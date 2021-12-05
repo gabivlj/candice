@@ -13,29 +13,35 @@ func TestCompiler_CompileExpression_With_AddSubtractMultiplyDivide(t *testing.T)
 		&ast.Program{
 			Statements: []ast.Statement{
 				&ast.ExpressionStatement{
-					Expression: &ast.BinaryOperation{
-						Operation: ops.Multiply,
-						Left: &ast.BinaryOperation{
-							Left: &ast.BinaryOperation{
-								Operation: ops.Plus,
-								Left: &ast.Integer{Value: 3},
-								Right: &ast.Integer{Value: 3},
-							},
-							Right: &ast.BinaryOperation{
-								Operation: ops.Divide,
+					Expression: &ast.BuiltinCall{
+						Name: "println",
+						Parameters: []ast.Expression{
+							&ast.BinaryOperation{
+								Operation: ops.Multiply,
 								Left: &ast.BinaryOperation{
-									Operation: ops.Minus,
-									Left: &ast.Integer{Value:332},
-									Right: &ast.Integer{Value:1},
+									Left: &ast.BinaryOperation{
+										Operation: ops.Plus,
+										Left:      &ast.Integer{Value: 3},
+										Right:     &ast.Integer{Value: 3},
+									},
+									Right: &ast.BinaryOperation{
+										Operation: ops.Divide,
+										Left: &ast.BinaryOperation{
+											Operation: ops.Minus,
+											Left:      &ast.Integer{Value: 332},
+											Right:     &ast.Integer{Value: 1},
+										},
+										Right: &ast.Integer{Value: 3},
+									},
 								},
-								Right: &ast.Integer{Value: 3},
+								Right: &ast.Integer{Value: 5},
 							},
 						},
-						Right: &ast.Integer{Value: 5},
 					},
 				},
 			},
 		},
 	)
-	a.AssertErr(c.Execute())
+
+	a.AssertEqual("580", string(a.UnwrapBytes(c.Execute())))
 }

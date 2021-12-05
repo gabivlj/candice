@@ -23,4 +23,3 @@ func GenerateExecutable(writer io.WriterTo, path string) error {
 	}
 	return nil
 }
-
