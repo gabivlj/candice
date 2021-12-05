@@ -55,6 +55,32 @@ func (i *IndexAccess) String() string {
 	return i.Left.String() + "[" + i.Access.String() + "]"
 }
 
+// BuiltinCall is a function call that does
+// stuff on compile time (like getting the type parameters and generating code accordingly)
+type BuiltinCall struct {
+	*node.Node
+	Name string
+	Parameters []Expression
+}
+
+func (bc *BuiltinCall) expressionNode() {}
+
+func (bc *BuiltinCall) String() string {
+	builder := strings.Builder{}
+	builder.WriteString("@")
+	builder.WriteString(bc.Name)
+	builder.WriteString("(")
+	for i, param := range bc.Parameters {
+		if i >= 1 {
+			builder.WriteString(", ")
+		}
+		builder.WriteString(param.String())
+	}
+	builder.WriteString(")")
+	return builder.String()
+}
+
+
 type Call struct {
 	*node.Node
 	Left Expression

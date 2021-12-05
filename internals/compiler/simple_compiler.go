@@ -74,6 +74,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		i8sType := c.block().NewGetElementPtr(
 			// To be honest this is so strange, we are casting [i8 x len] to *[i8 x len]
 			types.NewArray(uint64(len(s)), types.I8),
+			// Define as global, we can keep it at all times on memory
 			c.m.NewGlobalDef(s, stringWithCharArrayType),
 			zero,
 			zero,
