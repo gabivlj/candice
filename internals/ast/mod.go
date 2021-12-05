@@ -1,5 +1,10 @@
 package ast
 
+import (
+	"github.com/gabivlj/candice/internals/node"
+	"strings"
+)
+
 type Node interface {
 	String() string
 }
@@ -16,4 +21,24 @@ type Statement interface {
 
 type Program struct {
 	Statements []Statement
+}
+
+type ExpressionStatement struct {
+	*node.Node
+	Expression Expression
+}
+
+func (e *ExpressionStatement) String() string {
+	return e.Expression.String() + ";"
+}
+
+func (e *ExpressionStatement) statementNode() {}
+
+
+func (p *Program) String() string {
+	builder := strings.Builder{}
+	for _, s := range p.Statements {
+		builder.WriteString(s.String() + "\n")
+	}
+	return builder.String()
 }

@@ -27,6 +27,21 @@ func New() *Compiler {
 	}
 }
 
+/// Frequent private utils
+
+func (c *Compiler) block() *ir.Block {
+	return c.blocks[len(c.blocks)-1]
+}
+
+func (c *Compiler) popBlock() *ir.Block {
+	b := c.block()
+	c.blocks = c.blocks[:len(c.blocks)-1]
+	return b
+}
+
+/// Public methods for the compiler
+
+// Execute generates and executes the executable
 func (c *Compiler) Execute() error {
 	err := GenerateExecutable(c.m, "exec")
 	if err != nil {
@@ -36,6 +51,10 @@ func (c *Compiler) Execute() error {
 	return err
 }
 
+// Compile compiles the entire ast
+// It makes weak type checks, it will assume that the returned types
+// are right. Usually you would want to semantically check the tree before
+// calling this.
 func (c *Compiler) Compile(tree ast.Node) {
 
 	switch t := tree.(type) {
@@ -71,6 +90,10 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 	return nil
 }
 
+/// Simple binary compilations
+/// Making redundant and easy to understand functions is better
+/// than storing callbacks on a hashmap. Let's keep it simple.
+
 func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Value {
 	switch expr.Operation {
 	case ops.Multiply: {
@@ -86,8 +109,25 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 	}
 
 	case ops.Divide: {
-
+		return c.compileDivide(expr)
 	}
+
+	case ops.Minus: {
+		return c.compileSubtract(expr)
+	}
+
+	case ops.BinaryXOR: {
+		return c.compileXorBinary(expr)
+	}
+
+	case ops.BinaryAND: {
+		return c.compileAndBinary(expr)
+	}
+
+	case ops.BinaryOR: {
+		return c.compileOrBinary(expr)
+	}
+
 	}
 	panic("unimplemented: " + expr.Operation.String())
 	return nil
@@ -105,13 +145,50 @@ func (c *Compiler) compileMultiply(expr *ast.BinaryOperation) value.Value {
 	return c.block().NewMul(leftValue, rightValue)
 }
 
-
-func (c *Compiler) block() *ir.Block {
-	return c.blocks[len(c.blocks)-1]
+func (c *Compiler) compileSubtract(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	return c.block().NewSub(leftValue, rightValue)
 }
 
-func (c *Compiler) popBlock() *ir.Block {
-	b := c.block()
-	c.blocks = c.blocks[:len(c.blocks)-1]
-	return b
+func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	if types.IsInt(leftValue.Type()) {
+		return c.block().NewSDiv(leftValue, rightValue)
+	}
+	if types.IsFloat(leftValue.Type()) {
+		panic("float arithmetic not implemented")
+	}
+	return nil
+}
+
+func (c *Compiler) compileAndBinary(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	return c.block().NewAnd(leftValue, rightValue)
+}
+
+func (c *Compiler) compileOrBinary(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	return c.block().NewOr(leftValue, rightValue)
+}
+
+func (c *Compiler) compileXorBinary(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	return c.block().NewXor(leftValue, rightValue)
+}
+
+func (c *Compiler) compileShiftRightBinary(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	return c.block().NewLShr(leftValue, rightValue)
+}
+
+func (c *Compiler) compileShiftLeftBinary(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.compileExpression(expr.Left)
+	rightValue := c.compileExpression(expr.Right)
+	return c.block().NewShl(leftValue, rightValue)
 }

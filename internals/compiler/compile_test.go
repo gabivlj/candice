@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCompiler_CompileExpression_Simple(t *testing.T) {
+func TestCompiler_CompileExpression_With_AddSubtractMultiplyDivide(t *testing.T) {
 	c := New()
 	c.Compile(
 		&ast.Program{
@@ -22,8 +22,12 @@ func TestCompiler_CompileExpression_Simple(t *testing.T) {
 								Right: &ast.Integer{Value: 3},
 							},
 							Right: &ast.BinaryOperation{
-								Operation: ops.Multiply,
-								Left: &ast.Integer{Value: 3},
+								Operation: ops.Divide,
+								Left: &ast.BinaryOperation{
+									Operation: ops.Minus,
+									Left: &ast.Integer{Value:332},
+									Right: &ast.Integer{Value:1},
+								},
 								Right: &ast.Integer{Value: 3},
 							},
 						},

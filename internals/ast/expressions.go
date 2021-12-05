@@ -1,12 +1,14 @@
 package ast
 
 import (
+	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
 	"strconv"
 	"strings"
 )
 
 type Identifier struct {
+	*node.Node
 	Name string
 }
 
@@ -17,6 +19,7 @@ func (i *Identifier) String() string {
 }
 
 type BinaryOperation struct {
+	*node.Node
 	Left Expression
 	Right Expression
 	Operation ops.Operation
@@ -29,6 +32,7 @@ func (b *BinaryOperation) String() string {
 }
 
 type PrefixOperation struct {
+	*node.Node
 	Right Expression
 	Operation ops.Operation
 }
@@ -40,6 +44,7 @@ func (p *PrefixOperation) String() string {
 }
 
 type IndexAccess struct {
+	*node.Node
 	Left Expression
 	Access Expression
 }
@@ -51,6 +56,7 @@ func (i *IndexAccess) String() string {
 }
 
 type Call struct {
+	*node.Node
 	Left Expression
 	Parameters []Expression
 }
@@ -72,6 +78,7 @@ func (c *Call) String() string {
 }
 
 type Integer struct {
+	*node.Node
 	Value int64
 }
 
@@ -82,6 +89,7 @@ func (i *Integer) String() string {
 }
 
 type StringLiteral struct {
+	*node.Node
 	Value string
 }
 
