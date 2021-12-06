@@ -142,6 +142,10 @@ func TestCompiler_CompileStruct(t *testing.T) {
 							Name:       "x",
 							Expression: &ast.Integer{Value: 3},
 						},
+						{
+							Name:       "y",
+							Expression: &ast.Integer{Value: 3},
+						},
 					},
 				},
 			},

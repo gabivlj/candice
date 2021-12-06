@@ -246,9 +246,6 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 
 		// Store in the pointer the compiler value
 		c.block().NewStore(compiledValue, ptr)
-
-		// And load (necessary?)
-		c.block().NewLoad(compiledValue.Type(), ptr)
 	}
 
 	return c.block().NewLoad(possibleStruct.llvmType, struktValue)
