@@ -59,8 +59,8 @@ func TestCompiler_CompileExpression_With_And(t *testing.T) {
 						Parameters: []ast.Expression{
 							&ast.BinaryOperation{
 								Operation: ops.BinaryAND,
-								Left: &ast.Integer{Value: 3},
-								Right: &ast.Integer{Value: 5},
+								Left:      &ast.Integer{Value: 3},
+								Right:     &ast.Integer{Value: 5},
 							},
 						},
 					},
@@ -68,7 +68,7 @@ func TestCompiler_CompileExpression_With_And(t *testing.T) {
 			},
 		},
 	)
-	a.AssertEqual(fmt.Sprintf("%d", 3 & 5), string(a.UnwrapBytes(c.Execute())))
+	a.AssertEqual(fmt.Sprintf("%d", 3&5), string(a.UnwrapBytes(c.Execute())))
 }
 
 func TestCompiler_CompileExpression_With_Or(t *testing.T) {
@@ -82,8 +82,8 @@ func TestCompiler_CompileExpression_With_Or(t *testing.T) {
 						Parameters: []ast.Expression{
 							&ast.BinaryOperation{
 								Operation: ops.BinaryOR,
-								Left: &ast.Integer{Value: 3},
-								Right: &ast.Integer{Value: 5},
+								Left:      &ast.Integer{Value: 3},
+								Right:     &ast.Integer{Value: 5},
 							},
 						},
 					},
@@ -91,7 +91,7 @@ func TestCompiler_CompileExpression_With_Or(t *testing.T) {
 			},
 		},
 	)
-	a.AssertEqual(fmt.Sprintf("%d", 3 | 5), string(a.UnwrapBytes(c.Execute())))
+	a.AssertEqual(fmt.Sprintf("%d", 3|5), string(a.UnwrapBytes(c.Execute())))
 }
 
 func TestCompiler_CompileExpression_With_Xor(t *testing.T) {
@@ -105,8 +105,8 @@ func TestCompiler_CompileExpression_With_Xor(t *testing.T) {
 						Parameters: []ast.Expression{
 							&ast.BinaryOperation{
 								Operation: ops.BinaryXOR,
-								Left: &ast.Integer{Value: 3322323},
-								Right: &ast.Integer{Value: 51231212},
+								Left:      &ast.Integer{Value: 3322323},
+								Right:     &ast.Integer{Value: 51231212},
 							},
 						},
 					},
@@ -114,7 +114,7 @@ func TestCompiler_CompileExpression_With_Xor(t *testing.T) {
 			},
 		},
 	)
-	a.AssertEqual(fmt.Sprintf("%d", 3322323 ^ 51231212), string(a.UnwrapBytes(c.Execute())))
+	a.AssertEqual(fmt.Sprintf("%d", 3322323^51231212), string(a.UnwrapBytes(c.Execute())))
 }
 
 func TestCompiler_CompileStruct(t *testing.T) {
@@ -122,16 +122,29 @@ func TestCompiler_CompileStruct(t *testing.T) {
 	pointStruct := &ast.StructStatement{
 		Type: &ctypes.Struct{
 			Fields: []ctypes.Type{
-				&ctypes.Integer{BitSize: 32},
-				&ctypes.Integer{BitSize: 32},
+				&ctypes.Integer{BitSize: 64},
+				&ctypes.Integer{BitSize: 64},
 			},
 			Names: []string{"x", "y"},
-			Name:   "Point",
+			Name:  "Point",
 		},
 	}
 	c.Compile(&ast.Program{
 		Statements: []ast.Statement{
 			pointStruct,
+			&ast.DeclarationStatement{
+				Name: "point",
+				Type: &ctypes.Anonymous{Name: "Point"},
+				Expression: &ast.StructLiteral{
+					Name: "Point",
+					Values: []ast.StructValue{
+						{
+							Name:       "x",
+							Expression: &ast.Integer{Value: 3},
+						},
+					},
+				},
+			},
 		},
 	})
 	_, err := c.Execute()
@@ -142,16 +155,16 @@ func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
 	c := New()
 	binOp := &ast.BinaryOperation{
 		Operation: ops.Plus,
-		Left: &ast.Integer{Value: 3},
-		Right: &ast.Integer{Value: 5},
+		Left:      &ast.Integer{Value: 3},
+		Right:     &ast.Integer{Value: 5},
 	}
 	c.Compile(
 		&ast.Program{
 			Statements: []ast.Statement{
 				&ast.DeclarationStatement{
-					Name: "a",
+					Name:       "a",
 					Expression: binOp,
-					Type: &ctypes.Integer{BitSize: 64},
+					Type:       &ctypes.Integer{BitSize: 64},
 				},
 				&ast.ExpressionStatement{
 					Expression: &ast.BuiltinCall{
@@ -164,5 +177,5 @@ func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
 			},
 		},
 	)
-	a.AssertEqual(fmt.Sprintf("%d", 3 + 5), string(a.UnwrapBytes(c.Execute())))
+	a.AssertEqual(fmt.Sprintf("%d", 3+5), string(a.UnwrapBytes(c.Execute())))
 }

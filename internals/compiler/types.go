@@ -6,7 +6,7 @@ import (
 )
 
 type Type struct {
-	llvmType types.Type
+	llvmType    types.Type
 	candiceType ctypes.Type
 }
 

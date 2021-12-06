@@ -1,13 +1,14 @@
-@"%d " = global [3 x i8] c"%d "
+%Point = type { i64, i64 }
 
 define i32 @main() {
 _main:
-	%0 = alloca i64
-	%1 = add i64 3, 5
-	store i64 %1, i64* %0
-	%2 = load i64, i64* %0
-	%3 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%4 = call i32 (i8*, ...) @printf(i8* %3, i64 %2)
+	%0 = alloca %Point
+	%1 = alloca %Point
+	%2 = getelementptr %Point, %Point* %1, i32 0, i32 0
+	store i64 3, i64* %2
+	%3 = load i64, i64* %2
+	%4 = load %Point, %Point* %1
+	store %Point %4, %Point* %0
 	ret i32 0
 }
 

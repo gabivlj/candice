@@ -21,11 +21,11 @@ type Type interface {
 	String() string
 }
 
-type Void struct {}
+type Void struct{}
 
 func (_ *Void) String() string { return "void" }
 
-func (_ *Void) candiceType(){}
+func (_ *Void) candiceType() {}
 
 func (_ *Void) SizeOf() int64 {
 	return 0
@@ -44,7 +44,7 @@ func (i *Integer) String() string {
 	return fmt.Sprintf("i%d", i.BitSize)
 }
 
-func (_ *Integer) candiceType(){}
+func (_ *Integer) candiceType() {}
 
 func (i *Integer) SizeOf() int64 {
 	return int64(i.BitSize / 8)
@@ -71,7 +71,7 @@ func (i *UInteger) Alignment() int64 {
 	return int64(i.BitSize / 8)
 }
 
-func (_ *UInteger) candiceType(){}
+func (_ *UInteger) candiceType() {}
 
 type Pointer struct {
 	Inner Type
@@ -87,11 +87,11 @@ func (_ *Pointer) Alignment() int64 {
 
 func (_ *Pointer) SizeOf() int64 { return 8 }
 
-func (_ *Pointer) candiceType(){}
+func (_ *Pointer) candiceType() {}
 
-type Float struct {}
+type Float struct{}
 
-func (_ *Float) candiceType(){}
+func (_ *Float) candiceType() {}
 
 func (f *Float) SizeOf() int64 {
 	return 8
@@ -106,7 +106,7 @@ func (_ *Float) Alignment() int64 {
 }
 
 type Array struct {
-	Inner Type
+	Inner  Type
 	Length int64
 }
 
@@ -122,7 +122,7 @@ func (a *Array) Alignment() int64 {
 	return a.Inner.Alignment()
 }
 
-func (_ *Array) candiceType(){}
+func (_ *Array) candiceType() {}
 
 // Anonymous type is a type that is not yet declared or not processed by the semantic tree.
 // The front-end compiler will try to lookup by name the type and throw an exception if
@@ -131,15 +131,24 @@ type Anonymous struct {
 	Name string
 }
 
-func (_ *Anonymous) candiceType(){}
-func (a *Anonymous) String() string { return a.Name }
-func (a *Anonymous) Alignment() int64 { return 0}
-func (a *Anonymous) SizeOf() int64 { return 0}
+func (_ *Anonymous) candiceType()     {}
+func (a *Anonymous) String() string   { return a.Name }
+func (a *Anonymous) Alignment() int64 { return 0 }
+func (a *Anonymous) SizeOf() int64    { return 0 }
 
 type Struct struct {
 	Fields []Type
-	Names []string
-	Name string
+	Names  []string
+	Name   string
+}
+
+func (s *Struct) GetField(fieldName string) (int, Type) {
+	for i, field := range s.Fields {
+		if s.Names[i] == fieldName {
+			return i, field
+		}
+	}
+	return -1, nil
 }
 
 func (s *Struct) FullString() string {
@@ -159,13 +168,13 @@ func (s *Struct) String() string {
 	return s.Name
 }
 
-func (_ *Struct) candiceType(){}
+func (_ *Struct) candiceType() {}
 
 func (s *Struct) SizeOf() int64 {
 	currentAddress := int64(0)
 	// The padding formulas are quite confusing at first, check this out!
 	// -- https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
-	for _, t := range s.Fields  {
+	for _, t := range s.Fields {
 		typeSize := t.SizeOf()
 		alignment := t.Alignment()
 		offset := (currentAddress - (currentAddress % alignment)) % alignment

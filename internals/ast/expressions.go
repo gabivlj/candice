@@ -121,3 +121,30 @@ type StringLiteral struct {
 func (s *StringLiteral) String() string { return "\"" + s.Value + "\"" }
 
 func (s *StringLiteral) expressionNode() {}
+
+type StructValue struct {
+	Name       string
+	Expression Expression
+}
+
+type StructLiteral struct {
+	*node.Node
+	Name   string
+	Values []StructValue
+}
+
+func (_ *StructLiteral) expressionNode() {}
+
+func (s *StructLiteral) String() string {
+	output := strings.Builder{}
+	output.WriteString(s.Name)
+	output.WriteString("{")
+	for _, value := range s.Values {
+		output.WriteString(value.Name)
+		output.WriteString(": ")
+		output.WriteString(value.Expression.String())
+		output.WriteString(",\n")
+	}
+	output.WriteString("}")
+	return output.String()
+}

@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
@@ -193,6 +194,11 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 		{
 			return c.compileIdentifier(e)
 		}
+
+	case *ast.StructLiteral:
+		{
+			return c.compileStructLiteral(e)
+		}
 	}
 
 	return nil
@@ -216,6 +222,36 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 
 	return nil
+}
+
+func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
+	possibleStruct := c.types[strukt.Name]
+	struktType, ok := possibleStruct.candiceType.(*ctypes.Struct)
+	if !ok {
+		panic(fmt.Sprintf("expected struct but got a %s", possibleStruct.candiceType))
+	}
+
+	// Allocate in stack memory
+	struktValue := c.block().NewAlloca(possibleStruct.llvmType)
+
+	for _, decl := range strukt.Values {
+		// Get field position
+		i, _ := struktType.GetField(decl.Name)
+
+		// Compile the expression to have the value
+		compiledValue := c.compileExpression(decl.Expression)
+
+		// Get the pointer pointing to the memory where we need to store in
+		ptr := c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
+
+		// Store in the pointer the compiler value
+		c.block().NewStore(compiledValue, ptr)
+
+		// And load (necessary?)
+		c.block().NewLoad(compiledValue.Type(), ptr)
+	}
+
+	return c.block().NewLoad(possibleStruct.llvmType, struktValue)
 }
 
 /// Simple binary compilations
