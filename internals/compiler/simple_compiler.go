@@ -21,10 +21,10 @@ type Compiler struct {
 	m           *ir.Module
 	blocks      []*ir.Block
 	main        *ir.Func
-	types 		map[string]*Type
+	types       map[string]*Type
 	definitions map[string]value.Value
 	builtins    map[string]func(*ast.BuiltinCall) value.Value
-	stacks 		[]map[string]value.Value
+	stacks      []map[string]value.Value
 }
 
 func New() *Compiler {
@@ -34,9 +34,9 @@ func New() *Compiler {
 		m:           m,
 		blocks:      []*ir.Block{main.NewBlock("_main")},
 		definitions: map[string]value.Value{},
-		builtins: map[string]func(*ast.BuiltinCall) value.Value{},
-		types: map[string]*Type{},
-		stacks: []map[string]value.Value{map[string]value.Value{}},
+		builtins:    map[string]func(*ast.BuiltinCall) value.Value{},
+		types:       map[string]*Type{},
+		stacks:      []map[string]value.Value{map[string]value.Value{}},
 	}
 	c.initializeBuiltinLib()
 	return c
@@ -160,8 +160,8 @@ func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
 
 func (c *Compiler) compileType(name string, ct ctypes.Type) {
 	t := c.ToLLVMType(ct)
-	c.types[name] = &Type {
-		llvmType: c.m.NewTypeDef(name, t),
+	c.types[name] = &Type{
+		llvmType:    c.m.NewTypeDef(name, t),
 		candiceType: ct,
 	}
 }
@@ -217,7 +217,6 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 
 	return nil
 }
-
 
 /// Simple binary compilations
 /// Making redundant and easy to understand functions is better
