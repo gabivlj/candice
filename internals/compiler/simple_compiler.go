@@ -227,6 +227,7 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 	possibleStruct := c.types[strukt.Name]
 	struktType, ok := possibleStruct.candiceType.(*ctypes.Struct)
+
 	if !ok {
 		panic(fmt.Sprintf("expected struct but got a %s", possibleStruct.candiceType))
 	}
