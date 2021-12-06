@@ -15,6 +15,17 @@ type ConditionPlusBlock struct {
 	Condition Expression
 }
 
+func (c *ConditionPlusBlock) statementNode(){}
+
+func (c *ConditionPlusBlock) String() string {
+	s := strings.Builder{}
+	s.WriteString(c.Condition.String())
+	s.WriteString(" {\n")
+	s.WriteString(c.Block.String())
+	s.WriteString("\n}")
+	return s.String()
+}
+
 func (b *Block) String() string {
 	s := strings.Builder{}
 	for i, statement := range b.Statements {
@@ -69,10 +80,7 @@ func (i *IfStatement) String() string {
 
 	for _, iff := range i.ElseIfs {
 		s.WriteString(" else if ")
-		s.WriteString(iff.Condition.String())
-		s.WriteString(" {\n")
-		s.WriteString(iff.Block.String())
-		s.WriteString("\n}")
+		s.WriteString(iff.String())
 	}
 
 	if i.Else != nil {

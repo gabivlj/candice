@@ -3,6 +3,7 @@ package compiler
 import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
+	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/pkg/a"
 	"testing"
@@ -114,4 +115,54 @@ func TestCompiler_CompileExpression_With_Xor(t *testing.T) {
 		},
 	)
 	a.AssertEqual(fmt.Sprintf("%d", 3322323 ^ 51231212), string(a.UnwrapBytes(c.Execute())))
+}
+
+func TestCompiler_CompileStruct(t *testing.T) {
+	c := New()
+	pointStruct := &ast.StructStatement{
+		Type: &ctypes.Struct{
+			Fields: []ctypes.Type{
+				&ctypes.Integer{BitSize: 32},
+				&ctypes.Integer{BitSize: 32},
+			},
+			Names: []string{"x", "y"},
+			Name:   "Point",
+		},
+	}
+	c.Compile(&ast.Program{
+		Statements: []ast.Statement{
+			pointStruct,
+		},
+	})
+	_, err := c.Execute()
+	a.AssertErr(err)
+}
+
+func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
+	c := New()
+	binOp := &ast.BinaryOperation{
+		Operation: ops.Plus,
+		Left: &ast.Integer{Value: 3},
+		Right: &ast.Integer{Value: 5},
+	}
+	c.Compile(
+		&ast.Program{
+			Statements: []ast.Statement{
+				&ast.DeclarationStatement{
+					Name: "a",
+					Expression: binOp,
+					Type: &ctypes.Integer{BitSize: 64},
+				},
+				&ast.ExpressionStatement{
+					Expression: &ast.BuiltinCall{
+						Name: "println",
+						Parameters: []ast.Expression{
+							&ast.Identifier{Name: "a"},
+						},
+					},
+				},
+			},
+		},
+	)
+	a.AssertEqual(fmt.Sprintf("%d", 3 + 5), string(a.UnwrapBytes(c.Execute())))
 }

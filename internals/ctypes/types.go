@@ -124,6 +124,18 @@ func (a *Array) Alignment() int64 {
 
 func (_ *Array) candiceType(){}
 
+// Anonymous type is a type that is not yet declared or not processed by the semantic tree.
+// The front-end compiler will try to lookup by name the type and throw an exception if
+// it's not defined. We can do fancy lazy stuff with this.
+type Anonymous struct {
+	Name string
+}
+
+func (_ *Anonymous) candiceType(){}
+func (a *Anonymous) String() string { return a.Name }
+func (a *Anonymous) Alignment() int64 { return 0}
+func (a *Anonymous) SizeOf() int64 { return 0}
+
 type Struct struct {
 	Fields []Type
 	Names []string
@@ -168,12 +180,12 @@ func (s *Struct) SizeOf() int64 {
 }
 
 func (s *Struct) Alignment() int64 {
-	max := int64(0)
+	maximumAlignment := int64(0)
 	for _, t := range s.Fields {
 		alignment := t.Alignment()
-		if alignment >= max {
-			max = alignment
+		if alignment >= maximumAlignment {
+			maximumAlignment = alignment
 		}
 	}
-	return max
+	return maximumAlignment
 }

@@ -26,10 +26,11 @@ func main() {
 		Block: &ast.Block{Statements: []ast.Statement{
 			decl,
 		}},
-		ElseIfs: []*ast.ConditionPlusBlock{{
-			Condition: &ast.Integer{Value: 3},
-			Block:     &ast.Block{Statements: []ast.Statement{decl}},
-		},
+		ElseIfs: []*ast.ConditionPlusBlock{
+			{
+				Condition: &ast.Integer{Value: 3},
+				Block:     &ast.Block{Statements: []ast.Statement{decl}},
+			},
 		},
 		Else: &ast.Block{
 			Statements: []ast.Statement{&ast.DeclarationStatement{

@@ -3,6 +3,7 @@ package compiler
 import (
 	"bytes"
 	"github.com/gabivlj/candice/internals/ast"
+	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/llir/llvm/ir"
 	"github.com/llir/llvm/ir/constant"
@@ -20,8 +21,10 @@ type Compiler struct {
 	m           *ir.Module
 	blocks      []*ir.Block
 	main        *ir.Func
+	types 		map[string]*Type
 	definitions map[string]value.Value
 	builtins    map[string]func(*ast.BuiltinCall) value.Value
+	stacks 		[]map[string]value.Value
 }
 
 func New() *Compiler {
@@ -32,6 +35,8 @@ func New() *Compiler {
 		blocks:      []*ir.Block{main.NewBlock("_main")},
 		definitions: map[string]value.Value{},
 		builtins: map[string]func(*ast.BuiltinCall) value.Value{},
+		types: map[string]*Type{},
+		stacks: []map[string]value.Value{map[string]value.Value{}},
 	}
 	c.initializeBuiltinLib()
 	return c
@@ -39,12 +44,17 @@ func New() *Compiler {
 
 /// Frequent private utils
 
+func (c *Compiler) stack() map[string]value.Value {
+	return c.stacks[len(c.stacks)-1]
+}
+
 func (c *Compiler) block() *ir.Block {
 	return c.blocks[len(c.blocks)-1]
 }
 
 func (c *Compiler) popBlock() *ir.Block {
 	b := c.block()
+	c.stacks = c.stacks[:len(c.stacks)-1]
 	c.blocks = c.blocks[:len(c.blocks)-1]
 	return b
 }
@@ -113,6 +123,16 @@ func (c *Compiler) Compile(tree ast.Node) {
 			c.compileExpression(t.Expression)
 		}
 
+	case *ast.StructStatement:
+		{
+			c.compileStruct(t)
+		}
+
+	case *ast.DeclarationStatement:
+		{
+			c.compileDeclaration(t)
+		}
+
 	case *ast.Program:
 		{
 			for _, statement := range t.Statements {
@@ -124,6 +144,25 @@ func (c *Compiler) Compile(tree ast.Node) {
 			_ = c.popBlock()
 		}
 
+	}
+}
+
+func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
+	t := c.ToLLVMType(decl.Type)
+	val := c.block().NewAlloca(t)
+	c.block().NewStore(c.compileExpression(decl.Expression), val)
+	c.stack()[decl.Name] = val
+}
+
+func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
+	c.compileType(strukt.Type.Name, strukt.Type)
+}
+
+func (c *Compiler) compileType(name string, ct ctypes.Type) {
+	t := c.ToLLVMType(ct)
+	c.types[name] = &Type {
+		llvmType: c.m.NewTypeDef(name, t),
+		candiceType: ct,
 	}
 }
 
@@ -147,7 +186,12 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 
 	case *ast.BuiltinCall:
 		{
-			c.compileBuiltinFunctionCall(e)
+			return c.compileBuiltinFunctionCall(e)
+		}
+
+	case *ast.Identifier:
+		{
+			return c.compileIdentifier(e)
 		}
 	}
 
@@ -155,8 +199,10 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 }
 
 /// Identifier
-func (c *Compiler) compileIdentifier(ast *ast.Identifier) value.Value {
-	return nil
+
+func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
+	identifier := c.stack()[id.Name]
+	return c.block().NewLoad(identifier.(*ir.InstAlloca).ElemType, identifier)
 }
 
 /// Function calls
