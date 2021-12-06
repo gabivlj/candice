@@ -34,7 +34,6 @@ func (e *ExpressionStatement) String() string {
 
 func (e *ExpressionStatement) statementNode() {}
 
-
 func (p *Program) String() string {
 	builder := strings.Builder{}
 	for _, s := range p.Statements {

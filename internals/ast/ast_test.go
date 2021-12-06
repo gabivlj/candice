@@ -18,7 +18,7 @@ func TestBinaryOperation_String(t *testing.T) {
 		Operation: ops.Plus,
 		Left: &BinaryOperation{
 			Operation: ops.Multiply,
-			Left: &Integer{Value: integer}, Right: &Integer{Value: integerRight},
+			Left:      &Integer{Value: integer}, Right: &Integer{Value: integerRight},
 		},
 		Right: &Integer{Value: integer},
 	}
@@ -27,4 +27,3 @@ func TestBinaryOperation_String(t *testing.T) {
 			`((3 * 4) + 3)`,
 	)
 }
-

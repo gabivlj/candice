@@ -20,20 +20,20 @@ func (i *Identifier) String() string {
 
 type BinaryOperation struct {
 	*node.Node
-	Left Expression
-	Right Expression
+	Left      Expression
+	Right     Expression
 	Operation ops.Operation
 }
 
 func (b *BinaryOperation) expressionNode() {}
 
 func (b *BinaryOperation) String() string {
-	return "("+b.Left.String() + b.Operation.String() + b.Right.String()+")"
+	return "(" + b.Left.String() + b.Operation.String() + b.Right.String() + ")"
 }
 
 type PrefixOperation struct {
 	*node.Node
-	Right Expression
+	Right     Expression
 	Operation ops.Operation
 }
 
@@ -45,7 +45,7 @@ func (p *PrefixOperation) String() string {
 
 type IndexAccess struct {
 	*node.Node
-	Left Expression
+	Left   Expression
 	Access Expression
 }
 
@@ -59,7 +59,7 @@ func (i *IndexAccess) String() string {
 // stuff on compile time (like getting the type parameters and generating code accordingly)
 type BuiltinCall struct {
 	*node.Node
-	Name string
+	Name       string
 	Parameters []Expression
 }
 
@@ -80,10 +80,9 @@ func (bc *BuiltinCall) String() string {
 	return builder.String()
 }
 
-
 type Call struct {
 	*node.Node
-	Left Expression
+	Left       Expression
 	Parameters []Expression
 }
 
@@ -122,4 +121,3 @@ type StringLiteral struct {
 func (s *StringLiteral) String() string { return "\"" + s.Value + "\"" }
 
 func (s *StringLiteral) expressionNode() {}
-

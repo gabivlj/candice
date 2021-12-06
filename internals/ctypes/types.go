@@ -1,7 +1,13 @@
 package ctypes
 
+import (
+	"fmt"
+	"strings"
+)
+
 /// Candice types
 
+// Type is the implementation of a candice type
 type Type interface {
 	// candiceType private flag
 	candiceType()
@@ -11,9 +17,13 @@ type Type interface {
 
 	// Alignment returns the alignment in bytes
 	Alignment() int64
+
+	String() string
 }
 
 type Void struct {}
+
+func (_ *Void) String() string { return "void" }
 
 func (_ *Void) candiceType(){}
 
@@ -28,6 +38,10 @@ func (_ *Void) Alignment() int64 {
 type Integer struct {
 	// 8bits, 16bits, 32bits, 64bits
 	BitSize uint
+}
+
+func (i *Integer) String() string {
+	return fmt.Sprintf("i%d", i.BitSize)
 }
 
 func (_ *Integer) candiceType(){}
@@ -45,6 +59,10 @@ type UInteger struct {
 	BitSize uint
 }
 
+func (i *UInteger) String() string {
+	return fmt.Sprintf("u%d", i.BitSize)
+}
+
 func (i *UInteger) SizeOf() int64 {
 	return int64(i.BitSize / 8)
 }
@@ -57,6 +75,10 @@ func (_ *UInteger) candiceType(){}
 
 type Pointer struct {
 	Inner Type
+}
+
+func (p *Pointer) String() string {
+	return "*" + p.Inner.String()
 }
 
 func (_ *Pointer) Alignment() int64 {
@@ -75,6 +97,10 @@ func (f *Float) SizeOf() int64 {
 	return 8
 }
 
+func (f *Float) String() string {
+	return "f64"
+}
+
 func (_ *Float) Alignment() int64 {
 	return 8
 }
@@ -82,6 +108,10 @@ func (_ *Float) Alignment() int64 {
 type Array struct {
 	Inner Type
 	Length int64
+}
+
+func (a *Array) String() string {
+	return fmt.Sprintf("%s[%d]", a.Inner.String(), a.Length)
 }
 
 func (a *Array) SizeOf() int64 {
@@ -97,6 +127,24 @@ func (_ *Array) candiceType(){}
 type Struct struct {
 	Fields []Type
 	Names []string
+	Name string
+}
+
+func (s *Struct) FullString() string {
+	str := strings.Builder{}
+	str.WriteString("struct " + s.Name + " {\n")
+	for i, field := range s.Fields {
+		if i >= 1 {
+			str.WriteByte('\n')
+		}
+		str.WriteString(fmt.Sprintf("%s %s", s.Names[i], field.String()))
+	}
+	str.WriteString("\n}")
+	return str.String()
+}
+
+func (s *Struct) String() string {
+	return s.Name
 }
 
 func (_ *Struct) candiceType(){}
