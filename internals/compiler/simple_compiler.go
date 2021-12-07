@@ -94,6 +94,25 @@ func (c *Compiler) initializeBuiltinLib() {
 		c.block().NewCall(c.definitions["printf"], expressions...)
 		return constant.NewUndef(types.Void)
 	}
+
+	malloc := c.m.NewFunc(
+		"malloc",
+		types.NewPointer(types.I8),
+		ir.NewParam("", types.I64),
+	)
+	c.definitions["malloc"] = malloc
+
+	// alloc accepts one type parameter, and how many you want to allocate
+	c.builtins["alloc"] = func(call *ast.BuiltinCall) value.Value {
+		typeParameter := call.TypeParameters[0]
+		toReturnType := types.NewPointer(c.ToLLVMType(typeParameter))
+		length := c.compileExpression(call.Parameters[0])
+		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
+		returnedValue := c.block().NewCall(c.definitions["malloc"], totalSize)
+		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
+		return castedValue
+	}
+
 }
 
 /// Public methods for the compiler

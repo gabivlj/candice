@@ -220,6 +220,25 @@ func TestCompiler_CompileStruct(t *testing.T) {
 	a.AssertEqual(fmt.Sprintf("%d", 3), string(a.UnwrapBytes(c.Execute())))
 }
 
+func TestCompiler_CompileExpression_With_Malloc(t *testing.T) {
+	c := New()
+	c.Compile(&ast.Program{
+		Statements: []ast.Statement{
+			&ast.DeclarationStatement{
+				Name: "coolStuff",
+				Type: &ctypes.Pointer{Inner: &ctypes.Integer{BitSize: 32}},
+				Expression: &ast.BuiltinCall{
+					Name:           "alloc",
+					TypeParameters: []ctypes.Type{&ctypes.Integer{BitSize: 32}},
+					Parameters:     []ast.Expression{&ast.Integer{Value: 5}},
+				},
+			},
+		},
+	})
+	_, err := c.Execute()
+	a.AssertErr(err)
+}
+
 func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
 	c := New()
 	binOp := &ast.BinaryOperation{

@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
 	"strconv"
@@ -59,8 +60,9 @@ func (i *IndexAccess) String() string {
 // stuff on compile time (like getting the type parameters and generating code accordingly)
 type BuiltinCall struct {
 	*node.Node
-	Name       string
-	Parameters []Expression
+	Name           string
+	TypeParameters []ctypes.Type
+	Parameters     []Expression
 }
 
 func (bc *BuiltinCall) expressionNode() {}
