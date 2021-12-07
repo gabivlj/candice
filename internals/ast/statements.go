@@ -11,11 +11,11 @@ type Block struct {
 }
 
 type ConditionPlusBlock struct {
-	Block *Block
+	Block     *Block
 	Condition Expression
 }
 
-func (c *ConditionPlusBlock) statementNode(){}
+func (c *ConditionPlusBlock) statementNode() {}
 
 func (c *ConditionPlusBlock) String() string {
 	s := strings.Builder{}
@@ -57,6 +57,17 @@ func (_ *DeclarationStatement) statementNode() {}
 
 func (d *DeclarationStatement) String() string {
 	return fmt.Sprintf("%s :%s = %s", d.Name, d.Type.String(), d.Expression.String())
+}
+
+type AssignmentStatement struct {
+	Left       Expression
+	Expression Expression
+}
+
+func (_ *AssignmentStatement) statementNode() {}
+
+func (d *AssignmentStatement) String() string {
+	return fmt.Sprintf("%s = %s", d.Left.String(), d.Expression.String())
 }
 
 type IfStatement struct {

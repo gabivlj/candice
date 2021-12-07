@@ -226,17 +226,132 @@ func TestCompiler_CompileExpression_With_Malloc(t *testing.T) {
 		Statements: []ast.Statement{
 			&ast.DeclarationStatement{
 				Name: "coolStuff",
-				Type: &ctypes.Pointer{Inner: &ctypes.Integer{BitSize: 32}},
+				Type: &ctypes.Pointer{Inner: &ctypes.Integer{BitSize: 64}},
 				Expression: &ast.BuiltinCall{
 					Name:           "alloc",
-					TypeParameters: []ctypes.Type{&ctypes.Integer{BitSize: 32}},
+					TypeParameters: []ctypes.Type{&ctypes.Integer{BitSize: 64}},
 					Parameters:     []ast.Expression{&ast.Integer{Value: 5}},
 				},
 			},
+			&ast.AssignmentStatement{
+				Left: &ast.IndexAccess{
+					Left: &ast.Identifier{
+						Name: "coolStuff",
+					},
+					Access: &ast.Integer{Value: 1},
+				},
+				Expression: &ast.Integer{Value: 3333},
+			},
+			&ast.DeclarationStatement{
+				Name: "coolInside",
+				Type: &ctypes.Integer{BitSize: 64},
+				Expression: &ast.IndexAccess{
+					Left: &ast.Identifier{
+						Name: "coolStuff",
+					},
+					Access: &ast.Integer{Value: 1},
+				},
+			},
+			&ast.ExpressionStatement{Expression: &ast.BuiltinCall{
+				Name: "println",
+				Parameters: []ast.Expression{&ast.Identifier{
+					Name: "coolInside",
+				}},
+			}},
 		},
 	})
-	_, err := c.Execute()
+	b, err := c.Execute()
 	a.AssertErr(err)
+	a.AssertEqual(string(b), "3333")
+}
+
+func TestCompiler_CompileExpression_With_MallocStruct(t *testing.T) {
+	c := New()
+	point2Struct := &ast.StructStatement{
+		Type: &ctypes.Struct{
+			Fields: []ctypes.Type{
+				&ctypes.Integer{BitSize: 64},
+				&ctypes.Integer{BitSize: 64},
+			},
+			Names: []string{"x", "y"},
+			Name:  "Point2",
+		},
+	}
+	c.Compile(&ast.Program{
+		Statements: []ast.Statement{
+			point2Struct,
+			&ast.DeclarationStatement{
+				Name: "coolStuff",
+				Type: &ctypes.Pointer{Inner: point2Struct.Type},
+				Expression: &ast.BuiltinCall{
+					Name:           "alloc",
+					TypeParameters: []ctypes.Type{point2Struct.Type},
+					Parameters:     []ast.Expression{&ast.Integer{Value: 5}},
+				},
+			},
+			&ast.AssignmentStatement{
+				Left: &ast.IndexAccess{
+					Left: &ast.Identifier{
+						Name: "coolStuff",
+					},
+					Access: &ast.Integer{Value: 1},
+				},
+				Expression: &ast.StructLiteral{
+					Name: "Point2",
+					Values: []ast.StructValue{
+						{
+							Name:       "x",
+							Expression: &ast.Integer{Value: 3},
+						},
+						{
+							Name:       "y",
+							Expression: &ast.Integer{Value: 33},
+						},
+					},
+				},
+			},
+			&ast.AssignmentStatement{
+				Left: &ast.BinaryOperation{
+					Left: &ast.IndexAccess{
+						Left: &ast.Identifier{
+							Name: "coolStuff",
+						},
+						Access: &ast.Integer{Value: 1},
+					},
+					Right: &ast.Identifier{
+						Name: "x",
+					},
+					Operation: ops.Dot,
+				},
+				Expression: &ast.Integer{Value: 34},
+			},
+			&ast.DeclarationStatement{
+				Name: "coolInside",
+				Type: &ctypes.Integer{BitSize: 64},
+				Expression: &ast.BinaryOperation{
+					Left: &ast.IndexAccess{
+						Left: &ast.Identifier{
+							Name: "coolStuff",
+						},
+						Access: &ast.Integer{Value: 1},
+					},
+					Right: &ast.Identifier{
+						Name: "x",
+					},
+					Operation: ops.Dot,
+				},
+			},
+			&ast.ExpressionStatement{Expression: &ast.BuiltinCall{
+				Name: "println",
+				Parameters: []ast.Expression{&ast.Identifier{
+					Name: "coolInside",
+				}},
+			}},
+		},
+	})
+	b, err := c.Execute()
+	a.AssertErr(err)
+	a.AssertEqual(string(b), "34")
 }
 
 func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {

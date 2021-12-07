@@ -65,7 +65,10 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		}
 	case *ctypes.Struct:
 		{
+			if t, ok := c.types[el.Name]; ok {
 
+				return t.llvmType
+			}
 			llvmTypes := make([]types.Type, len(el.Fields))
 			for i, field := range el.Fields {
 				llvmTypes[i] = c.ToLLVMType(field)

@@ -18,32 +18,52 @@ var zero value.Value = constant.NewInt(types.I32, 0)
 var one value.Value = constant.NewInt(types.I32, 1)
 
 type Compiler struct {
-	errors      []error
-	m           *ir.Module
-	blocks      []*ir.Block
-	main        *ir.Func
-	types       map[string]*Type
-	definitions map[string]value.Value
-	builtins    map[string]func(*ast.BuiltinCall) value.Value
-	stacks      []map[string]value.Value
+	errors                []error
+	m                     *ir.Module
+	blocks                []*ir.Block
+	main                  *ir.Func
+	types                 map[string]*Type
+	definitions           map[string]value.Value
+	builtins              map[string]func(*ast.BuiltinCall) value.Value
+	definitionsToBePopped []string
+	stacks                []map[string]value.Value
 }
 
 func New() *Compiler {
 	m := ir.NewModule()
 	main := m.NewFunc("main", types.I32)
 	c := &Compiler{
-		m:           m,
-		blocks:      []*ir.Block{main.NewBlock("_main")},
-		definitions: map[string]value.Value{},
-		builtins:    map[string]func(*ast.BuiltinCall) value.Value{},
-		types:       map[string]*Type{},
-		stacks:      []map[string]value.Value{map[string]value.Value{}},
+		m:                     m,
+		blocks:                []*ir.Block{main.NewBlock("_main")},
+		definitions:           map[string]value.Value{},
+		builtins:              map[string]func(*ast.BuiltinCall) value.Value{},
+		types:                 map[string]*Type{},
+		definitionsToBePopped: []string{"<>"},
+		stacks:                []map[string]value.Value{map[string]value.Value{}},
 	}
 	c.initializeBuiltinLib()
 	return c
 }
 
 /// Frequent private utils
+
+// A small context stores variables stored by the current scope defined by if and for statements.
+func (c *Compiler) createSmallContext() {
+	c.definitionsToBePopped = append(c.definitionsToBePopped, "<>")
+}
+
+func (c *Compiler) addToCurrentSmallContext(variable string) {
+	c.definitionsToBePopped = append(c.definitionsToBePopped, variable)
+}
+
+func (c *Compiler) removeCurrentSmallContext() {
+	var i int
+	stack := c.stack()
+	for i = len(c.definitionsToBePopped) - 1; c.definitionsToBePopped[i] != "<>"; i-- {
+		delete(stack, c.definitionsToBePopped[i])
+	}
+	c.definitionsToBePopped = c.definitionsToBePopped[:i]
+}
 
 func (c *Compiler) stack() map[string]value.Value {
 	return c.stacks[len(c.stacks)-1]
@@ -72,7 +92,7 @@ func (c *Compiler) initializeBuiltinLib() {
 	c.builtins["println"] = func(call *ast.BuiltinCall) value.Value {
 		expressions := make([]value.Value, len(call.Parameters)+1)
 		for i := 0; i < len(call.Parameters); i++ {
-			expressions[i+1] = c.compileExpression(call.Parameters[i])
+			expressions[i+1] = c.loadIfPointer(c.compileExpression(call.Parameters[i]))
 		}
 		constantString := strings.Builder{}
 		// TODO: Here we would write a function that tries to do a toString()
@@ -106,11 +126,13 @@ func (c *Compiler) initializeBuiltinLib() {
 	c.builtins["alloc"] = func(call *ast.BuiltinCall) value.Value {
 		typeParameter := call.TypeParameters[0]
 		toReturnType := types.NewPointer(c.ToLLVMType(typeParameter))
-		length := c.compileExpression(call.Parameters[0])
+		length := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
 		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
 		returnedValue := c.block().NewCall(c.definitions["malloc"], totalSize)
 		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
-		return castedValue
+		alloca := c.block().NewAlloca(castedValue.Type())
+		c.block().NewStore(castedValue, alloca)
+		return alloca
 	}
 
 }
@@ -153,6 +175,11 @@ func (c *Compiler) Compile(tree ast.Node) {
 			c.compileDeclaration(t)
 		}
 
+	case *ast.AssignmentStatement:
+		{
+			c.compileAssignment(t)
+		}
+
 	case *ast.Program:
 		{
 			for _, statement := range t.Statements {
@@ -169,18 +196,19 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
-	if _, exists := c.types[t.Name()]; exists {
-		if _, ok := c.types[t.Name()].candiceType.(*ctypes.Struct); ok {
-			// Convert struct to pointer.
-			// Reason why is that it's easy to copy a struct,
-			// the main convention we should maintain is, a struct is always behind a pointer.
-			// And when we copy make a manual copy before calling the function.
-			t = types.NewPointer(t)
-		}
-	}
+	//if _, exists := c.types[t.Name()]; exists {
+	//	if _, ok := c.types[t.Name()].candiceType.(*ctypes.Struct); ok {
+	//		// Convert struct to pointer.
+	//		// Reason why is that it's easy to copy a struct,
+	//		// the main convention we should maintain is, a struct is always behind a pointer.
+	//		// And when we copy make a manual copy before calling the function.
+	//		t = types.NewPointer(t)
+	//	}
+	//}
 	val := c.block().NewAlloca(t)
-	c.block().NewStore(c.compileExpression(decl.Expression), val)
+	c.block().NewStore(c.loadIfPointer(c.compileExpression(decl.Expression)), val)
 	c.stack()[decl.Name] = val
+	c.addToCurrentSmallContext(decl.Name)
 }
 
 func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
@@ -188,18 +216,19 @@ func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
 }
 
 func (c *Compiler) compileType(name string, ct ctypes.Type) {
-	s := &types.StructType{}
-	tmp := &Type{
-		llvmType:    s,
-		candiceType: &ctypes.Pointer{Inner: ct},
-	}
-	c.types[name] = tmp
+	// todo: recursive types
+	//s := &types.StructType{TypeName: "__todo"}
+	//tmp := &Type{
+	//	llvmType:    s,
+	//	candiceType: &ctypes.Pointer{Inner: ct},
+	//}
+	//c.types[name] = tmp
 	t := c.ToLLVMType(ct)
 	c.types[name] = &Type{
 		llvmType:    c.m.NewTypeDef(name, t),
 		candiceType: ct,
 	}
-	tmp.llvmType = t
+	//tmp.llvmType = t
 
 }
 
@@ -214,6 +243,11 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 	case *ast.BinaryOperation:
 		{
 			return c.compileBinaryExpression(e)
+		}
+
+	case *ast.IndexAccess:
+		{
+			return c.compileIndexAccess(e)
 		}
 
 	case *ast.Call:
@@ -240,11 +274,12 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 	return nil
 }
 
-/// Identifier
-
+// NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
+// load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
-	identifier := c.stack()[id.Name]
-	return c.block().NewLoad(identifier.(*ir.InstAlloca).ElemType, identifier)
+	//identifier := c.stack()[id.Name]
+	return c.compileIdentifierReference(id)
+	// return c.block().NewLoad(identifier.(*ir.InstAlloca).ElemType, identifier)
 }
 
 func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
@@ -261,8 +296,27 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
-
 	return nil
+}
+
+func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
+	l := c.compileExpression(assignment.Left)
+	r := c.loadIfPointer(c.compileExpression(assignment.Expression))
+	c.block().NewStore(r, l)
+}
+
+func (c *Compiler) compileIndexAccess(access *ast.IndexAccess) value.Value {
+	leftArray := c.loadIfPointer(c.compileExpression(access.Left))
+	index := c.loadIfPointer(c.compileExpression(access.Access))
+	pointer := c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, index)
+	return pointer
+}
+
+func (c *Compiler) loadIfPointer(val value.Value) value.Value {
+	if types.IsPointer(val.Type()) {
+		return c.block().NewLoad(val.Type().(*types.PointerType).ElemType, val)
+	}
+	return val
 }
 
 func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
@@ -290,10 +344,8 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 		// Get the pointer pointing to the memory where we need to store in
 		var ptr value.Value = c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
 
-		// Check if it's a struct so we can unwrap pointer
-		if _, ok := field.(*ctypes.Struct); ok {
-			compiledValue = c.block().NewLoad(compiledValue.Type().(*types.PointerType).ElemType, compiledValue)
-		}
+		// Unwrap value pointer
+		compiledValue = c.loadIfPointer(compiledValue)
 
 		// Store in the pointer the compiler value
 		c.block().NewStore(compiledValue, ptr)
@@ -386,15 +438,8 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.NewInt(32), int64(i)))
 		leftStruct = ptr
 
-		// Long story short, we need to check if it's a struct,
-		// if it isn't we need to unwrap the value. (Needed for pointers and values)
-		// For example, here we get struct, we don't want to unwrap the value (we already have it as *llvmType.struct)
-		// If we get *struct, we want to unwrap the value (because in llvm it would be stored as **llvmType.struct, and we need the *llvm.struct)
-		// If we get *integer, for obvious reasons we need to unwrap the value. (*llvm.integer -> llvm.integer)
-		if strukt := c.GetPureStruct(field); strukt == nil {
-			t := c.ToLLVMType(field)
-			leftStruct = c.block().NewLoad(t, ptr)
-		}
+		// Previously here we were unwrapping pointer struct values now we don't...
+		// We only need to unwrap when we really need to load
 
 		if last {
 			break
@@ -407,26 +452,26 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 }
 
 func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewAdd(leftValue, rightValue)
 }
 
 func (c *Compiler) compileMultiply(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewMul(leftValue, rightValue)
 }
 
 func (c *Compiler) compileSubtract(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewSub(leftValue, rightValue)
 }
 
 func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	if types.IsInt(leftValue.Type()) {
 		return c.block().NewSDiv(leftValue, rightValue)
 	}
@@ -437,31 +482,31 @@ func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
 }
 
 func (c *Compiler) compileAndBinary(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewAnd(leftValue, rightValue)
 }
 
 func (c *Compiler) compileOrBinary(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewOr(leftValue, rightValue)
 }
 
 func (c *Compiler) compileXorBinary(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewXor(leftValue, rightValue)
 }
 
 func (c *Compiler) compileShiftRightBinary(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewLShr(leftValue, rightValue)
 }
 
 func (c *Compiler) compileShiftLeftBinary(expr *ast.BinaryOperation) value.Value {
-	leftValue := c.compileExpression(expr.Left)
-	rightValue := c.compileExpression(expr.Right)
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewShl(leftValue, rightValue)
 }
