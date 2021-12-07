@@ -26,11 +26,13 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		}
 	case *ctypes.Struct:
 		{
+
 			llvmTypes := make([]types.Type, len(el.Fields))
 			for i, field := range el.Fields {
 				llvmTypes[i] = c.ToLLVMType(field)
 			}
-			return types.NewStruct(llvmTypes...)
+			s := types.NewStruct(llvmTypes...)
+			return s
 		}
 	case *ctypes.Array:
 		{

@@ -118,19 +118,50 @@ func TestCompiler_CompileExpression_With_Xor(t *testing.T) {
 }
 
 func TestCompiler_CompileStruct(t *testing.T) {
+	/*
+			This is an insane test to type as an AST.
+
+			what we are testing is:
+
+			struct Point2 {
+				x int
+				y int
+			}
+
+			struct Point {
+				x int
+				y int
+				self Point2
+			}
+
+		    point := Point{ ..., self: { x = 3} }
+			assertEqual(point.self.x, 3)
+	*/
 	c := New()
 	pointStruct := &ast.StructStatement{
 		Type: &ctypes.Struct{
 			Fields: []ctypes.Type{
 				&ctypes.Integer{BitSize: 64},
 				&ctypes.Integer{BitSize: 64},
+				&ctypes.Anonymous{Name: "Point2"},
+			},
+			Names: []string{"x", "y", "self"},
+			Name:  "Point",
+		},
+	}
+	point2Struct := &ast.StructStatement{
+		Type: &ctypes.Struct{
+			Fields: []ctypes.Type{
+				&ctypes.Integer{BitSize: 64},
+				&ctypes.Integer{BitSize: 64},
 			},
 			Names: []string{"x", "y"},
-			Name:  "Point",
+			Name:  "Point2",
 		},
 	}
 	c.Compile(&ast.Program{
 		Statements: []ast.Statement{
+			point2Struct,
 			pointStruct,
 			&ast.DeclarationStatement{
 				Name: "point",
@@ -146,13 +177,47 @@ func TestCompiler_CompileStruct(t *testing.T) {
 							Name:       "y",
 							Expression: &ast.Integer{Value: 3},
 						},
+						{
+							Name: "self",
+							Expression: &ast.StructLiteral{
+								Name: "Point2",
+								Values: []ast.StructValue{
+									{
+										Name:       "x",
+										Expression: &ast.Integer{Value: 3},
+									},
+									{
+										Name:       "y",
+										Expression: &ast.Integer{Value: 3},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
+			&ast.DeclarationStatement{
+				Name: "x",
+				Type: &ctypes.Integer{BitSize: 64},
+				Expression: &ast.BinaryOperation{
+					Left: &ast.Identifier{Name: "point"},
+					Right: &ast.BinaryOperation{
+						Left:      &ast.Identifier{Name: "self"},
+						Right:     &ast.Identifier{Name: "x"},
+						Operation: ops.Dot,
+					},
+					Operation: ops.Dot,
+				},
+			},
+			&ast.ExpressionStatement{Expression: &ast.BuiltinCall{
+				Name: "println",
+				Parameters: []ast.Expression{&ast.Identifier{
+					Name: "x",
+				}},
+			}},
 		},
 	})
-	_, err := c.Execute()
-	a.AssertErr(err)
+	a.AssertEqual(fmt.Sprintf("%d", 3), string(a.UnwrapBytes(c.Execute())))
 }
 
 func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {

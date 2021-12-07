@@ -150,6 +150,15 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
+	if _, exists := c.types[t.Name()]; exists {
+		if _, ok := c.types[t.Name()].candiceType.(*ctypes.Struct); ok {
+			// Convert struct to pointer.
+			// Reason why is that it's easy to copy a struct,
+			// the main convention we should maintain is, a struct is always behind a pointer.
+			// And when we copy make a manual copy before calling the function.
+			t = types.NewPointer(t)
+		}
+	}
 	val := c.block().NewAlloca(t)
 	c.block().NewStore(c.compileExpression(decl.Expression), val)
 	c.stack()[decl.Name] = val
@@ -160,11 +169,19 @@ func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
 }
 
 func (c *Compiler) compileType(name string, ct ctypes.Type) {
+	s := &types.StructType{}
+	tmp := &Type{
+		llvmType:    s,
+		candiceType: &ctypes.Pointer{Inner: ct},
+	}
+	c.types[name] = tmp
 	t := c.ToLLVMType(ct)
 	c.types[name] = &Type{
 		llvmType:    c.m.NewTypeDef(name, t),
 		candiceType: ct,
 	}
+	tmp.llvmType = t
+
 }
 
 func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
@@ -211,6 +228,11 @@ func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
 	return c.block().NewLoad(identifier.(*ir.InstAlloca).ElemType, identifier)
 }
 
+func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
+	identifier := c.stack()[id.Name]
+	return identifier
+}
+
 /// Function calls
 func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value {
 	if fun, ok := c.builtins[ast.Name]; ok {
@@ -237,19 +259,28 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 
 	for _, decl := range strukt.Values {
 		// Get field position
-		i, _ := struktType.GetField(decl.Name)
+		i, field := struktType.GetField(decl.Name)
+
+		if anonymous, ok := field.(*ctypes.Anonymous); ok {
+			field = c.types[anonymous.Name].candiceType
+		}
 
 		// Compile the expression to have the value
 		compiledValue := c.compileExpression(decl.Expression)
 
 		// Get the pointer pointing to the memory where we need to store in
-		ptr := c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
+		var ptr value.Value = c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
+
+		// Check if it's a struct so we can unwrap pointer
+		if _, ok := field.(*ctypes.Struct); ok {
+			compiledValue = c.block().NewLoad(compiledValue.Type().(*types.PointerType).ElemType, compiledValue)
+		}
 
 		// Store in the pointer the compiler value
 		c.block().NewStore(compiledValue, ptr)
 	}
 
-	return c.block().NewLoad(possibleStruct.llvmType, struktValue)
+	return struktValue
 }
 
 /// Simple binary compilations
@@ -297,10 +328,88 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 			return c.compileOrBinary(expr)
 		}
 
+	case ops.Dot:
+		{
+			return c.compileStructAccess(expr)
+		}
 	}
 
 	panic("unimplemented: " + expr.Operation.String())
 	return nil
+}
+
+func getName(expr ast.Expression) (string, bool) {
+	//if bin, ok := expr.(*ast.BinaryOperation)
+	if bin, ok := expr.(*ast.BinaryOperation); ok {
+		return bin.Left.(*ast.Identifier).Name, false
+	}
+	if bin, ok := expr.(*ast.Identifier); ok {
+		return bin.Name, true
+	}
+	panic("?? " + expr.String())
+}
+
+func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
+	leftStruct := c.compileExpression(expr.Left)
+	var candiceType *ctypes.Struct
+	if s, ok := leftStruct.Type().(*types.PointerType); ok {
+		candiceType = c.types[s.ElemType.Name()].candiceType.(*ctypes.Struct)
+	} else {
+		panic("not a struct")
+	}
+	for {
+		rightName, last := getName(expr.Right)
+		i, field := candiceType.GetField(rightName)
+		var inner types.Type
+
+		inner = leftStruct.Type().(*types.PointerType).ElemType
+
+		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.NewInt(32), int64(i)))
+		leftStruct = ptr
+
+		// Long story short, we need to check if it's a struct,
+		// if it isn't we need to unwrap the value. (Needed for pointers and values)
+		if _, ok := field.(*ctypes.Struct); !ok {
+			if an, ok := field.(*ctypes.Anonymous); ok {
+				if _, ok := c.types[an.Name].candiceType.(*ctypes.Struct); !ok {
+					t := c.ToLLVMType(field)
+					leftStruct = c.block().NewLoad(t, ptr)
+				}
+			} else {
+				t := c.ToLLVMType(field)
+				leftStruct = c.block().NewLoad(t, ptr)
+			}
+		}
+		if last {
+			break
+		} else {
+			expr = expr.Right.(*ast.BinaryOperation)
+		}
+		candiceType = c.unwrapStruct(field)
+	}
+	return leftStruct
+}
+
+func (c *Compiler) unwrapStruct(field ctypes.Type) *ctypes.Struct {
+	prev, ok := field.(*ctypes.Pointer)
+	var candiceType *ctypes.Struct
+	if ok {
+		possibleStruct, ok := prev.Inner.(*ctypes.Struct)
+		if !ok {
+			candiceType = c.types[prev.Inner.(*ctypes.Anonymous).Name].candiceType.(*ctypes.Struct)
+		} else {
+			candiceType = possibleStruct
+		}
+	} else {
+		possibleStruct, ok := field.(*ctypes.Struct)
+		if !ok {
+			candiceType = c.types[field.(*ctypes.Anonymous).Name].candiceType.(*ctypes.Struct)
+		} else {
+			candiceType = possibleStruct
+		}
+
+	}
+	return candiceType
 }
 
 func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
