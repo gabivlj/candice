@@ -369,47 +369,22 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 
 		// Long story short, we need to check if it's a struct,
 		// if it isn't we need to unwrap the value. (Needed for pointers and values)
-		if _, ok := field.(*ctypes.Struct); !ok {
-			if an, ok := field.(*ctypes.Anonymous); ok {
-				if _, ok := c.types[an.Name].candiceType.(*ctypes.Struct); !ok {
-					t := c.ToLLVMType(field)
-					leftStruct = c.block().NewLoad(t, ptr)
-				}
-			} else {
-				t := c.ToLLVMType(field)
-				leftStruct = c.block().NewLoad(t, ptr)
-			}
+		// For example, here we get struct, we don't want to unwrap the value (we already have it as *llvmType.struct)
+		// If we get *struct, we want to unwrap the value (because in llvm it would be stored as **llvmType.struct, and we need the *llvm.struct)
+		// If we get *integer, for obvious reasons we need to unwrap the value. (*llvm.integer -> llvm.integer)
+		if strukt := c.GetPureStruct(field); strukt == nil {
+			t := c.ToLLVMType(field)
+			leftStruct = c.block().NewLoad(t, ptr)
 		}
+
 		if last {
 			break
 		} else {
 			expr = expr.Right.(*ast.BinaryOperation)
 		}
-		candiceType = c.unwrapStruct(field)
+		candiceType = c.UnwrapStruct(field)
 	}
 	return leftStruct
-}
-
-func (c *Compiler) unwrapStruct(field ctypes.Type) *ctypes.Struct {
-	prev, ok := field.(*ctypes.Pointer)
-	var candiceType *ctypes.Struct
-	if ok {
-		possibleStruct, ok := prev.Inner.(*ctypes.Struct)
-		if !ok {
-			candiceType = c.types[prev.Inner.(*ctypes.Anonymous).Name].candiceType.(*ctypes.Struct)
-		} else {
-			candiceType = possibleStruct
-		}
-	} else {
-		possibleStruct, ok := field.(*ctypes.Struct)
-		if !ok {
-			candiceType = c.types[field.(*ctypes.Anonymous).Name].candiceType.(*ctypes.Struct)
-		} else {
-			candiceType = possibleStruct
-		}
-
-	}
-	return candiceType
 }
 
 func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
