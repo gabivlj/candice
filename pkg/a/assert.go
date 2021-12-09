@@ -2,7 +2,7 @@ package a
 
 import "log"
 
-func Assert(expr bool, message ...string) {
+func Assert(expr bool, message ...interface{}) {
 	if !expr {
 		log.Fatalln("assertion is false", message)
 	}

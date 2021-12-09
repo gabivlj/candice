@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/token"
 	"strings"
 )
 
@@ -48,6 +49,7 @@ func (s *StructStatement) String() string {
 }
 
 type DeclarationStatement struct {
+	Token      token.Token
 	Name       string
 	Type       ctypes.Type
 	Expression Expression
