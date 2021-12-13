@@ -21,8 +21,10 @@ func LiteralToType(literal string) Type {
 	return &Anonymous{Name: literal}
 }
 
+var todoType = &Anonymous{Name: "<TODO>"}
+
 func TODO() Type {
-	return &Anonymous{Name: "<TODO>"}
+	return todoType
 }
 
 // Type is the implementation of a candice type

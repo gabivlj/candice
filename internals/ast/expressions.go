@@ -72,8 +72,15 @@ func (bc *BuiltinCall) String() string {
 	builder.WriteString("@")
 	builder.WriteString(bc.Name)
 	builder.WriteString("(")
-	for i, param := range bc.Parameters {
+	for i, param := range bc.TypeParameters {
 		if i >= 1 {
+			builder.WriteString(", ")
+		}
+		builder.WriteString(param.String())
+	}
+
+	for i, param := range bc.Parameters {
+		if i >= 1 || len(bc.TypeParameters) > 0 {
 			builder.WriteString(", ")
 		}
 		builder.WriteString(param.String())

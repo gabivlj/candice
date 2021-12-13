@@ -57,6 +57,7 @@ func New(l *lexer.Lexer) *Parser {
 		infixFunc:  map[token.TypeToken]infixFunc{},
 		errors:     []error{},
 	}
+	p.initBuiltinFunctions()
 	p.nextToken()
 	p.nextToken()
 	p.registerInfixHandler(token.PLUS, p.parseInfix)
@@ -79,19 +80,16 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.ASSIGN, p.parseInfix)
 	p.registerInfixHandler(token.LBRACKET, p.parseIndex)
 	//p.registerInfixHandler(token.LPAREN, p.parseInfix)
-
 	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.ANDBIN, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.PLUS, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.ASTERISK, p.parsePrefixExpression)
-	// todo: manage better token.AT
-	p.registerPrefixHandler(token.AT, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.AT, p.parseBuiltinFunction)
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
 	p.registerPrefixHandler(token.INT, p.parseInteger)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
-
 	return p
 }
 
@@ -309,4 +307,87 @@ func (p *Parser) parseParenthesisPrefix() ast.Expression {
 	p.error(token.RPAREN)
 	p.nextToken()
 	return exp
+}
+
+func (p *Parser) parseBuiltinFunction() ast.Expression {
+	p.error(token.AT)
+	at := p.nextToken()
+	p.error(token.IDENT)
+	identifier := p.nextToken()
+	p.error(token.LPAREN)
+	p.nextToken()
+	functionRequirements := p.getBuiltinFunctionRequirements(identifier.Literal)
+	types := p.parseBuiltinCallTypes(functionRequirements)
+	expressions := p.parseBuiltinCallParameters(functionRequirements)
+	p.error(token.RPAREN)
+	p.nextToken()
+	return &ast.BuiltinCall{
+		Node:           &node.Node{Token: at, Type: ctypes.TODO()},
+		Name:           identifier.Literal,
+		TypeParameters: types,
+		Parameters:     expressions,
+	}
+}
+
+func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseRequirements) []ctypes.Type {
+	var types []ctypes.Type
+	if builtinRequirements.Types == 0 {
+		return types
+	}
+
+	for i := 0; i < builtinRequirements.Types; i++ {
+		types = append(types, p.parseType())
+		if i+1 < builtinRequirements.Types || builtinRequirements.Parameters > 0 {
+			if p.currentToken.Type == token.RPAREN {
+				p.addErrorMessage(fmt.Sprintf("expected %d types, got=%d", builtinRequirements.Types, i))
+				break
+			}
+
+			p.error(token.COMMA)
+			p.nextToken()
+		} else {
+			if builtinRequirements.Types > 0 {
+				p.error(token.COMMA)
+				p.nextToken()
+			}
+		}
+	}
+
+	return types
+}
+
+func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionParseRequirements) []ast.Expression {
+	var expressions []ast.Expression
+	if builtinRequirements.Parameters == 0 {
+		return expressions
+	}
+
+	if builtinRequirements.Parameters == UndefinedNumberOfParameters {
+		for {
+			expressions = append(expressions, p.parseExpression(0))
+			if p.currentToken.Type == token.RPAREN {
+				return expressions
+			}
+			p.error(token.COMMA)
+			if p.currentToken.Type != token.COMMA {
+				return expressions
+			}
+		}
+	}
+
+	for i := 0; i < builtinRequirements.Parameters; i++ {
+		expressions = append(expressions, p.parseExpression(0))
+		if i+1 < builtinRequirements.Parameters {
+			if p.currentToken.Type == token.RPAREN {
+				p.addErrorMessage(fmt.Sprintf("expected %d expressions, got=%d", builtinRequirements.Types, i))
+				break
+			}
+
+			p.error(token.COMMA)
+			p.nextToken()
+		}
+
+	}
+
+	return expressions
 }

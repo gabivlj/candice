@@ -86,6 +86,18 @@ func TestParser_MultipleBinaryExpressions(t *testing.T) {
 			expression: "cool = \"Hello world\"",
 			expected:   "cool = \"Hello world\";\n",
 		},
+		{
+			expression: "@println(\"hello world\");",
+			expected:   "@println(\"hello world\");\n",
+		},
+		{
+			expression: "pointer : *i32 = @alloc(i32, 33);",
+			expected:   "pointer :*i32 = @alloc(i32, 33);\n",
+		},
+		{
+			expression: "pointer : *i32 = @alloc(i32, @alloc(i64, 223 * 333 + 212921) + 329323 & 3333);",
+			expected:   "pointer :*i32 = @alloc(i32, (@alloc(i64, ((223*333)+212921))+(329323&3333)));\n",
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)
