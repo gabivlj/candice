@@ -6,24 +6,26 @@ import (
 )
 
 var precedences = map[token.TypeToken]int{
-	token.AND:      1,
-	token.OR:       1,
-	token.EQ:       2,
-	token.NOTEQ:    2,
-	token.GTE:      2,
-	token.GT:       2,
-	token.LT:       2,
-	token.LTE:      2,
-	token.PLUS:     3,
-	token.MINUS:    3,
-	token.XORBIN:   4,
-	token.ANDBIN:   4,
-	token.ORBIN:    4,
-	token.BANG:     4,
-	token.SLASH:    5,
-	token.ASTERISK: 5,
-	token.LPAREN:   7,
-	token.DOT:      9,
+	token.ASSIGN:   1,
+	token.AND:      2,
+	token.OR:       2,
+	token.EQ:       3,
+	token.NOTEQ:    3,
+	token.GTE:      3,
+	token.GT:       3,
+	token.LT:       3,
+	token.LTE:      3,
+	token.PLUS:     4,
+	token.MINUS:    4,
+	token.XORBIN:   5,
+	token.ANDBIN:   5,
+	token.ORBIN:    5,
+	token.BANG:     5,
+	token.SLASH:    6,
+	token.ASTERISK: 6,
+	token.LPAREN:   8,
+	token.DOT:      10,
+	token.LBRACKET: 11,
 }
 
 func (p *Parser) precedencePrefix() int {
@@ -53,6 +55,7 @@ var operations = map[token.TypeToken]ops.Operation{
 	token.EQ:       ops.Equals,
 	token.NOTEQ:    ops.NotEquals,
 	token.DOT:      ops.Dot,
+	token.ASSIGN:   ops.TempAssign,
 }
 
 func (p *Parser) currentTokenToOperation() ops.Operation {

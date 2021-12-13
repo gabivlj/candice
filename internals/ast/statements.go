@@ -69,7 +69,7 @@ type AssignmentStatement struct {
 func (_ *AssignmentStatement) statementNode() {}
 
 func (d *AssignmentStatement) String() string {
-	return fmt.Sprintf("%s = %s", d.Left.String(), d.Expression.String())
+	return fmt.Sprintf("%s = %s;", d.Left.String(), d.Expression.String())
 }
 
 type IfStatement struct {

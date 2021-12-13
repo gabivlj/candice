@@ -76,12 +76,16 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.OR, p.parseInfix)
 	p.registerInfixHandler(token.SLASH, p.parseInfix)
 	p.registerInfixHandler(token.EQ, p.parseInfix)
+	p.registerInfixHandler(token.ASSIGN, p.parseInfix)
+	p.registerInfixHandler(token.LBRACKET, p.parseIndex)
 	//p.registerInfixHandler(token.LPAREN, p.parseInfix)
 
+	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.ANDBIN, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.PLUS, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.ASTERISK, p.parsePrefixExpression)
 	// todo: manage better token.AT
 	p.registerPrefixHandler(token.AT, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
@@ -107,6 +111,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.IDENT:
 		{
 			return p.parseIdentifierStatement()
+		}
+	case token.ASTERISK:
+		{
+			return p.parsePossibleAssignment()
 		}
 	default:
 		{
@@ -143,7 +151,7 @@ func (p *Parser) parseIdentifierStatement() ast.Statement {
 	if p.peekToken.Type == token.COLON {
 		return p.parseDeclaration()
 	}
-	return nil
+	return p.parsePossibleAssignment()
 }
 
 func (p *Parser) parseDeclaration() ast.Statement {
@@ -248,13 +256,28 @@ func (p *Parser) parseInfix(expression ast.Expression) ast.Expression {
 	currentToken := p.nextToken()
 	return &ast.BinaryOperation{
 		Node: &node.Node{
-			Type:  nil,
+			Type:  ctypes.TODO(),
 			Token: currentToken,
 		},
 		Left:      expression,
 		Right:     p.parseExpression(nextPrecedence),
 		Operation: operation,
 	}
+}
+
+func (p *Parser) parseIndex(expression ast.Expression) ast.Expression {
+	currentToken := p.nextToken()
+	i := &ast.IndexAccess{
+		Node: &node.Node{
+			Type:  ctypes.TODO(),
+			Token: currentToken,
+		},
+		Left:   expression,
+		Access: p.parseExpression(0),
+	}
+	p.error(token.RBRACKET)
+	p.nextToken()
+	return i
 }
 
 func (p *Parser) parseInteger() ast.Expression {
@@ -266,6 +289,17 @@ func (p *Parser) parseInteger() ast.Expression {
 			Token: t,
 		},
 		Value: integer,
+	}
+}
+
+func (p *Parser) parseString() ast.Expression {
+	str := p.nextToken()
+	return &ast.StringLiteral{
+		Node: &node.Node{
+			Type:  &ctypes.Pointer{Inner: &ctypes.Integer{BitSize: 8}},
+			Token: str,
+		},
+		Value: str.Literal,
 	}
 }
 

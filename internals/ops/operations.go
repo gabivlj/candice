@@ -25,6 +25,8 @@ const (
 	NotEquals
 	Assigns
 
+	TempAssign
+
 	// Dot is useful for struct access
 	// like struct.thing
 	Dot

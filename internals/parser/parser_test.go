@@ -78,6 +78,14 @@ func TestParser_MultipleBinaryExpressions(t *testing.T) {
 			expression: "hello :int = 4; 55  >=   33 && 33 <= 11 || 44==-33",
 			expected:   "hello :int = 4;\n(((55>=33)&&(33<=11))||(44==-33));\n",
 		},
+		{
+			expression: "*hello.ss[3].ss = 3;",
+			expected:   "*((hello.ss[3]).ss) = 3;\n",
+		},
+		{
+			expression: "cool = \"Hello world\"",
+			expected:   "cool = \"Hello world\";\n",
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)
