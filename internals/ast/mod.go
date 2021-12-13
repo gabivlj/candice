@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"github.com/gabivlj/candice/internals/node"
+	"github.com/gabivlj/candice/internals/token"
 	"strings"
 )
 
@@ -24,7 +24,7 @@ type Program struct {
 }
 
 type ExpressionStatement struct {
-	*node.Node
+	Token      token.Token
 	Expression Expression
 }
 

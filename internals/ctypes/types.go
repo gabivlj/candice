@@ -7,6 +7,24 @@ import (
 
 /// Candice types
 
+var typeLiteral = map[string]Type{
+	"i8":  &Integer{BitSize: 8},
+	"i16": &Integer{BitSize: 16},
+	"i32": &Integer{BitSize: 32},
+	"i64": &Integer{BitSize: 64},
+}
+
+func LiteralToType(literal string) Type {
+	if t, ok := typeLiteral[literal]; ok {
+		return t
+	}
+	return &Anonymous{Name: literal}
+}
+
+func TODO() Type {
+	return &Anonymous{Name: "<TODO>"}
+}
+
 // Type is the implementation of a candice type
 type Type interface {
 	// candiceType private flag
@@ -111,7 +129,7 @@ type Array struct {
 }
 
 func (a *Array) String() string {
-	return fmt.Sprintf("%s[%d]", a.Inner.String(), a.Length)
+	return fmt.Sprintf("[%d]%s", a.Length, a.Inner.String())
 }
 
 func (a *Array) SizeOf() int64 {

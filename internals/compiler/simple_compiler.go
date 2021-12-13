@@ -277,9 +277,7 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 // NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
-	//identifier := c.stack()[id.Name]
 	return c.compileIdentifierReference(id)
-	// return c.block().NewLoad(identifier.(*ir.InstAlloca).ElemType, identifier)
 }
 
 func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
@@ -410,7 +408,6 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 }
 
 func getName(expr ast.Expression) (string, bool) {
-	//if bin, ok := expr.(*ast.BinaryOperation)
 	if bin, ok := expr.(*ast.BinaryOperation); ok {
 		return bin.Left.(*ast.Identifier).Name, false
 	}
@@ -443,9 +440,9 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 
 		if last {
 			break
-		} else {
-			expr = expr.Right.(*ast.BinaryOperation)
 		}
+
+		expr = expr.Right.(*ast.BinaryOperation)
 		candiceType = c.UnwrapStruct(field)
 	}
 	return leftStruct

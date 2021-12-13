@@ -2,11 +2,11 @@ package node
 
 import (
 	"github.com/gabivlj/candice/internals/ctypes"
-	"github.com/gabivlj/candice/pkg/todo"
+	"github.com/gabivlj/candice/internals/token"
 )
 
 type Node struct {
 	Type ctypes.Type
 	// TODO This will be filled by the lexer
-	Token todo.TodoType
+	Token token.Token
 }

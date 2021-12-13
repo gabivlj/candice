@@ -3,6 +3,7 @@ package ast
 import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/token"
 	"strings"
 )
 
@@ -48,6 +49,7 @@ func (s *StructStatement) String() string {
 }
 
 type DeclarationStatement struct {
+	Token      token.Token
 	Name       string
 	Type       ctypes.Type
 	Expression Expression
@@ -56,7 +58,7 @@ type DeclarationStatement struct {
 func (_ *DeclarationStatement) statementNode() {}
 
 func (d *DeclarationStatement) String() string {
-	return fmt.Sprintf("%s :%s = %s", d.Name, d.Type.String(), d.Expression.String())
+	return fmt.Sprintf("%s :%s = %s;", d.Name, d.Type.String(), d.Expression.String())
 }
 
 type AssignmentStatement struct {

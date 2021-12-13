@@ -24,6 +24,6 @@ func TestBinaryOperation_String(t *testing.T) {
 	}
 	a.Assert(
 		binaryOp.String() ==
-			`((3 * 4) + 3)`,
+			`((3*4)+3)`,
 	)
 }
