@@ -73,11 +73,14 @@ func (d *AssignmentStatement) String() string {
 }
 
 type IfStatement struct {
+	Token     token.Token
 	Condition Expression
 	Block     *Block
 	ElseIfs   []*ConditionPlusBlock
 	Else      *Block
 }
+
+func (i *IfStatement) statementNode() {}
 
 func (i *IfStatement) String() string {
 	s := strings.Builder{}

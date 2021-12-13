@@ -65,7 +65,7 @@ func TestParser_ParseBinaryOperation(t *testing.T) {
 	a.AssertEqual(tt.String(), "(3+3);\n")
 }
 
-func TestParser_MultipleBinaryExpressions(t *testing.T) {
+func TestParser_MultipleExpressions(t *testing.T) {
 	tests := []struct {
 		expression string
 		expected   string
@@ -97,6 +97,22 @@ func TestParser_MultipleBinaryExpressions(t *testing.T) {
 		{
 			expression: "pointer : *i32 = @alloc(i32, @alloc(i64, 223 * 333 + 212921) + 329323 & 3333);",
 			expected:   "pointer :*i32 = @alloc(i32, (@alloc(i64, ((223*333)+212921))+(329323&3333)));\n",
+		},
+		{
+			expression: `
+				if 3 {
+				} else if 3+3+3==3/4/3/3.hello.hello == 4 {
+				} else {
+				}
+			`,
+			expected: `if 3 {
+
+} else if ((((3+3)+3)==(((3/4)/3)/((3.hello).hello)))==4) {
+
+} else {
+
+}
+`,
 		},
 	}
 	for _, test := range tests {

@@ -114,6 +114,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		{
 			return p.parsePossibleAssignment()
 		}
+	case token.IF:
+		return p.parseIf()
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -326,6 +328,54 @@ func (p *Parser) parseBuiltinFunction() ast.Expression {
 		Name:           identifier.Literal,
 		TypeParameters: types,
 		Parameters:     expressions,
+	}
+}
+
+func (p *Parser) parseBlock() *ast.Block {
+	if p.currentToken.Type == token.LBRACE {
+		p.nextToken()
+		block := &ast.Block{
+			Statements: []ast.Statement{},
+		}
+		for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+			block.Statements = append(block.Statements, p.parseStatement())
+		}
+		p.error(token.RBRACE)
+		p.nextToken()
+		return block
+	}
+
+	stmt := p.parseStatement()
+	return &ast.Block{Statements: []ast.Statement{stmt}}
+}
+
+func (p *Parser) parseIf() ast.Statement {
+	ifToken := p.nextToken()
+	condition := p.parseExpression(0)
+	block := p.parseBlock()
+	var elseWithConditions []*ast.ConditionPlusBlock
+	var elseBlock *ast.Block
+	for p.currentToken.Type == token.ELSE {
+		p.nextToken()
+		if p.currentToken.Type != token.IF {
+			elseBlock = p.parseBlock()
+		} else if p.currentToken.Type == token.IF {
+			p.nextToken()
+			expression := p.parseExpression(0)
+			block := p.parseBlock()
+			elseWithConditions = append(elseWithConditions, &ast.ConditionPlusBlock{
+				Block:     block,
+				Condition: expression,
+			})
+		}
+	}
+
+	return &ast.IfStatement{
+		Token:     ifToken,
+		Condition: condition,
+		Block:     block,
+		ElseIfs:   elseWithConditions,
+		Else:      elseBlock,
 	}
 }
 
