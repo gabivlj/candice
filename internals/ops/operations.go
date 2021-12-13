@@ -11,6 +11,7 @@ const (
 	Divide
 	AND
 	OR
+	At
 	Bang
 	BinaryXOR
 	BinaryAND

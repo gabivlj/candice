@@ -58,7 +58,7 @@ type DeclarationStatement struct {
 func (_ *DeclarationStatement) statementNode() {}
 
 func (d *DeclarationStatement) String() string {
-	return fmt.Sprintf("%s :%s = %s", d.Name, d.Type.String(), d.Expression.String())
+	return fmt.Sprintf("%s :%s = %s;", d.Name, d.Type.String(), d.Expression.String())
 }
 
 type AssignmentStatement struct {

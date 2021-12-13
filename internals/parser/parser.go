@@ -7,7 +7,6 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/node"
-	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/token"
 	"strconv"
 )
@@ -46,7 +45,8 @@ func (p *Parser) error(expected token.TypeToken) {
 }
 
 func (p *Parser) addErrorMessage(message string) {
-	errMsg := errors.New(fmt.Sprintf("error on %d-%d\n - %s", p.currentToken.Line, p.currentToken.Position, message))
+	errMsg := errors.New(fmt.Sprintf("error on %d:%d 'token: %s %s': %s",
+		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, p.currentToken.Type, message))
 	p.errors = append(p.errors, errMsg)
 }
 
@@ -60,18 +60,33 @@ func New(l *lexer.Lexer) *Parser {
 	p.nextToken()
 	p.nextToken()
 	p.registerInfixHandler(token.PLUS, p.parseInfix)
+	p.registerInfixHandler(token.ASTERISK, p.parseInfix)
+	p.registerInfixHandler(token.AND, p.parseInfix)
+	p.registerInfixHandler(token.ANDBIN, p.parseInfix)
+	p.registerInfixHandler(token.ORBIN, p.parseInfix)
+	p.registerInfixHandler(token.EQ, p.parseInfix)
+	p.registerInfixHandler(token.NOTEQ, p.parseInfix)
+	p.registerInfixHandler(token.XORBIN, p.parseInfix)
+	p.registerInfixHandler(token.GT, p.parseInfix)
+	p.registerInfixHandler(token.GTE, p.parseInfix)
+	p.registerInfixHandler(token.LT, p.parseInfix)
+	p.registerInfixHandler(token.LTE, p.parseInfix)
+	p.registerInfixHandler(token.DOT, p.parseInfix)
+	p.registerInfixHandler(token.MINUS, p.parseInfix)
+	p.registerInfixHandler(token.OR, p.parseInfix)
+	p.registerInfixHandler(token.SLASH, p.parseInfix)
+	p.registerInfixHandler(token.EQ, p.parseInfix)
+	//p.registerInfixHandler(token.LPAREN, p.parseInfix)
 
-	p.registerPrefixHandler(token.INT, func() ast.Expression {
-		t := p.nextToken()
-		integer, _ := strconv.ParseInt(t.Literal, 10, 64)
-		return &ast.Integer{
-			Node: &node.Node{
-				Type:  &ctypes.Integer{BitSize: 64},
-				Token: t,
-			},
-			Value: integer,
-		}
-	})
+	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.ANDBIN, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.MINUS, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.PLUS, p.parsePrefixExpression)
+	// todo: manage better token.AT
+	p.registerPrefixHandler(token.AT, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
+	p.registerPrefixHandler(token.INT, p.parseInteger)
+	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
 
 	return p
 }
@@ -85,6 +100,9 @@ func (p *Parser) Parse() *ast.Program {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
+	defer func() {
+		p.skipSemicolon()
+	}()
 	switch p.currentToken.Type {
 	case token.IDENT:
 		{
@@ -97,10 +115,27 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 }
 
+func (p *Parser) skipSemicolon() {
+	for p.currentToken.Type == token.SEMICOLON {
+		p.nextToken()
+	}
+}
+
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return &ast.ExpressionStatement{
 		Token:      p.currentToken,
 		Expression: p.parseExpression(0),
+	}
+}
+
+func (p *Parser) parseIdentifierExpression() ast.Expression {
+	identifier := p.nextToken()
+	return &ast.Identifier{
+		Node: &node.Node{
+			Type:  ctypes.TODO(),
+			Token: identifier,
+		},
+		Name: identifier.Literal,
 	}
 }
 
@@ -173,12 +208,26 @@ func (p *Parser) parsePrefix() ast.Expression {
 	fn, ok := p.prefixFunc[p.currentToken.Type]
 
 	if !ok {
-		p.addErrorMessage("unknown token to parse")
+		p.addErrorMessage("unknown token to parse on prefix")
 		p.nextToken()
 		return &ast.Integer{Value: 1}
 	}
 
 	return fn()
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	op := p.currentTokenToOperation()
+	tok := p.nextToken()
+	left := &ast.PrefixOperation{
+		Node: &node.Node{
+			Token: tok,
+			Type:  ctypes.TODO(),
+		},
+		Right:     p.parseExpression(p.precedencePrefix()),
+		Operation: op,
+	}
+	return left
 }
 
 func (p *Parser) parseExpression(prec int) ast.Expression {
@@ -194,15 +243,36 @@ func (p *Parser) parseExpression(prec int) ast.Expression {
 }
 
 func (p *Parser) parseInfix(expression ast.Expression) ast.Expression {
-	nextPrec := p.precedence()
-	token := p.nextToken()
+	nextPrecedence := p.precedence()
+	operation := p.currentTokenToOperation()
+	currentToken := p.nextToken()
 	return &ast.BinaryOperation{
 		Node: &node.Node{
 			Type:  nil,
-			Token: token,
+			Token: currentToken,
 		},
 		Left:      expression,
-		Right:     p.parseExpression(nextPrec),
-		Operation: ops.Plus,
+		Right:     p.parseExpression(nextPrecedence),
+		Operation: operation,
 	}
+}
+
+func (p *Parser) parseInteger() ast.Expression {
+	t := p.nextToken()
+	integer, _ := strconv.ParseInt(t.Literal, 10, 64)
+	return &ast.Integer{
+		Node: &node.Node{
+			Type:  &ctypes.Integer{BitSize: 64},
+			Token: t,
+		},
+		Value: integer,
+	}
+}
+
+func (p *Parser) parseParenthesisPrefix() ast.Expression {
+	_ = p.nextToken()
+	exp := p.parseExpression(0)
+	p.error(token.RPAREN)
+	p.nextToken()
+	return exp
 }

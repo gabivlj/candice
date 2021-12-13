@@ -65,6 +65,8 @@ func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 	l.skipWhiteSpace()
 	switch l.ch {
+	case '@':
+		tok = l.newToken(token.AT, l.ch)
 	case '.':
 		tok = l.newToken(token.DOT, l.ch)
 	case ':':

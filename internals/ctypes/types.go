@@ -21,6 +21,10 @@ func LiteralToType(literal string) Type {
 	return &Anonymous{Name: literal}
 }
 
+func TODO() Type {
+	return &Anonymous{Name: "<TODO>"}
+}
+
 // Type is the implementation of a candice type
 type Type interface {
 	// candiceType private flag

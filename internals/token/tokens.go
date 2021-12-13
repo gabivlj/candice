@@ -24,6 +24,7 @@ const (
 
 	// Operators
 
+	AT       = TypeToken("@")
 	OR       = TypeToken("||")
 	AND      = TypeToken("&&")
 	ANDBIN   = TypeToken("&")

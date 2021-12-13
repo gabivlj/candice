@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/pkg/a"
@@ -62,4 +63,33 @@ func TestParser_ParseBinaryOperation(t *testing.T) {
 	p := New(lex)
 	tt := p.Parse()
 	a.AssertEqual(tt.String(), "(3+3);\n")
+}
+
+func TestParser_MultipleBinaryExpressions(t *testing.T) {
+	tests := []struct {
+		expression string
+		expected   string
+	}{
+		{
+			expression: "exp :int = 3==3+(3+3)/4*6+-&element.element.element.element",
+			expected:   "exp :int = (3==((3+(((3+3)/4)*6))+-&(((element.element).element).element)));\n",
+		},
+		{
+			expression: "hello :int = 4; 55  >=   33 && 33 <= 11 || 44==-33",
+			expected:   "hello :int = 4;\n(((55>=33)&&(33<=11))||(44==-33));\n",
+		},
+	}
+	for _, test := range tests {
+		evaluate(t, test.expression, test.expected)
+	}
+}
+
+func evaluate(t *testing.T, expression, expected string) {
+	p := New(lexer.New(expression))
+	program := p.Parse()
+	if len(p.errors) != 0 {
+		panic(fmt.Sprintf("%v", p.errors))
+	}
+	output := program.String()
+	a.AssertEqual(output, expected)
 }
