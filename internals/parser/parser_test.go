@@ -114,6 +114,17 @@ func TestParser_MultipleExpressions(t *testing.T) {
 }
 `,
 		},
+		{
+			expression: `
+				if 1 @println("hello world"); else @println("hello world 2"); 
+			`,
+			expected: `if 1 {
+@println("hello world");
+} else {
+@println("hello world 2");
+}
+`,
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)
