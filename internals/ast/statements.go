@@ -72,6 +72,43 @@ func (d *AssignmentStatement) String() string {
 	return fmt.Sprintf("%s = %s;", d.Left.String(), d.Expression.String())
 }
 
+type ForStatement struct {
+	Token                token.Token
+	Condition            Expression
+	InitializerStatement Statement
+	Operation            Statement
+	Block                *Block
+}
+
+func (f *ForStatement) statementNode() {}
+
+func (f *ForStatement) String() string {
+	s := strings.Builder{}
+	s.WriteString("for")
+
+	if f.InitializerStatement != nil {
+		s.WriteByte(' ')
+		s.WriteString(f.InitializerStatement.String())
+	}
+
+	if f.Condition != nil {
+		s.WriteByte(' ')
+		s.WriteString(f.Condition.String())
+	}
+
+	if f.Operation != nil {
+		s.WriteString("; ")
+		s.WriteString(f.Operation.String())
+	} else if f.InitializerStatement != nil {
+		s.WriteString(";")
+	}
+
+	s.WriteString(" {\n")
+	s.WriteString(f.Block.String())
+	s.WriteString("\n}")
+	return s.String()
+}
+
 type IfStatement struct {
 	Token     token.Token
 	Condition Expression

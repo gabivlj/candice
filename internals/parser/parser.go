@@ -90,6 +90,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
 	p.registerPrefixHandler(token.INT, p.parseInteger)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
+
 	return p
 }
 
@@ -116,6 +117,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		}
 	case token.IF:
 		return p.parseIf()
+	case token.FOR:
+		return p.parseFor()
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -440,4 +443,76 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 	}
 
 	return expressions
+}
+
+func (p *Parser) parseFor() ast.Statement {
+	forToken := p.nextToken()
+	if p.currentToken.Type == token.LBRACE {
+		return &ast.ForStatement{
+			Token:                forToken,
+			Condition:            nil,
+			InitializerStatement: nil,
+			Operation:            nil,
+			Block:                p.parseBlock(),
+		}
+	}
+
+	possibleStatement := p.parseStatement()
+	var assignment, operation ast.Statement
+	var condition ast.Expression
+	_, isAssignment := possibleStatement.(*ast.AssignmentStatement)
+	_, isDeclaration := possibleStatement.(*ast.DeclarationStatement)
+	if isDeclaration || isAssignment {
+		assignment = possibleStatement
+	} else {
+		possibleExpression, isExpression := possibleStatement.(*ast.ExpressionStatement)
+
+		// for <statement>
+		if !isExpression {
+			return &ast.ForStatement{
+				Token:                forToken,
+				Condition:            nil,
+				InitializerStatement: nil,
+				Operation:            nil,
+				Block:                &ast.Block{Statements: []ast.Statement{possibleStatement}},
+			}
+		}
+
+		// for <statement>
+		if p.currentToken.Type != token.LBRACE {
+			return &ast.ForStatement{
+				Token:                forToken,
+				Condition:            nil,
+				InitializerStatement: nil,
+				Operation:            nil,
+				Block:                &ast.Block{Statements: []ast.Statement{possibleStatement}},
+			}
+		}
+
+		// for <condition> { /*block*/ }
+
+		condition = possibleExpression.Expression
+		block := p.parseBlock()
+		return &ast.ForStatement{
+			Token:                forToken,
+			Condition:            condition,
+			InitializerStatement: nil,
+			Operation:            nil,
+			Block:                block,
+		}
+	}
+	condition = p.parseExpression(0)
+	p.error(token.SEMICOLON)
+	p.nextToken()
+	if p.currentToken.Type != token.LBRACE {
+		operation = p.parsePossibleAssignment()
+	}
+	block := p.parseBlock()
+	return &ast.ForStatement{
+		Token:                forToken,
+		Condition:            condition,
+		InitializerStatement: assignment,
+		Operation:            operation,
+		Block:                block,
+	}
 }

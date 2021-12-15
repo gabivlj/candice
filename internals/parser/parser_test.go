@@ -116,13 +116,84 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `
-				if 1 @println("hello world"); else @println("hello world 2"); 
+				if 1 @println("hello world"); 
+				else if 2 @println("hello world 2");
+				else if 3 @println("hello world 3");
+				else @println("hello world else"); @println("hello world apart"); 
 			`,
 			expected: `if 1 {
 @println("hello world");
-} else {
+} else if 2 {
 @println("hello world 2");
+} else if 3 {
+@println("hello world 3");
+} else {
+@println("hello world else");
 }
+@println("hello world apart");
+`,
+		},
+		{
+			expression: `if 1 == 1 @println("cool") else @println("not cool")`,
+			expected: `if (1==1) {
+@println("cool");
+} else {
+@println("not cool");
+}
+`,
+		},
+		{
+			expression: `for i := 0; i < 1000; i = i + 1 { @println("hello world!") }`,
+			expected: `for i :<INFER> = 0; (i<1000); i = (i+1); {
+@println("hello world!");
+}
+`,
+		},
+		{
+			expression: `for i := 0; i < 1000; i = i + 1 @println("hello world!") @println("hello world...")`,
+			expected: `for i :<INFER> = 0; (i<1000); i = (i+1); {
+@println("hello world!");
+}
+@println("hello world...");
+`,
+		},
+		{
+			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thinng || works == 3;
+							i.i.i.i.i[0] = i + 1 @println("hello world!");`,
+			expected: `for ((((i.i).i).i).i[0]) = 0; ((((i<1000)&&cool)&&thinng)||(works==3)); ((((i.i).i).i).i[0]) = (i+1); {
+@println("hello world!");
+}
+`,
+		},
+		{
+			expression: `for @println("infinite loop")`,
+			expected: `for {
+@println("infinite loop");
+}
+`,
+		},
+		{
+			expression: `for { @println("infinite loop") }`,
+			expected: `for {
+@println("infinite loop");
+}
+`,
+		},
+		{
+			// NOTE! for 1 @println("infinite loop") cannot be represented like this
+			expression: `for 1 { @println("infinite loop") }`,
+			expected: `for 1 {
+@println("infinite loop");
+}
+`,
+		},
+		{
+			// NOTE! for 1 @println("infinite loop") is represented like this
+			expression: `for 1 @println("infinite loop")`,
+			expected: `for {
+1;
+}
+@println("infinite loop");
 `,
 		},
 	}
