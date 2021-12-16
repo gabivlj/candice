@@ -38,14 +38,14 @@ func (p *Parser) nextToken() token.Token {
 	return prev
 }
 
-func (p *Parser) error(expected token.TypeToken) {
+func (p *Parser) expect(expected token.TypeToken) {
 	if p.currentToken.Type != expected {
 		p.addErrorMessage(fmt.Sprintf("expected: '%s', got: '%s'", string(expected), p.currentToken.Literal))
 	}
 }
 
 func (p *Parser) addErrorMessage(message string) {
-	errMsg := errors.New(fmt.Sprintf("error on %d:%d 'token: %s %s': %s",
+	errMsg := errors.New(fmt.Sprintf("expect on %d:%d 'token: %s %s': %s",
 		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, p.currentToken.Type, message))
 	p.errors = append(p.errors, errMsg)
 }
@@ -167,25 +167,25 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 
 func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	fun := p.nextToken()
-	p.error(token.IDENT)
+	p.expect(token.IDENT)
 	name := p.nextToken()
 	var names []string
 	var types []ctypes.Type
-	p.error(token.LPAREN)
+	p.expect(token.LPAREN)
 	p.nextToken()
 	for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
 		if len(names) > 0 {
-			p.error(token.COMMA)
+			p.expect(token.COMMA)
 			p.nextToken()
 		}
-		p.error(token.IDENT)
+		p.expect(token.IDENT)
 		ident := p.nextToken()
 		t := p.parseType()
 		names = append(names, ident.Literal)
 		types = append(types, t)
 	}
 
-	p.error(token.RPAREN)
+	p.expect(token.RPAREN)
 	p.nextToken()
 	var returnType ctypes.Type
 	if p.currentToken.Type != token.LBRACE {
@@ -206,18 +206,18 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 
 func (p *Parser) parseStructLiteral() ast.Expression {
 	literal := p.nextToken()
-	p.error(token.LBRACE)
+	p.expect(token.LBRACE)
 	p.nextToken()
 	var structValues []ast.StructValue
 
 	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
-		p.error(token.IDENT)
+		p.expect(token.IDENT)
 		identifier := p.nextToken()
-		p.error(token.COLON)
+		p.expect(token.COLON)
 		p.nextToken()
 		expr := p.parseExpression(0)
 		if len(structValues) >= 1 && p.currentToken.Type != token.RBRACE {
-			p.error(token.COMMA)
+			p.expect(token.COMMA)
 		}
 
 		structValues = append(structValues, ast.StructValue{
@@ -230,7 +230,7 @@ func (p *Parser) parseStructLiteral() ast.Expression {
 
 	}
 
-	p.error(token.RBRACE)
+	p.expect(token.RBRACE)
 	p.nextToken()
 	return &ast.StructLiteral{
 		Node: &node.Node{
@@ -244,15 +244,15 @@ func (p *Parser) parseStructLiteral() ast.Expression {
 
 func (p *Parser) parseStruct() ast.Statement {
 	_ = p.nextToken()
-	p.error(token.IDENT)
+	p.expect(token.IDENT)
 	identifier := p.nextToken()
-	p.error(token.LBRACE)
+	p.expect(token.LBRACE)
 	p.nextToken()
 	var types []ctypes.Type
 	var names []string
 
 	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
-		p.error(token.IDENT)
+		p.expect(token.IDENT)
 		name := p.nextToken()
 		names = append(names, name.Literal)
 		t := p.parseType()
@@ -260,7 +260,7 @@ func (p *Parser) parseStruct() ast.Statement {
 
 	}
 
-	p.error(token.RBRACE)
+	p.expect(token.RBRACE)
 	p.nextToken()
 	s := ast.StructStatement{
 		Token: identifier,
@@ -287,7 +287,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 	// pass id
 	p.nextToken()
 	// check curr == colon
-	p.error(token.COLON)
+	p.expect(token.COLON)
 	// pass colon
 	p.nextToken()
 	var t = ctypes.TODO()
@@ -296,7 +296,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 		t = p.parseType()
 	}
 
-	p.error(token.ASSIGN)
+	p.expect(token.ASSIGN)
 	// pass assign
 	p.nextToken()
 
@@ -319,7 +319,7 @@ func (p *Parser) parseType() ctypes.Type {
 		modules := []string{t.Literal}
 		for p.currentToken.Type == token.DOT {
 			p.nextToken()
-			p.error(token.IDENT)
+			p.expect(token.IDENT)
 			identifier := p.nextToken()
 			modules = append(modules, identifier.Literal)
 		}
@@ -335,17 +335,17 @@ func (p *Parser) parseType() ctypes.Type {
 
 	if p.currentToken.Type == token.FUNCTION {
 		_ = p.nextToken()
-		p.error(token.LPAREN)
+		p.expect(token.LPAREN)
 		p.nextToken()
 		var parameters []ctypes.Type
 		for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
 			if len(parameters) >= 1 {
-				p.error(token.COMMA)
+				p.expect(token.COMMA)
 				p.nextToken()
 			}
 			parameters = append(parameters, p.parseType())
 		}
-		p.error(token.RPAREN)
+		p.expect(token.RPAREN)
 		p.nextToken()
 		var returnType ctypes.Type
 		if p.currentToken.Type == token.IDENT {
@@ -361,13 +361,13 @@ func (p *Parser) parseType() ctypes.Type {
 
 	if p.currentToken.Type == token.LBRACKET {
 		p.nextToken()
-		p.error(token.INT)
+		p.expect(token.INT)
 		integer, err := strconv.ParseInt(p.currentToken.Literal, 10, 32)
 		p.nextToken()
 		if err != nil {
-			p.addErrorMessage(fmt.Sprintf("couldn't parse array size because of the following error: %s", err.Error()))
+			p.addErrorMessage(fmt.Sprintf("couldn't parse array size because of the following expect: %s", err.Error()))
 		}
-		p.error(token.RBRACKET)
+		p.expect(token.RBRACKET)
 		p.nextToken()
 		return &ctypes.Array{Length: integer, Inner: p.parseType()}
 	}
@@ -437,12 +437,12 @@ func (p *Parser) parseCall(expression ast.Expression) ast.Expression {
 	var expressions []ast.Expression
 	for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
 		if len(expressions) > 0 {
-			p.error(token.COMMA)
+			p.expect(token.COMMA)
 			p.nextToken()
 		}
 		expressions = append(expressions, p.parseExpression(0))
 	}
-	p.error(token.RPAREN)
+	p.expect(token.RPAREN)
 	p.nextToken()
 	return &ast.Call{
 		Node: &node.Node{
@@ -464,7 +464,7 @@ func (p *Parser) parseIndex(expression ast.Expression) ast.Expression {
 		Left:   expression,
 		Access: p.parseExpression(0),
 	}
-	p.error(token.RBRACKET)
+	p.expect(token.RBRACKET)
 	p.nextToken()
 	return i
 }
@@ -495,26 +495,26 @@ func (p *Parser) parseString() ast.Expression {
 func (p *Parser) parseParenthesisPrefix() ast.Expression {
 	_ = p.nextToken()
 	exp := p.parseExpression(0)
-	p.error(token.RPAREN)
+	p.expect(token.RPAREN)
 	p.nextToken()
 	return exp
 }
 
 func (p *Parser) parseAt() ast.Expression {
-	p.error(token.AT)
+	p.expect(token.AT)
 	at := p.nextToken()
-	p.error(token.IDENT)
+	p.expect(token.IDENT)
 	if p.peekToken.Type == token.LBRACE {
 		return p.parseStructLiteral()
 	}
 
 	identifier := p.nextToken()
-	p.error(token.LPAREN)
+	p.expect(token.LPAREN)
 	p.nextToken()
 	functionRequirements := p.getBuiltinFunctionRequirements(identifier.Literal)
 	types := p.parseBuiltinCallTypes(functionRequirements)
 	expressions := p.parseBuiltinCallParameters(functionRequirements)
-	p.error(token.RPAREN)
+	p.expect(token.RPAREN)
 	p.nextToken()
 	return &ast.BuiltinCall{
 		Node:           &node.Node{Token: at, Type: ctypes.TODO()},
@@ -533,7 +533,7 @@ func (p *Parser) parseBlock() *ast.Block {
 		for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
 			block.Statements = append(block.Statements, p.parseStatement())
 		}
-		p.error(token.RBRACE)
+		p.expect(token.RBRACE)
 		p.nextToken()
 		return block
 	}
@@ -586,11 +586,11 @@ func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseR
 				break
 			}
 
-			p.error(token.COMMA)
+			p.expect(token.COMMA)
 			p.nextToken()
 		} else {
 			if builtinRequirements.Types > 0 {
-				p.error(token.COMMA)
+				p.expect(token.COMMA)
 				p.nextToken()
 			}
 		}
@@ -611,7 +611,7 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 			if p.currentToken.Type == token.RPAREN {
 				return expressions
 			}
-			p.error(token.COMMA)
+			p.expect(token.COMMA)
 			if p.currentToken.Type != token.COMMA {
 				return expressions
 			}
@@ -626,7 +626,7 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 				break
 			}
 
-			p.error(token.COMMA)
+			p.expect(token.COMMA)
 			p.nextToken()
 		}
 
@@ -692,7 +692,7 @@ func (p *Parser) parseFor() ast.Statement {
 		}
 	}
 	condition = p.parseExpression(0)
-	p.error(token.SEMICOLON)
+	p.expect(token.SEMICOLON)
 	p.nextToken()
 	if p.currentToken.Type != token.LBRACE {
 		operation = p.parsePossibleAssignment()
