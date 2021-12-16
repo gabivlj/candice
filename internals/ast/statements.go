@@ -146,3 +146,42 @@ func (i *IfStatement) String() string {
 
 	return s.String()
 }
+
+type FunctionDeclarationStatement struct {
+	Token        token.Token
+	FunctionType *ctypes.Function
+	Block        *Block
+}
+
+func (f *FunctionDeclarationStatement) statementNode() {}
+
+func (f *FunctionDeclarationStatement) String() string {
+	builder := strings.Builder{}
+	builder.WriteString(f.FunctionType.FullString())
+	builder.WriteString(" {\n")
+	builder.WriteString(f.Block.String())
+	builder.WriteString("\n}")
+	return builder.String()
+}
+
+type ExternStatement struct {
+	Token token.Token
+	Type  ctypes.Type
+}
+
+func (e *ExternStatement) String() string {
+	return "extern " + e.Type.String() + ";"
+}
+
+func (e *ExternStatement) statementNode() {}
+
+type ReturnStatement struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (r *ReturnStatement) String() string {
+	return "return " + r.Expression.String() + ";"
+}
+
+func (r *ReturnStatement) statementNode() {}

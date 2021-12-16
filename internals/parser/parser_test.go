@@ -100,11 +100,11 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `
-				if 3 {
-				} else if 3+3+3==3/4/3/3.hello.hello == 4 {
-				} else {
-				}
-			`,
+						if 3 {
+						} else if 3+3+3==3/4/3/3.hello.hello == 4 {
+						} else {
+						}
+					`,
 			expected: `if 3 {
 
 } else if ((((3+3)+3)==(((3/4)/3)/((3.hello).hello)))==4) {
@@ -116,11 +116,11 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `
-				if 1 @println("hello world"); 
-				else if 2 @println("hello world 2");
-				else if 3 @println("hello world 3");
-				else @println("hello world else"); @println("hello world apart"); 
-			`,
+						if 1 @println("hello world");
+						else if 2 @println("hello world 2");
+						else if 3 @println("hello world 3");
+						else @println("hello world else"); @println("hello world apart");
+					`,
 			expected: `if 1 {
 @println("hello world");
 } else if 2 {
@@ -159,7 +159,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3;
-							i.i.i.i.i[0] = i + 1 @println("hello world!");`,
+									i.i.i.i.i[0] = i + 1 @println("hello world!");`,
 			expected: `for ((((i.i).i).i).i[0]) = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i[0]) = (i+1); {
 @println("hello world!");
 }
@@ -205,13 +205,13 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `
-				struct Point {
-					x i32
-					y i32
-					p ********[100][100][100]OtherStruct
-					
-				}
-			`,
+						struct Point {
+							x i32
+							y i32
+							p ********[100][100][100]OtherStruct
+		
+						}
+					`,
 			expected: `struct Point {
 x i32
 y i32
@@ -220,10 +220,10 @@ p ********[100][100][100]OtherStruct
 `,
 		},
 		{
-			expression: `structLiteral := StructLiteral{ a: 1, b: &*&AnotherStruct { pog: 3, pog2: 4, } }`,
-			expected: `structLiteral :<TODO> = StructLiteral{
+			expression: `structLiteral := @StructLiteral{ a: 1, b: &*&@AnotherStruct { pog: 3, pog2: 4, } }`,
+			expected: `structLiteral :<TODO> = @StructLiteral{
 a: 1,
-b: &*&AnotherStruct{
+b: &*&@AnotherStruct{
 pog: 3,
 pog2: 4,
 },
@@ -233,6 +233,36 @@ pog2: 4,
 		{
 			expression: `structLiteral : func (i32, i32) i32 = function`,
 			expected: `structLiteral :func(i32, i32) i32 = function;
+`,
+		},
+		{
+			expression: `func hello_world(hello i32, world [111]i32) i32 {
+						@println(hello + world[0])
+						return 0;
+					}`,
+			expected: `func hello_world(hello i32, world [111]i32) i32 {
+@println((hello+world[0]));
+return 0;
+}
+`,
+		},
+		{
+			expression: `func helloworld(hello i32, world [111]i32) i32 {
+				if 33 > hello {
+					return module.@hello{hellobaby: 3}
+				}
+				helloworld(hello + world[0], 0)
+				return 0;
+			}`,
+			expected: `func helloworld(hello i32, world [111]i32) i32 {
+if (33>hello) {
+return (module.@hello{
+hellobaby: 3,
+});
+}
+helloworld((hello+world[0]), 0);
+return 0;
+}
 `,
 		},
 	}

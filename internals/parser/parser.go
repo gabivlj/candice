@@ -79,6 +79,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.EQ, p.parseInfix)
 	p.registerInfixHandler(token.ASSIGN, p.parseInfix)
 	p.registerInfixHandler(token.LBRACKET, p.parseIndex)
+	p.registerInfixHandler(token.LPAREN, p.parseCall)
 	//p.registerInfixHandler(token.LPAREN, p.parseInfix)
 	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
@@ -86,7 +87,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.PLUS, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.ASTERISK, p.parsePrefixExpression)
-	p.registerPrefixHandler(token.AT, p.parseBuiltinFunction)
+	p.registerPrefixHandler(token.AT, p.parseAt)
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
 	p.registerPrefixHandler(token.INT, p.parseInteger)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
@@ -121,7 +122,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseFor()
 	case token.STRUCT:
 		return p.parseStruct()
-
+	case token.FUNCTION:
+		return p.parseFunctionDeclaration()
+	case token.RETURN:
+		return p.parseReturn()
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -135,6 +139,14 @@ func (p *Parser) skipSemicolon() {
 	}
 }
 
+func (p *Parser) parseReturn() ast.Statement {
+	ret := p.nextToken()
+	return &ast.ReturnStatement{
+		Token:      ret,
+		Expression: p.parseExpression(0),
+	}
+}
+
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return &ast.ExpressionStatement{
 		Token:      p.currentToken,
@@ -143,9 +155,6 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseIdentifierExpression() ast.Expression {
-	if p.peekToken.Type == token.LBRACE {
-		return p.parseStructLiteral()
-	}
 	identifier := p.nextToken()
 	return &ast.Identifier{
 		Node: &node.Node{
@@ -153,6 +162,45 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 			Token: identifier,
 		},
 		Name: identifier.Literal,
+	}
+}
+
+func (p *Parser) parseFunctionDeclaration() ast.Statement {
+	fun := p.nextToken()
+	p.error(token.IDENT)
+	name := p.nextToken()
+	var names []string
+	var types []ctypes.Type
+	p.error(token.LPAREN)
+	p.nextToken()
+	for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
+		if len(names) > 0 {
+			p.error(token.COMMA)
+			p.nextToken()
+		}
+		p.error(token.IDENT)
+		ident := p.nextToken()
+		t := p.parseType()
+		names = append(names, ident.Literal)
+		types = append(types, t)
+	}
+
+	p.error(token.RPAREN)
+	p.nextToken()
+	var returnType ctypes.Type
+	if p.currentToken.Type != token.LBRACE {
+		returnType = p.parseType()
+	}
+	block := p.parseBlock()
+	return &ast.FunctionDeclarationStatement{
+		Token: fun,
+		FunctionType: &ctypes.Function{
+			Name:       name.Literal,
+			Parameters: types,
+			Names:      names,
+			Return:     returnType,
+		},
+		Block: block,
 	}
 }
 
@@ -370,6 +418,28 @@ func (p *Parser) parseInfix(expression ast.Expression) ast.Expression {
 	}
 }
 
+func (p *Parser) parseCall(expression ast.Expression) ast.Expression {
+	paren := p.nextToken()
+	var expressions []ast.Expression
+	for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
+		if len(expressions) > 0 {
+			p.error(token.COMMA)
+			p.nextToken()
+		}
+		expressions = append(expressions, p.parseExpression(0))
+	}
+	p.error(token.RPAREN)
+	p.nextToken()
+	return &ast.Call{
+		Node: &node.Node{
+			Type:  ctypes.TODO(),
+			Token: paren,
+		},
+		Left:       expression,
+		Parameters: expressions,
+	}
+}
+
 func (p *Parser) parseIndex(expression ast.Expression) ast.Expression {
 	currentToken := p.nextToken()
 	i := &ast.IndexAccess{
@@ -416,10 +486,14 @@ func (p *Parser) parseParenthesisPrefix() ast.Expression {
 	return exp
 }
 
-func (p *Parser) parseBuiltinFunction() ast.Expression {
+func (p *Parser) parseAt() ast.Expression {
 	p.error(token.AT)
 	at := p.nextToken()
 	p.error(token.IDENT)
+	if p.peekToken.Type == token.LBRACE {
+		return p.parseStructLiteral()
+	}
+
 	identifier := p.nextToken()
 	p.error(token.LPAREN)
 	p.nextToken()
