@@ -144,6 +144,56 @@ func (a *Array) Alignment() int64 {
 
 func (_ *Array) candiceType() {}
 
+type Function struct {
+	Name       string
+	Parameters []Type
+	Names      []string
+	Return     Type
+}
+
+func (_ *Function) candiceType() {}
+
+func (f *Function) SizeOf() int64 {
+	return 8
+}
+
+func (f *Function) Alignment() int64 {
+	return 8
+}
+
+func (f *Function) FullString() string {
+	builder := strings.Builder{}
+	builder.WriteString("func ")
+	builder.WriteString(f.Name)
+	builder.WriteString("(")
+	for i := 0; i < len(f.Names); i++ {
+		if i >= 1 {
+			builder.WriteString(", ")
+		}
+		builder.WriteString(f.Names[i])
+		builder.WriteString(" ")
+		builder.WriteString(f.Parameters[i].String())
+	}
+	builder.WriteString(") ")
+	builder.WriteString(f.Return.String())
+	return builder.String()
+}
+
+func (f *Function) String() string {
+	builder := strings.Builder{}
+	builder.WriteString("func")
+	builder.WriteString("(")
+	for i := 0; i < len(f.Parameters); i++ {
+		if i >= 1 {
+			builder.WriteString(", ")
+		}
+		builder.WriteString(f.Parameters[i].String())
+	}
+	builder.WriteString(") ")
+	builder.WriteString(f.Return.String())
+	return builder.String()
+}
+
 // Anonymous type is a type that is not yet declared or not processed by the semantic tree.
 // The front-end compiler will try to lookup by name the type and throw an exception if
 // it's not defined. We can do fancy lazy stuff with this.

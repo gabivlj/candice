@@ -119,6 +119,9 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseIf()
 	case token.FOR:
 		return p.parseFor()
+	case token.STRUCT:
+		return p.parseStruct()
+
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -140,6 +143,9 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseIdentifierExpression() ast.Expression {
+	if p.peekToken.Type == token.LBRACE {
+		return p.parseStructLiteral()
+	}
 	identifier := p.nextToken()
 	return &ast.Identifier{
 		Node: &node.Node{
@@ -150,10 +156,81 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 	}
 }
 
+func (p *Parser) parseStructLiteral() ast.Expression {
+	literal := p.nextToken()
+	p.error(token.LBRACE)
+	p.nextToken()
+	var structValues []ast.StructValue
+
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		p.error(token.IDENT)
+		identifier := p.nextToken()
+		p.error(token.COLON)
+		p.nextToken()
+		expr := p.parseExpression(0)
+		if len(structValues) >= 1 && p.currentToken.Type != token.RBRACE {
+			p.error(token.COMMA)
+		}
+
+		structValues = append(structValues, ast.StructValue{
+			Name:       identifier.Literal,
+			Expression: expr,
+		})
+		if p.currentToken.Type == token.COMMA {
+			p.nextToken()
+		}
+
+	}
+
+	p.error(token.RBRACE)
+	p.nextToken()
+	return &ast.StructLiteral{
+		Node: &node.Node{
+			Type:  &ctypes.Anonymous{Name: literal.Literal},
+			Token: literal,
+		},
+		Name:   literal.Literal,
+		Values: structValues,
+	}
+}
+
+func (p *Parser) parseStruct() ast.Statement {
+	_ = p.nextToken()
+	p.error(token.IDENT)
+	identifier := p.nextToken()
+	p.error(token.LBRACE)
+	p.nextToken()
+	var types []ctypes.Type
+	var names []string
+
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		p.error(token.IDENT)
+		name := p.nextToken()
+		names = append(names, name.Literal)
+		t := p.parseType()
+		types = append(types, t)
+
+	}
+
+	p.error(token.RBRACE)
+	p.nextToken()
+	s := ast.StructStatement{
+		Token: identifier,
+		Type: &ctypes.Struct{
+			Fields: types,
+			Names:  names,
+			Name:   identifier.Literal,
+		},
+	}
+
+	return &s
+}
+
 func (p *Parser) parseIdentifierStatement() ast.Statement {
 	if p.peekToken.Type == token.COLON {
 		return p.parseDeclaration()
 	}
+
 	return p.parsePossibleAssignment()
 }
 
@@ -165,8 +242,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 	p.error(token.COLON)
 	// pass colon
 	p.nextToken()
-
-	var t ctypes.Type = &ctypes.Anonymous{Name: "<INFER>"}
+	var t = ctypes.TODO()
 
 	if p.currentToken.Type != token.ASSIGN {
 		t = p.parseType()
@@ -193,6 +269,32 @@ func (p *Parser) parseType() ctypes.Type {
 	if p.currentToken.Type == token.IDENT {
 		t := p.nextToken()
 		return ctypes.LiteralToType(t.Literal)
+	}
+
+	if p.currentToken.Type == token.FUNCTION {
+		_ = p.nextToken()
+		p.error(token.LPAREN)
+		p.nextToken()
+		var parameters []ctypes.Type
+		for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
+			if len(parameters) >= 1 {
+				p.error(token.COMMA)
+				p.nextToken()
+			}
+			parameters = append(parameters, p.parseType())
+		}
+		p.error(token.RPAREN)
+		p.nextToken()
+		var returnType ctypes.Type
+		if p.currentToken.Type == token.IDENT {
+			returnType = p.parseType()
+		}
+		return &ctypes.Function{
+			Name:       "",
+			Parameters: parameters,
+			Names:      []string{},
+			Return:     returnType,
+		}
 	}
 
 	if p.currentToken.Type == token.LBRACKET {

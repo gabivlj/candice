@@ -57,6 +57,7 @@ const (
 
 	// Keywords
 
+	STRUCT   = TypeToken("STRUCT")
 	FUNCTION = TypeToken("FUNCTION")
 	LET      = TypeToken("LET")
 	TRUE     = TypeToken("TRUE")
@@ -83,6 +84,7 @@ var keywords = map[string]TypeToken{
 	"for":    FOR,
 	"return": RETURN,
 	"void":   VOID,
+	"struct": STRUCT,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

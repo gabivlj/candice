@@ -147,7 +147,7 @@ func (_ *StructLiteral) expressionNode() {}
 func (s *StructLiteral) String() string {
 	output := strings.Builder{}
 	output.WriteString(s.Name)
-	output.WriteString("{")
+	output.WriteString("{\n")
 	for _, value := range s.Values {
 		output.WriteString(value.Name)
 		output.WriteString(": ")

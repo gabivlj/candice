@@ -144,23 +144,23 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `for i := 0; i < 1000; i = i + 1 { @println("hello world!") }`,
-			expected: `for i :<INFER> = 0; (i<1000); i = (i+1); {
+			expected: `for i :<TODO> = 0; (i<1000); i = (i+1); {
 @println("hello world!");
 }
 `,
 		},
 		{
 			expression: `for i := 0; i < 1000; i = i + 1 @println("hello world!") @println("hello world...")`,
-			expected: `for i :<INFER> = 0; (i<1000); i = (i+1); {
+			expected: `for i :<TODO> = 0; (i<1000); i = (i+1); {
 @println("hello world!");
 }
 @println("hello world...");
 `,
 		},
 		{
-			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thinng || works == 3;
+			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3;
 							i.i.i.i.i[0] = i + 1 @println("hello world!");`,
-			expected: `for ((((i.i).i).i).i[0]) = 0; ((((i<1000)&&cool)&&thinng)||(works==3)); ((((i.i).i).i).i[0]) = (i+1); {
+			expected: `for ((((i.i).i).i).i[0]) = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i[0]) = (i+1); {
 @println("hello world!");
 }
 `,
@@ -194,6 +194,45 @@ func TestParser_MultipleExpressions(t *testing.T) {
 1;
 }
 @println("infinite loop");
+`,
+		},
+		{
+			expression: `for i := 0; i < 100; {}`,
+			expected: `for i :<TODO> = 0; (i<100); {
+
+}
+`,
+		},
+		{
+			expression: `
+				struct Point {
+					x i32
+					y i32
+					p ********[100][100][100]OtherStruct
+					
+				}
+			`,
+			expected: `struct Point {
+x i32
+y i32
+p ********[100][100][100]OtherStruct
+}
+`,
+		},
+		{
+			expression: `structLiteral := StructLiteral{ a: 1, b: &*&AnotherStruct { pog: 3, pog2: 4, } }`,
+			expected: `structLiteral :<TODO> = StructLiteral{
+a: 1,
+b: &*&AnotherStruct{
+pog: 3,
+pog2: 4,
+},
+};
+`,
+		},
+		{
+			expression: `structLiteral : func (i32, i32) i32 = function`,
+			expected: `structLiteral :func(i32, i32) i32 = function;
 `,
 		},
 	}

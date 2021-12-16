@@ -39,7 +39,8 @@ func (b *Block) String() string {
 }
 
 type StructStatement struct {
-	Type *ctypes.Struct
+	Token token.Token
+	Type  *ctypes.Struct
 }
 
 func (s *StructStatement) statementNode() {}
