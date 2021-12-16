@@ -316,7 +316,21 @@ func (p *Parser) parseType() ctypes.Type {
 
 	if p.currentToken.Type == token.IDENT {
 		t := p.nextToken()
-		return ctypes.LiteralToType(t.Literal)
+		modules := []string{t.Literal}
+		for p.currentToken.Type == token.DOT {
+			p.nextToken()
+			p.error(token.IDENT)
+			identifier := p.nextToken()
+			modules = append(modules, identifier.Literal)
+		}
+		if len(modules) > 1 {
+			return &ctypes.Anonymous{
+				Modules: modules[:len(modules)-1],
+				Name:    modules[len(modules)-1],
+			}
+		}
+
+		return ctypes.LiteralToType(modules[0])
 	}
 
 	if p.currentToken.Type == token.FUNCTION {

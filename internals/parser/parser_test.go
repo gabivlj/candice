@@ -247,14 +247,14 @@ return 0;
 `,
 		},
 		{
-			expression: `func helloworld(hello i32, world [111]i32) i32 {
+			expression: `func helloworld(hello i32, world [111]a_module.Element) i32 {
 				if 33 > hello {
 					return module.@hello{hellobaby: 3}
 				}
 				helloworld(hello + world[0], 0)
 				return 0;
 			}`,
-			expected: `func helloworld(hello i32, world [111]i32) i32 {
+			expected: `func helloworld(hello i32, world [111]a_module.Element) i32 {
 if (33>hello) {
 return (module.@hello{
 hellobaby: 3,

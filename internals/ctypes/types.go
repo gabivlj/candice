@@ -198,11 +198,12 @@ func (f *Function) String() string {
 // The front-end compiler will try to lookup by name the type and throw an exception if
 // it's not defined. We can do fancy lazy stuff with this.
 type Anonymous struct {
-	Name string
+	Name    string
+	Modules []string
 }
 
 func (_ *Anonymous) candiceType()     {}
-func (a *Anonymous) String() string   { return a.Name }
+func (a *Anonymous) String() string   { return strings.Join(append(a.Modules, a.Name), ".") }
 func (a *Anonymous) Alignment() int64 { return 0 }
 func (a *Anonymous) SizeOf() int64    { return 0 }
 
