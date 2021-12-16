@@ -187,14 +187,18 @@ func (r *ReturnStatement) String() string {
 func (r *ReturnStatement) statementNode() {}
 
 type ImportStatement struct {
+	Token token.Token
+	Name  string
 	Types []ctypes.Type
 	Path  *StringLiteral
 }
+
+func (_ *ImportStatement) statementNode() {}
 
 func (i *ImportStatement) String() string {
 	var types []string
 	for _, t := range i.Types {
 		types = append(types, t.String())
 	}
-	return "import " + strings.Join(types, ", ") + ", " + i.Path.String()
+	return "import " + i.Name + ", " + strings.Join(types, ", ") + ", " + i.Path.String()
 }

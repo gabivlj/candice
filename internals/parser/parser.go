@@ -109,13 +109,9 @@ func (p *Parser) parseStatement() ast.Statement {
 	}()
 	switch p.currentToken.Type {
 	case token.IDENT:
-		{
-			return p.parseIdentifierStatement()
-		}
+		return p.parseIdentifierStatement()
 	case token.ASTERISK:
-		{
-			return p.parsePossibleAssignment()
-		}
+		return p.parsePossibleAssignment()
 	case token.IF:
 		return p.parseIf()
 	case token.FOR:
@@ -126,10 +122,43 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseFunctionDeclaration()
 	case token.RETURN:
 		return p.parseReturn()
+	case token.IMPORT:
+		return p.parseImport()
 	default:
 		{
 			return p.parseExpressionStatement()
 		}
+	}
+}
+
+func (p *Parser) parseImport() ast.Statement {
+	imp := p.nextToken()
+	p.expect(token.IDENT)
+	identifier := p.nextToken()
+	var types []ctypes.Type
+	for p.peekToken.Type != token.STRING && p.currentToken.Type != token.EOF {
+		p.expect(token.COMMA)
+		p.nextToken()
+		t := p.parseType()
+		if t == nil {
+			p.addErrorMessage("couldn't parse type")
+		}
+		types = append(types, t)
+	}
+	p.expect(token.COMMA)
+	p.nextToken()
+	p.expect(token.STRING)
+	path, ok := p.parseString().(*ast.StringLiteral)
+	if !ok {
+		p.addErrorMessage("couldn't parse string literal in import statement")
+		return &ast.ImportStatement{}
+	}
+
+	return &ast.ImportStatement{
+		Name:  identifier.Literal,
+		Types: types,
+		Path:  path,
+		Token: imp,
 	}
 }
 

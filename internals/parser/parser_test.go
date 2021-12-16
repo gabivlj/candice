@@ -266,6 +266,11 @@ return 0;
 }
 `,
 		},
+		{
+			expression: `import hellomodules, i32, i32, i32, "./path.cd"`,
+			expected: `import hellomodules, i32, i32, i32, "./path.cd"
+`,
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)

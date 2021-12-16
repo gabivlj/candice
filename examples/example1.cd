@@ -48,8 +48,8 @@ struct List {
 
 ////
 
-listi32 := import i32, "./list.cd"
-listi64 := import i64, "./list.cd"
+import listi32, i32, "./list.cd"
+import listi64, i64, "./list.cd"
 list := listi32.NewList(100)
 
 
