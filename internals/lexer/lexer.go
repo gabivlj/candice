@@ -43,6 +43,15 @@ func (l *Lexer) skipWhiteSpace() {
 	}
 }
 
+func (l *Lexer) skipUntilJL() {
+	for l.ch != '\n' && l.ch != 0 {
+		l.readChar()
+	}
+	l.readChar()
+	l.line++
+	l.column = 1
+}
+
 // Returns if there is a combination with the next char, else returns otherwise param
 func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.TypeToken) token.Token {
 	// Peek next character
@@ -63,6 +72,9 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 // NextToken Returns the next token of an input
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+	for l.ch == '/' && l.peekChar() == '/' {
+		l.skipUntilJL()
+	}
 	l.skipWhiteSpace()
 	switch l.ch {
 	case '@':

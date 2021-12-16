@@ -70,7 +70,8 @@ const (
 	LBRACKET = TypeToken("[")
 	RBRACKET = TypeToken("]")
 
-	FOR = TypeToken("FOR")
+	IMPORT = TypeToken("IMPORT")
+	FOR    = TypeToken("FOR")
 
 	VOID = TypeToken("VOID")
 )
@@ -85,6 +86,7 @@ var keywords = map[string]TypeToken{
 	"return": RETURN,
 	"void":   VOID,
 	"struct": STRUCT,
+	"import": IMPORT,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

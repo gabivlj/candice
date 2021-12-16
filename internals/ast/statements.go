@@ -185,3 +185,16 @@ func (r *ReturnStatement) String() string {
 }
 
 func (r *ReturnStatement) statementNode() {}
+
+type ImportStatement struct {
+	Types []ctypes.Type
+	Path  *StringLiteral
+}
+
+func (i *ImportStatement) String() string {
+	var types []string
+	for _, t := range i.Types {
+		types = append(types, t.String())
+	}
+	return "import " + strings.Join(types, ", ") + ", " + i.Path.String()
+}
