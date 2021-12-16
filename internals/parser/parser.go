@@ -91,7 +91,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
 	p.registerPrefixHandler(token.INT, p.parseInteger)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
-
+	p.registerPrefixHandler(token.LBRACKET, p.parseStaticArray)
 	return p
 }
 
@@ -130,6 +130,32 @@ func (p *Parser) parseStatement() ast.Statement {
 		{
 			return p.parseExpressionStatement()
 		}
+	}
+}
+
+func (p *Parser) parseStaticArray() ast.Expression {
+	t := p.parseType()
+	if _, ok := t.(*ctypes.Array); !ok {
+		p.addErrorMessage("expected array type, got: " + t.String())
+	}
+	p.expect(token.LBRACE)
+	l := p.nextToken()
+	var expressions []ast.Expression
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
+		if len(expressions) > 0 {
+			p.expect(token.COMMA)
+			p.nextToken()
+		}
+		expressions = append(expressions, p.parseExpression(0))
+	}
+	p.expect(token.RBRACE)
+	p.nextToken()
+	return &ast.ArrayLiteral{
+		Node: &node.Node{
+			Type:  t,
+			Token: l,
+		},
+		Values: expressions,
 	}
 }
 

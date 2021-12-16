@@ -158,3 +158,23 @@ func (s *StructLiteral) String() string {
 	output.WriteString("}")
 	return output.String()
 }
+
+type ArrayLiteral struct {
+	*node.Node
+	Values []Expression
+}
+
+func (a *ArrayLiteral) expressionNode() {}
+
+func (a *ArrayLiteral) String() string {
+	builder := strings.Builder{}
+	builder.WriteString(a.Node.Type.String())
+	builder.WriteString(" {")
+	var expressions []string
+	for _, expr := range a.Values {
+		expressions = append(expressions, expr.String())
+	}
+	builder.WriteString(strings.Join(expressions, ", "))
+	builder.WriteString("}")
+	return builder.String()
+}

@@ -273,6 +273,11 @@ return 0;
 break
 `,
 		},
+		{
+			expression: `arr := [1000]i32{1, 1, 1, 1, 2}`,
+			expected: `arr :<TODO> = [1000]i32 {1, 1, 1, 1, 2};
+`,
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)
