@@ -124,6 +124,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturn()
 	case token.IMPORT:
 		return p.parseImport()
+	case token.BREAK:
+		return &ast.BreakStatement{Token: p.nextToken()}
 	default:
 		{
 			return p.parseExpressionStatement()

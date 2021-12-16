@@ -267,8 +267,10 @@ return 0;
 `,
 		},
 		{
-			expression: `import hellomodules, i32, i32, i32, "./path.cd"`,
+			expression: `import hellomodules, i32, i32, i32, "./path.cd";
+	break`,
 			expected: `import hellomodules, i32, i32, i32, "./path.cd"
+break
 `,
 		},
 	}

@@ -202,3 +202,11 @@ func (i *ImportStatement) String() string {
 	}
 	return "import " + i.Name + ", " + strings.Join(types, ", ") + ", " + i.Path.String()
 }
+
+type BreakStatement struct {
+	Token token.Token
+}
+
+func (b *BreakStatement) statementNode() {}
+
+func (b *BreakStatement) String() string { return b.Token.Literal }
