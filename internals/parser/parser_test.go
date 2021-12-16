@@ -158,7 +158,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 `,
 		},
 		{
-			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3;
+			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3; // sdds
 									i.i.i.i.i[0] = i + 1 @println("hello world!");///sss
 // sss`,
 			expected: `for ((((i.i).i).i).i[0]) = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i[0]) = (i+1); {

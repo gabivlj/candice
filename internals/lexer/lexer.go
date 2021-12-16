@@ -72,6 +72,7 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 // NextToken Returns the next token of an input
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+	l.skipWhiteSpace()
 	for l.ch == '/' && l.peekChar() == '/' {
 		l.skipUntilJL()
 	}
