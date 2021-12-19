@@ -13,7 +13,7 @@ func TestParser_ParseType(t *testing.T) {
 	lex := lexer.New(src)
 	p := New(lex)
 	tt := p.parseType()
-	a.Assert(len(p.errors) == 0, p.errors)
+	a.Assert(len(p.Errors) == 0, p.Errors)
 	a.AssertEqual(src, tt.String())
 }
 
@@ -22,7 +22,7 @@ func TestParser_ParseTypeI32(t *testing.T) {
 	lex := lexer.New(src)
 	p := New(lex)
 	tt := p.parseType()
-	a.Assert(len(p.errors) == 0, p.errors)
+	a.Assert(len(p.Errors) == 0, p.Errors)
 	a.AssertEqual(src, tt.String())
 	a.Assert(tt.(*ctypes.Integer).BitSize == 32)
 }
@@ -32,7 +32,7 @@ func TestParser_ParseTypeI64(t *testing.T) {
 	lex := lexer.New(src)
 	p := New(lex)
 	tt := p.parseType()
-	a.Assert(len(p.errors) == 0, p.errors)
+	a.Assert(len(p.Errors) == 0, p.Errors)
 	a.AssertEqual(src, tt.String())
 	a.Assert(tt.(*ctypes.Integer).BitSize == 64)
 }
@@ -42,7 +42,7 @@ func TestParser_ParseTypeI16(t *testing.T) {
 	lex := lexer.New(src)
 	p := New(lex)
 	tt := p.parseType()
-	a.Assert(len(p.errors) == 0, p.errors)
+	a.Assert(len(p.Errors) == 0, p.Errors)
 	a.AssertEqual(src, tt.String())
 	a.Assert(tt.(*ctypes.Integer).BitSize == 16)
 }
@@ -52,7 +52,7 @@ func TestParser_ParseTypeI8(t *testing.T) {
 	lex := lexer.New(src)
 	p := New(lex)
 	tt := p.parseType()
-	a.Assert(len(p.errors) == 0, p.errors)
+	a.Assert(len(p.Errors) == 0, p.Errors)
 	a.AssertEqual(src, tt.String())
 	a.Assert(tt.(*ctypes.Integer).BitSize == 8)
 }
@@ -287,8 +287,8 @@ break
 func evaluate(t *testing.T, expression, expected string) {
 	p := New(lexer.New(expression))
 	program := p.Parse()
-	if len(p.errors) != 0 {
-		panic(fmt.Sprintf("%v", p.errors))
+	if len(p.Errors) != 0 {
+		panic(fmt.Sprintf("%v", p.Errors))
 	}
 	output := program.String()
 	a.AssertEqual(output, expected)

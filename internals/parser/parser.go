@@ -21,7 +21,7 @@ type Parser struct {
 
 	prefixFunc map[token.TypeToken]prefixFunc
 	infixFunc  map[token.TypeToken]infixFunc
-	errors     []error
+	Errors     []error
 }
 
 func (p *Parser) registerPrefixHandler(tokenType token.TypeToken, prefixFunc prefixFunc) {
@@ -47,7 +47,7 @@ func (p *Parser) expect(expected token.TypeToken) {
 func (p *Parser) addErrorMessage(message string) {
 	errMsg := errors.New(fmt.Sprintf("expect on %d:%d 'token: %s %s': %s",
 		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, p.currentToken.Type, message))
-	p.errors = append(p.errors, errMsg)
+	p.Errors = append(p.Errors, errMsg)
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -55,7 +55,7 @@ func New(l *lexer.Lexer) *Parser {
 		lexer:      l,
 		prefixFunc: map[token.TypeToken]prefixFunc{},
 		infixFunc:  map[token.TypeToken]infixFunc{},
-		errors:     []error{},
+		Errors:     []error{},
 	}
 	p.initBuiltinFunctions()
 	p.nextToken()
@@ -531,7 +531,7 @@ func (p *Parser) parseInteger() ast.Expression {
 	integer, _ := strconv.ParseInt(t.Literal, 10, 64)
 	return &ast.Integer{
 		Node: &node.Node{
-			Type:  &ctypes.Integer{BitSize: 64},
+			Type:  ctypes.I32,
 			Token: t,
 		},
 		Value: integer,

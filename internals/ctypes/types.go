@@ -7,11 +7,16 @@ import (
 
 /// Candice types
 
+var I8 = &Integer{BitSize: 8}
+var I16 = &Integer{BitSize: 16}
+var I32 = &Integer{BitSize: 32}
+var I64 = &Integer{BitSize: 64}
+
 var typeLiteral = map[string]Type{
-	"i8":  &Integer{BitSize: 8},
-	"i16": &Integer{BitSize: 16},
-	"i32": &Integer{BitSize: 32},
-	"i64": &Integer{BitSize: 64},
+	"i8":  I8,
+	"i16": I16,
+	"i32": I32,
+	"i64": I64,
 }
 
 func LiteralToType(literal string) Type {
@@ -268,4 +273,26 @@ func (s *Struct) Alignment() int64 {
 		}
 	}
 	return maximumAlignment
+}
+
+func IsNumeric(t Type) bool {
+	switch t.(type) {
+	case *Integer:
+		return true
+	case *UInteger:
+		return true
+	case *Float:
+		return true
+	}
+	return false
+}
+
+func IsPointer(t Type) bool {
+	_, ok := t.(*Pointer)
+	return ok
+}
+
+func IsArray(t Type) bool {
+	_, ok := t.(*Array)
+	return ok
 }

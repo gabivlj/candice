@@ -15,7 +15,7 @@ type Lexer struct {
 
 // New Returns a new Lexer
 func New(input string) *Lexer {
-	l := &Lexer{input: input, line: 1, column: 1}
+	l := &Lexer{input: input, line: 1, column: 0}
 	// Initialize to first char.
 	l.readChar()
 	return l
@@ -63,7 +63,7 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 		// Next character
 		l.readChar()
 		// Return the token for that combination
-		return token.Token{Type: t, Literal: string(ch) + string(peek)}
+		return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column}
 	}
 	// Otherwise return the token that it falls to
 	return otherwise
@@ -134,11 +134,15 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			// lookup the literal in the keyword table, if it doesn't exist it's a IDENT.
 			tok.Type = token.LookupIdent(tok.Literal)
+			tok.Position = l.column
+			tok.Line = l.line
 			return tok
 		}
 		if isDigit(l.ch) {
 			tok.Type = token.INT
 			tok.Literal = l.readNumber()
+			tok.Position = l.column
+			tok.Line = l.line
 			return tok
 		}
 		tok = l.newToken(token.ILLEGAL, l.ch)
