@@ -7,6 +7,7 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
+	"github.com/gabivlj/candice/pkg/a"
 	"log"
 )
 
@@ -37,6 +38,8 @@ func (s *Semantic) leaveFrame() {
 	for key != "<main-frame>" {
 		key, _ = s.variables.Pop()
 	}
+	key, _ = s.variables.Pop()
+	a.AssertEqual(key, "<main-frame>")
 }
 
 func (s *Semantic) error(msg string, tok token.Token) {
@@ -96,7 +99,29 @@ func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationState
 
 }
 
+func (s *Semantic) unwrapAnonymous(t ctypes.Type) ctypes.Type {
+	if anonymous, ok := t.(*ctypes.Anonymous); ok {
+		return s.definedTypes[anonymous.Name]
+	}
+
+	return t
+}
+
 func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
+	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {
+		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
+	}
+
+	if ctypes.IsArray(first) {
+		fArray := first.(*ctypes.Array)
+		sArray, ok := second.(*ctypes.Array)
+		if !ok {
+			return false
+		}
+
+		return fArray.Length == sArray.Length && s.areTypesEqual(fArray.Inner, sArray.Inner)
+	}
+
 	return first == second
 }
 
