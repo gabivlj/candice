@@ -147,7 +147,6 @@ func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Ty
 	if identifierType := s.variables.Get(identifier.Name); identifierType != nil {
 		return identifierType
 	}
-	log.Println(s.variables)
 	s.error("undefined variable "+identifier.Name, identifier.Token)
 	return ctypes.TODO()
 }
