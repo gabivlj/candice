@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
@@ -38,7 +39,7 @@ func (s *Semantic) leaveFrame() {
 	for key != "<main-frame>" {
 		key, _ = s.variables.Pop()
 	}
-	key, _ = s.variables.Pop()
+	//key, _ = s.variables.Pop()
 	a.AssertEqual(key, "<main-frame>")
 }
 
@@ -131,10 +132,46 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 		return s.analyzeInteger(expressionType)
 	case *ast.BuiltinCall:
 		return s.analyzeBuiltinCall(expressionType)
+	case *ast.BinaryOperation:
+		return s.analyzeBinaryOperation(expressionType)
 	default:
 		log.Fatalln("couldn't analyze expression: " + expressionType.String())
 	}
 	return nil
+}
+
+func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) ctypes.Type {
+	op := binaryOperation.Operation
+	if s.isArithmetic(op) {
+		return s.analyzeArithmetic(binaryOperation)
+	}
+	s.error("can't analyze operator", binaryOperation.Token)
+	return ctypes.TODO()
+}
+
+func (s *Semantic) isArithmetic(op ops.Operation) bool {
+	return op == ops.OR || op == ops.Multiply || op == ops.BinaryXOR || op == ops.BinaryOR ||
+		op == ops.BinaryAND || op == ops.AND || op == ops.Plus || op == ops.Minus || op == ops.LessThanEqual ||
+		op == ops.LessThan || op == ops.Equals || op == ops.GreaterThan || op == ops.GreaterThanEqual ||
+		op == ops.NotEquals || op == ops.Divide
+}
+
+func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctypes.Type {
+	left := s.analyzeExpression(binaryOperation.Left)
+	right := s.analyzeExpression(binaryOperation.Right)
+	if !ctypes.IsNumeric(left) {
+		s.error("expected numeric type, got: "+left.String(), binaryOperation.Token)
+	}
+
+	if !ctypes.IsNumeric(right) {
+		s.error("expected numeric type, got: "+right.String(), binaryOperation.Token)
+	}
+
+	if !s.areTypesEqual(left, right) {
+		s.typeMismatchError(binaryOperation.String(), binaryOperation.Token, right, left)
+	}
+
+	return left
 }
 
 func (s *Semantic) analyzeInteger(integer *ast.Integer) ctypes.Type {

@@ -24,6 +24,10 @@ func TestSemantic_Analyze(t *testing.T) {
 			`variable : i64 = 32`,
 			false,
 		},
+		{
+			`variable : i64 = @cast(i64, 32 + 32 * 32 * 32 * 44)`,
+			true,
+		},
 	}
 
 	for _, test := range tests {
