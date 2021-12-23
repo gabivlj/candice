@@ -5,8 +5,8 @@ import "strconv"
 type Operation int
 
 const (
-	Plus Operation = iota
-	Minus
+	Add Operation = iota
+	Subtract
 	Multiply
 	Divide
 	AND
@@ -46,8 +46,8 @@ var precedences = map[Operation]int{
 	GreaterThanEqual: 2,
 	Equals:           2,
 	NotEquals:        2,
-	Plus:             3,
-	Minus:            3,
+	Add:              3,
+	Subtract:         3,
 	Multiply:         4,
 	Divide:           4,
 	BinaryXOR:        5,
@@ -66,9 +66,9 @@ func (o Operation) Precedence() int {
 
 func (o Operation) String() string {
 	switch o {
-	case Plus:
+	case Add:
 		return "+"
-	case Minus:
+	case Subtract:
 		return "-"
 	case Multiply:
 		return "*"

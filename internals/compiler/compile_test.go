@@ -21,14 +21,14 @@ func TestCompiler_CompileExpression_With_AddSubtractMultiplyDivide(t *testing.T)
 							Operation: ops.Multiply,
 							Left: &ast.BinaryOperation{
 								Left: &ast.BinaryOperation{
-									Operation: ops.Plus,
+									Operation: ops.Add,
 									Left:      &ast.Integer{Value: 3},
 									Right:     &ast.Integer{Value: 3},
 								},
 								Right: &ast.BinaryOperation{
 									Operation: ops.Divide,
 									Left: &ast.BinaryOperation{
-										Operation: ops.Minus,
+										Operation: ops.Subtract,
 										Left:      &ast.Integer{Value: 332},
 										Right:     &ast.Integer{Value: 1},
 									},
@@ -357,7 +357,7 @@ func TestCompiler_CompileExpression_With_MallocStruct(t *testing.T) {
 func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
 	c := New()
 	binOp := &ast.BinaryOperation{
-		Operation: ops.Plus,
+		Operation: ops.Add,
 		Left:      &ast.Integer{Value: 3},
 		Right:     &ast.Integer{Value: 5},
 	}

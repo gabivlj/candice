@@ -39,7 +39,6 @@ func (s *Semantic) leaveFrame() {
 	for key != "<main-frame>" {
 		key, _ = s.variables.Pop()
 	}
-	//key, _ = s.variables.Pop()
 	a.AssertEqual(key, "<main-frame>")
 }
 
@@ -91,13 +90,13 @@ func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationState
 			s.typeMismatchError(declaration.String(), declaration.Token, declType, ctype)
 			return
 		}
-
+		s.variables.Add(declaration.Name, declType)
 		return
 	}
 
 	// else we just prefer the one returned by analyzeExpression
 	declaration.Type = ctype
-
+	s.variables.Add(declaration.Name, ctype)
 }
 
 func (s *Semantic) unwrapAnonymous(t ctypes.Type) ctypes.Type {
@@ -134,10 +133,60 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 		return s.analyzeBuiltinCall(expressionType)
 	case *ast.BinaryOperation:
 		return s.analyzeBinaryOperation(expressionType)
+	case *ast.PrefixOperation:
+		return s.analyzePrefixOperation(expressionType)
+	case *ast.Identifier:
+		return s.analyzeSimpleIdentifier(expressionType)
 	default:
 		log.Fatalln("couldn't analyze expression: " + expressionType.String())
 	}
 	return nil
+}
+
+func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Type {
+	if identifierType := s.variables.Get(identifier.Name); identifierType != nil {
+		return identifierType
+	}
+	log.Println(s.variables)
+	s.error("undefined variable "+identifier.Name, identifier.Token)
+	return ctypes.TODO()
+}
+
+func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) ctypes.Type {
+	t := s.analyzeExpression(prefixOperation.Right)
+	if prefixOperation.Operation == ops.Bang || prefixOperation.Operation == ops.Add {
+		if !ctypes.IsNumeric(t) {
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+		}
+
+		return t
+	}
+
+	// We make this if because maybe in the future we don't want to '-' unsigned integers?
+	if prefixOperation.Operation == ops.Subtract {
+		if !ctypes.IsNumeric(t) {
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+		}
+
+		return t
+	}
+
+	if prefixOperation.Operation == ops.BinaryAND {
+		return &ctypes.Pointer{Inner: t}
+	}
+
+	if prefixOperation.Operation == ops.Multiply {
+		if ptr, ok := t.(*ctypes.Pointer); !ok {
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, &ctypes.Pointer{Inner: t}, t)
+			return t
+		} else {
+			return ptr.Inner
+		}
+	}
+
+	s.error("unknown prefix operator to analyze", prefixOperation.Token)
+
+	return t
 }
 
 func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) ctypes.Type {
@@ -151,7 +200,7 @@ func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) 
 
 func (s *Semantic) isArithmetic(op ops.Operation) bool {
 	return op == ops.OR || op == ops.Multiply || op == ops.BinaryXOR || op == ops.BinaryOR ||
-		op == ops.BinaryAND || op == ops.AND || op == ops.Plus || op == ops.Minus || op == ops.LessThanEqual ||
+		op == ops.BinaryAND || op == ops.AND || op == ops.Add || op == ops.Subtract || op == ops.LessThanEqual ||
 		op == ops.LessThan || op == ops.Equals || op == ops.GreaterThan || op == ops.GreaterThanEqual ||
 		op == ops.NotEquals || op == ops.Divide
 }

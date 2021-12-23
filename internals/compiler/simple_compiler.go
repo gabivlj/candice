@@ -367,7 +367,7 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 
 		}
 
-	case ops.Plus:
+	case ops.Add:
 		{
 			return c.compileAdd(expr)
 		}
@@ -377,7 +377,7 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 			return c.compileDivide(expr)
 		}
 
-	case ops.Minus:
+	case ops.Subtract:
 		{
 			return c.compileSubtract(expr)
 		}

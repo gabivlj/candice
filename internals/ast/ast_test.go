@@ -15,7 +15,7 @@ func TestBinaryOperation_String(t *testing.T) {
 	const integer = 3
 	const integerRight = 4
 	binaryOp := BinaryOperation{
-		Operation: ops.Plus,
+		Operation: ops.Add,
 		Left: &BinaryOperation{
 			Operation: ops.Multiply,
 			Left:      &Integer{Value: integer}, Right: &Integer{Value: integerRight},

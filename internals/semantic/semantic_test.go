@@ -25,8 +25,17 @@ func TestSemantic_Analyze(t *testing.T) {
 			false,
 		},
 		{
-			`variable : i64 = @cast(i64, 32 + 32 * 32 * 32 * 44)`,
+			`variable : i64 = @cast(i64, 32 + 32 * 32 * 32 * 44 / 33 / 44 || 444 && 333 ^ 333 && 333 & 44)`,
 			true,
+		},
+		{
+			`variable : i32 = !!!*&44
+					 variable2 := variable + variable`,
+			true,
+		},
+		{
+			`variable : i32 = *!!!*&44`,
+			false,
 		},
 	}
 
