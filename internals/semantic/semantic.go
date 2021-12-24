@@ -67,9 +67,27 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	case *ast.DeclarationStatement:
 		s.analyzeDeclarationStatement(statementType)
 		return
+	case *ast.StructStatement:
+		s.analyzeStructStatement(statementType)
+		return
 	}
 
 	log.Fatalln("couldn't analyze statement: " + statement.String())
+}
+
+func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
+	s.definedTypes[statementType.Type.Name] = statementType.Type
+	for _, t := range statementType.Type.Fields {
+		unwrappedType := s.unwrap(t)
+		if anonymous, ok := unwrappedType.(*ctypes.Anonymous); ok {
+			definedType := s.unwrapAnonymous(anonymous)
+			if definedType == statementType.Type && t == anonymous {
+				s.error("recursive type detected", statementType.Token)
+				return
+			}
+			s.swapTypes(t, definedType)
+		}
+	}
 }
 
 func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
@@ -105,6 +123,34 @@ func (s *Semantic) unwrapAnonymous(t ctypes.Type) ctypes.Type {
 	}
 
 	return t
+}
+
+func (s *Semantic) unwrap(t ctypes.Type) ctypes.Type {
+	if ptr, ok := t.(*ctypes.Pointer); ok {
+		return s.unwrap(ptr.Inner)
+	}
+
+	if arr, ok := t.(*ctypes.Array); ok {
+		return s.unwrap(arr.Inner)
+	}
+
+	return t
+}
+
+func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
+	if ptr, ok := t.(*ctypes.Pointer); ok {
+		val := s.swapTypes(ptr.Inner, toSwap)
+		ptr.Inner = val
+		return ptr
+	}
+
+	if arr, ok := t.(*ctypes.Array); ok {
+		val := s.swapTypes(arr.Inner, toSwap)
+		arr.Inner = val
+		return arr
+	}
+
+	return toSwap
 }
 
 func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {

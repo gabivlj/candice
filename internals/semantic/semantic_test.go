@@ -37,6 +37,14 @@ func TestSemantic_Analyze(t *testing.T) {
 			`variable : i32 = *!!!*&44`,
 			false,
 		},
+		{
+			`struct Point { x i32 y i32 point *Point }`,
+			true,
+		},
+		{
+			`struct Point { x i32 y i32 point Point }`,
+			false,
+		},
 	}
 
 	for _, test := range tests {
