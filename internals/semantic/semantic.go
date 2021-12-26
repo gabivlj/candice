@@ -9,23 +9,29 @@ import (
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
+	"github.com/gabivlj/candice/pkg/todo"
 	"log"
 )
 
 type Semantic struct {
-	variables       *undomap.UndoMap
-	definedTypes    map[string]ctypes.Type
-	builtinHandlers map[string]func(builtin *ast.BuiltinCall) ctypes.Type
-	errors          []error
+	variables                 *undomap.UndoMap
+	definedTypes              map[string]ctypes.Type
+	builtinHandlers           map[string]func(builtin *ast.BuiltinCall) ctypes.Type
+	returns                   bool
+	currentExpectedReturnType ctypes.Type
+	errors                    []error
 }
 
 func New() *Semantic {
 	s := &Semantic{
-		variables:       undomap.New(),
-		definedTypes:    map[string]ctypes.Type{},
-		builtinHandlers: map[string]func(builtin *ast.BuiltinCall) ctypes.Type{},
-		errors:          []error{},
+		variables:                 undomap.New(),
+		definedTypes:              map[string]ctypes.Type{},
+		builtinHandlers:           map[string]func(builtin *ast.BuiltinCall) ctypes.Type{},
+		errors:                    []error{},
+		currentExpectedReturnType: ctypes.VoidType,
+		returns:                   false,
 	}
+
 	s.builtinHandlers["cast"] = s.analyzeCast
 	return s
 }
@@ -70,9 +76,130 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	case *ast.StructStatement:
 		s.analyzeStructStatement(statementType)
 		return
+	case *ast.BreakStatement:
+		return
+	case *ast.IfStatement:
+		s.analyzeIfStatement(statementType)
+		return
+	case *ast.ForStatement:
+		s.enterFrame()
+		todo.Call("analyzeForStatement")
+		s.leaveFrame()
+		return
+	case *ast.FunctionDeclarationStatement:
+		s.analyzeFunctionStatement(statementType)
+		return
+	case *ast.ReturnStatement:
+		// NOTE the idea here would be having a "current" expected return type,
+		// when we find a return we check with the expected return type.
+		// If they don't match we add an error.
+		// When analyzing a block we would analyze if all its
+		// branches return true. Finding a return type guarantees that on a block it will return something.
+		// Then when someone analyzes that block will guess that it always returns something.
+		// When we find an if, we need to check that every block analyzed returns something (an else must exist)
+		// When we find a block we analyze statement and check if the return flag is true, then statement means that this
+		// block always returns.
+		// ```
+		// for analyzeStmt(), if thisStatementReturns: return...
+		// if EOF thisStatementReturns = false
+		//
+		// ```
+		s.analyzeReturnStatement(statementType)
+		return
 	}
 
 	log.Fatalln("couldn't analyze statement: " + statement.String())
+}
+
+func (s *Semantic) analyzeBlock(block *ast.Block) {
+	s.enterFrame()
+	for _, stmt := range block.Statements {
+		if s.returns {
+			return
+		}
+		s.analyzeStatement(stmt)
+	}
+	s.leaveFrame()
+}
+
+func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatement) {
+	s.definedTypes[fun.FunctionType.Name] = fun.FunctionType
+	if fun.FunctionType.Return == nil {
+		fun.FunctionType.Return = ctypes.VoidType
+	}
+
+	s.enterFrame()
+
+	for i, param := range fun.FunctionType.Parameters {
+		s.variables.Add(fun.FunctionType.Names[i], param)
+	}
+
+	temporaryExpectedReturnType := s.currentExpectedReturnType
+	s.currentExpectedReturnType = fun.FunctionType.Return
+
+	if fun.Block != nil {
+		for _, statement := range fun.Block.Statements {
+			if s.returns {
+				break
+			}
+			s.analyzeStatement(statement)
+		}
+	}
+
+	if !s.returns && fun.FunctionType.Return != ctypes.VoidType {
+		s.error("not all paths of the function '"+fun.FunctionType.Name+"'  return a variable", fun.Token)
+	}
+
+	s.returns = false
+	s.leaveFrame()
+	s.currentExpectedReturnType = temporaryExpectedReturnType
+}
+
+func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
+	condition := s.analyzeExpression(ifStatement.Condition)
+	if !ctypes.IsNumeric(condition) {
+		s.typeMismatchError(ifStatement.Condition.String(), ifStatement.Token, ctypes.I32, condition)
+	}
+
+	doesReturn := true
+	s.analyzeBlock(ifStatement.Block)
+	if !s.returns {
+		doesReturn = false
+		s.returns = false
+	}
+
+	for _, currentIf := range ifStatement.ElseIfs {
+		condition := s.analyzeExpression(currentIf.Condition)
+		if !ctypes.IsNumeric(condition) {
+			//todo
+			s.typeMismatchError(currentIf.Condition.String(), token.Token{}, ctypes.I32, condition)
+		}
+		s.analyzeBlock(currentIf.Block)
+		if !s.returns {
+			doesReturn = false
+			s.returns = false
+		}
+	}
+
+	if ifStatement.Else != nil {
+		s.analyzeBlock(ifStatement.Else)
+		if !s.returns {
+			doesReturn = false
+			s.returns = false
+		}
+	} else {
+		doesReturn = false
+	}
+
+	s.returns = doesReturn
+}
+
+func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) {
+	theType := s.analyzeExpression(returnStatement.Expression)
+	if !s.areTypesEqual(theType, s.currentExpectedReturnType) {
+		s.typeMismatchError(returnStatement.String(), returnStatement.Token, s.currentExpectedReturnType, theType)
+	}
+	s.returns = true
 }
 
 func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
@@ -172,6 +299,10 @@ func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
 }
 
 func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
+	if expression == nil {
+		return ctypes.VoidType
+	}
+
 	switch expressionType := expression.(type) {
 	case *ast.Integer:
 		return s.analyzeInteger(expressionType)

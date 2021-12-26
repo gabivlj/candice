@@ -46,6 +46,8 @@ type Type interface {
 	String() string
 }
 
+var VoidType = &Void{}
+
 type Void struct{}
 
 func (_ *Void) String() string { return "void" }

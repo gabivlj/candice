@@ -198,9 +198,14 @@ func (p *Parser) skipSemicolon() {
 
 func (p *Parser) parseReturn() ast.Statement {
 	ret := p.nextToken()
+	var exp ast.Expression
+	if p.currentToken.Type != token.SEMICOLON {
+		exp = p.parseExpression(0)
+	}
+
 	return &ast.ReturnStatement{
 		Token:      ret,
-		Expression: p.parseExpression(0),
+		Expression: exp,
 	}
 }
 

@@ -45,13 +45,51 @@ func TestSemantic_Analyze(t *testing.T) {
 			`struct Point { x i32 y i32 point Point }`,
 			false,
 		},
+		{
+			`func aFunction(i i32, j i32) i32 {
+	if 1 {
+		return 3
+	}
+	return;
+}`,
+			false,
+		},
+		{
+			`func aFunction(i i32, j i32) i32 {
+	if 1 {
+		return i + j;
+	} else { return 3; }
+	
+}`,
+			true,
+		},
+		{
+			`func aFunction(i i32, j i32) i32 {
+	if 1 {
+		return i + j;
+	}
+}`,
+			false,
+		},
+		{
+			`func aFunction(i i32, j i32) {
+	if 1 {
+		return;
+	}
+}`,
+			true,
+		},
+		{
+			`func aFunction(i i32, j i32) {}`,
+			true,
+		},
 	}
 
 	for _, test := range tests {
 		semantic := New()
 		p := parser.New(lexer.New(test.program))
 		program := p.Parse()
-		a.Assert(len(p.Errors) == 0)
+		a.Assert(len(p.Errors) == 0, p.Errors)
 		semantic.Analyze(program)
 		if test.shouldBeOk && len(semantic.errors) != 0 {
 			t.Fatal(test, semantic.errors)

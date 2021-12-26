@@ -181,7 +181,11 @@ type ReturnStatement struct {
 }
 
 func (r *ReturnStatement) String() string {
-	return "return " + r.Expression.String() + ";"
+	returnExpr := ""
+	if r.Expression != nil {
+		returnExpr = r.Expression.String()
+	}
+	return "return " + returnExpr + ";"
 }
 
 func (r *ReturnStatement) statementNode() {}
