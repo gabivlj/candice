@@ -9,7 +9,6 @@ import (
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
-	"github.com/gabivlj/candice/pkg/todo"
 	"log"
 )
 
@@ -19,7 +18,7 @@ type Semantic struct {
 	builtinHandlers           map[string]func(builtin *ast.BuiltinCall) ctypes.Type
 	returns                   bool
 	currentExpectedReturnType ctypes.Type
-	errors                    []error
+	Errors                    []error
 }
 
 func New() *Semantic {
@@ -27,7 +26,7 @@ func New() *Semantic {
 		variables:                 undomap.New(),
 		definedTypes:              map[string]ctypes.Type{},
 		builtinHandlers:           map[string]func(builtin *ast.BuiltinCall) ctypes.Type{},
-		errors:                    []error{},
+		Errors:                    []error{},
 		currentExpectedReturnType: ctypes.VoidType,
 		returns:                   false,
 	}
@@ -49,7 +48,7 @@ func (s *Semantic) leaveFrame() {
 }
 
 func (s *Semantic) error(msg string, tok token.Token) {
-	s.errors = append(s.errors, errors.New(fmt.Sprintf("error analyzing on %d:%d (at %s): %s", tok.Line, tok.Position, tok.Type, msg)))
+	s.Errors = append(s.Errors, errors.New(fmt.Sprintf("error analyzing on %d:%d (at %s): %s", tok.Line, tok.Position, tok.Type, msg)))
 }
 
 func (s *Semantic) typeMismatchError(node string, tok token.Token, expected, got ctypes.Type) {
@@ -61,7 +60,7 @@ func (s *Semantic) Analyze(program *ast.Program) {
 	s.enterFrame()
 	for _, statement := range program.Statements {
 		s.analyzeStatement(statement)
-		if len(s.errors) > 0 {
+		if len(s.Errors) > 0 {
 			return
 		}
 	}
@@ -69,6 +68,11 @@ func (s *Semantic) Analyze(program *ast.Program) {
 }
 
 func (s *Semantic) analyzeStatement(statement ast.Statement) {
+
+	if statement == nil {
+		return
+	}
+
 	switch statementType := statement.(type) {
 	case *ast.DeclarationStatement:
 		s.analyzeDeclarationStatement(statementType)
@@ -82,13 +86,19 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		s.analyzeIfStatement(statementType)
 		return
 	case *ast.ForStatement:
-		s.enterFrame()
-		todo.Call("analyzeForStatement")
-		s.leaveFrame()
+		s.analyzeForStatement(statementType)
 		return
 	case *ast.FunctionDeclarationStatement:
 		s.analyzeFunctionStatement(statementType)
 		return
+	case *ast.AssignmentStatement:
+		s.analyzeAssigmentStatement(statementType)
+		return
+
+	case *ast.ExpressionStatement:
+		s.analyzeExpression(statementType.Expression)
+		return
+
 	case *ast.ReturnStatement:
 		// NOTE the idea here would be having a "current" expected return type,
 		// when we find a return we check with the expected return type.
@@ -108,7 +118,16 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		return
 	}
 
-	log.Fatalln("couldn't analyze statement: " + statement.String())
+	log.Fatalln("couldn't analyze statement: " + statement.String() + " ")
+}
+
+func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
+	right := s.analyzeExpression(assign.Expression)
+	left := s.analyzeExpression(assign.Left)
+	if !s.areTypesEqual(left, right) {
+		//todo: token
+		s.typeMismatchError(assign.String(), token.Token{}, left, right)
+	}
 }
 
 func (s *Semantic) analyzeBlock(block *ast.Block) {
@@ -122,11 +141,30 @@ func (s *Semantic) analyzeBlock(block *ast.Block) {
 	s.leaveFrame()
 }
 
+func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
+	s.enterFrame()
+
+	s.analyzeStatement(forStatement.InitializerStatement)
+
+	condition := s.analyzeExpression(forStatement.Condition)
+
+	if !ctypes.IsNumeric(condition) && condition != ctypes.VoidType {
+		s.typeMismatchError(forStatement.Condition.String(), forStatement.Token, ctypes.I32, condition)
+	}
+
+	s.analyzeStatement(forStatement.Operation)
+
+	s.analyzeBlock(forStatement.Block)
+
+	s.leaveFrame()
+}
+
 func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatement) {
-	s.definedTypes[fun.FunctionType.Name] = fun.FunctionType
 	if fun.FunctionType.Return == nil {
 		fun.FunctionType.Return = ctypes.VoidType
 	}
+
+	s.variables.Add(fun.FunctionType.Name, fun.FunctionType)
 
 	s.enterFrame()
 
@@ -147,11 +185,12 @@ func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatemen
 	}
 
 	if !s.returns && fun.FunctionType.Return != ctypes.VoidType {
-		s.error("not all paths of the function '"+fun.FunctionType.Name+"'  return a variable", fun.Token)
+		s.error("not all paths of the function '"+fun.FunctionType.String()+"'  return a variable", fun.Token)
 	}
 
 	s.returns = false
 	s.leaveFrame()
+
 	s.currentExpectedReturnType = temporaryExpectedReturnType
 }
 
@@ -281,8 +320,24 @@ func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
 }
 
 func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
+	first = s.unwrapAnonymous(first)
+	second = s.unwrapAnonymous(second)
+
 	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {
 		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
+	}
+
+	if firstFunc, ok := first.(*ctypes.Function); ok {
+		secondFunc, ok := second.(*ctypes.Function)
+		if !ok {
+			return false
+		}
+		for i, param := range firstFunc.Parameters {
+			if !s.areTypesEqual(secondFunc.Parameters[i], param) {
+				return false
+			}
+		}
+		return s.areTypesEqual(firstFunc.Return, secondFunc.Return)
 	}
 
 	if ctypes.IsArray(first) {
@@ -314,10 +369,37 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 		return s.analyzePrefixOperation(expressionType)
 	case *ast.Identifier:
 		return s.analyzeSimpleIdentifier(expressionType)
+	case *ast.Call:
+		return s.analyzeFunctionCall(expressionType)
 	default:
 		log.Fatalln("couldn't analyze expression: " + expressionType.String())
 	}
 	return nil
+}
+
+func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
+	possibleFuncType := s.analyzeExpression(call.Left)
+
+	if funcType, ok := possibleFuncType.(*ctypes.Function); !ok {
+		log.Println(call.Left, s.definedTypes)
+		s.error("can't call non function "+call.Left.String()+" of type "+possibleFuncType.String(), call.Token)
+	} else {
+		if len(call.Parameters) != len(funcType.Parameters) {
+			s.error("mismatch number of parameters", call.Token)
+		}
+
+		for i, param := range call.Parameters {
+			paramType := s.analyzeExpression(param)
+			if !s.areTypesEqual(funcType.Parameters[i], paramType) {
+				s.typeMismatchError(param.String(), call.Token, funcType.Parameters[i], paramType)
+			}
+		}
+
+		call.Type = s.unwrapAnonymous(funcType.Return)
+		return call.Type
+	}
+
+	return ctypes.TODO()
 }
 
 func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Type {

@@ -83,6 +83,30 @@ func TestSemantic_Analyze(t *testing.T) {
 			`func aFunction(i i32, j i32) {}`,
 			true,
 		},
+		{
+			`for 1 < 100 { }`,
+			true,
+		},
+		{
+			`for i := 100; i < 100; { }`,
+			true,
+		},
+		{
+			`for i := 100; i < 100; i = i + 1 { }`,
+			true,
+		},
+		{
+			`func callMe() i32 { return callMe() }
+					called := callMe() + 3 + 10 * 100 / 300;
+					func callback(c func() i32) { c(); } callback(callMe)`,
+			true,
+		},
+		{
+			`func callMe() i32 { return callMe() }
+					called := callMe() + 3 + 10 * 100 / 300;
+					func callback(c func() i64) { c(); } callback(callMe)`,
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -91,11 +115,10 @@ func TestSemantic_Analyze(t *testing.T) {
 		program := p.Parse()
 		a.Assert(len(p.Errors) == 0, p.Errors)
 		semantic.Analyze(program)
-		if test.shouldBeOk && len(semantic.errors) != 0 {
-			t.Fatal(test, semantic.errors)
-		} else if !test.shouldBeOk && len(semantic.errors) == 0 {
-			t.Fatal(test, "shouldn't be ok but we got 0 errors...")
+		if test.shouldBeOk && len(semantic.Errors) != 0 {
+			t.Fatal(test, semantic.Errors)
+		} else if !test.shouldBeOk && len(semantic.Errors) == 0 {
+			t.Fatal(test, "shouldn't be ok but we got 0 Errors...")
 		}
 	}
-
 }
