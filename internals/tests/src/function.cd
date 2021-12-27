@@ -2,3 +2,35 @@
 func thing(goodstuff *i32) i32 {
     return *goodstuff
 }
+
+func coolStuff(array *i64) **i64 {
+    return @alloc(*i64, 1)
+}
+
+aVariable := coolStuff(
+    *coolStuff(
+        @cast(*i64, [32]i64{
+            @cast(i64, 1)
+        })
+    )
+)
+
+if **aVariable == @cast(i64, 3) {
+    coolThing := 3
+}
+
+struct p {
+    x i32
+    p *p
+}
+
+pp := @p{
+    x: 0
+    p: &@p{
+        p: &@p{
+            p: &@p{}
+        }
+    }
+}
+
+variable :i32 = pp.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p.p[3].x

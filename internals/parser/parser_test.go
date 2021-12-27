@@ -80,7 +80,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: "*hello.ss[3].ss = 3;",
-			expected:   "*((hello.ss[3]).ss) = 3;\n",
+			expected:   "*((hello.ss)[3].ss) = 3;\n",
 		},
 		{
 			expression: "cool = \"Hello world\"",
@@ -161,7 +161,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3; // sdds
 									i.i.i.i.i[0] = i + 1 @println("hello world!");///sss
 // sss`,
-			expected: `for ((((i.i).i).i).i[0]) = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i[0]) = (i+1); {
+			expected: `for ((((i.i).i).i).i)[0] = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i)[0] = (i+1); {
 @println("hello world!");
 }
 `,

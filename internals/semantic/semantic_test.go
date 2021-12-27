@@ -107,6 +107,38 @@ func TestSemantic_Analyze(t *testing.T) {
 					func callback(c func() i64) { c(); } callback(callMe)`,
 			false,
 		},
+		{
+			`arr := [4]i32{1, 2, 3, 4}`,
+			true,
+		},
+		{
+			`arr := [3]i32{1, 2, 3, 4}`,
+			false,
+		},
+		{
+			`struct RecursivePoint { x i32 y i32 point *RecursivePoint } point := @RecursivePoint { x: 3, y: 4, point: @alloc(RecursivePoint, 3) }`,
+			true,
+		},
+		{
+			`point := @RecursivePoint { x: 3, y: 4, point: @alloc(RecursivePoint, 3) }`,
+			false,
+		},
+		{
+			`struct RecursivePoint { x i32 y i32 point *RecursivePoint } struct Point { x i32 y i32 point *RecursivePoint }point := @RecursivePoint { x: 3, y: 4, point: @alloc(Point, 3) }`,
+			false,
+		},
+		{
+			`thing := @alloc(RecursivePoint, 3)`,
+			false,
+		},
+		{
+			`arr := [4]i32{1, 2, 3, 4}
+					for i := 0; i < 4; i = i + 1 { arr[i] = 1 }
+					if arr[0] == 0 {
+						arr[1] = 3
+					}`,
+			true,
+		},
 	}
 
 	for _, test := range tests {

@@ -3,41 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
-	"github.com/gabivlj/candice/internals/ctypes"
-	"github.com/gabivlj/candice/internals/ops"
+	"github.com/gabivlj/candice/internals/lexer"
+	"github.com/gabivlj/candice/internals/parser"
 )
 
 func main() {
-	decl := &ast.DeclarationStatement{
-		Name:       "cool",
-		Type:       &ctypes.Array{Inner: &ctypes.Pointer{Inner: &ctypes.Integer{BitSize: 64}}, Length: 5},
-		Expression: &ast.Integer{Value: 5},
-	}
-	i := ast.IfStatement{
-		Condition: &ast.BinaryOperation{
-			Left: &ast.Integer{
-				Value: 3,
-			},
-			Right: &ast.Integer{
-				Value: 0,
-			},
-			Operation: ops.Multiply,
-		},
-		Block: &ast.Block{Statements: []ast.Statement{
-			decl,
-		}},
-		ElseIfs: []*ast.ConditionPlusBlock{
-			{
-				Condition: &ast.Integer{Value: 3},
-				Block:     &ast.Block{Statements: []ast.Statement{decl}},
-			},
-		},
-		Else: &ast.Block{
-			Statements: []ast.Statement{&ast.DeclarationStatement{
-				Name:       "cool",
-				Type:       &ctypes.Array{Inner: &ctypes.Pointer{Inner: &ctypes.Integer{BitSize: 64}}, Length: 5},
-				Expression: &ast.Integer{Value: 5},
-			}}},
-	}
-	fmt.Println(i.String())
+	tree := parser.New(lexer.New("thing.thing2.thing3[3].thing4.thing5.thing6")).Parse()
+	fmt.Printf("%v", tree.Statements[0].(*ast.ExpressionStatement).Expression.(*ast.BinaryOperation).Left.(*ast.BinaryOperation).Right)
 }

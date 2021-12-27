@@ -24,8 +24,8 @@ var precedences = map[token.TypeToken]int{
 	token.SLASH:    6,
 	token.ASTERISK: 6,
 	token.LPAREN:   8,
-	token.DOT:      10,
 	token.LBRACKET: 11,
+	token.DOT:      12,
 }
 
 func (p *Parser) precedencePrefix() int {

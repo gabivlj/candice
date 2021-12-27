@@ -10,8 +10,20 @@ func (s *Semantic) analyzeCast(castCall *ast.BuiltinCall) ctypes.Type {
 	toType := castCall.TypeParameters[0]
 	if (ctypes.IsPointer(currentType) || ctypes.IsArray(currentType) || ctypes.IsNumeric(currentType)) &&
 		(ctypes.IsPointer(toType) || ctypes.IsArray(toType) || ctypes.IsNumeric(toType)) {
+		castCall.Type = toType
 		return toType
 	}
 	s.error("can't cast "+currentType.String()+" to "+toType.String(), castCall.Token)
 	return ctypes.TODO()
+}
+
+func (s *Semantic) analyzeAlloc(allocCall *ast.BuiltinCall) ctypes.Type {
+	t := allocCall.TypeParameters[0]
+	s.replaceAnonymous(t)
+	expr := s.analyzeExpression(allocCall.Parameters[0])
+	if !ctypes.IsNumeric(expr) {
+		s.typeMismatchError(allocCall.String(), allocCall.Token, ctypes.I32, expr)
+	}
+	allocCall.Type = &ctypes.Pointer{Inner: t}
+	return allocCall.Type
 }

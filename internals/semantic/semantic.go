@@ -10,6 +10,7 @@ import (
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
 	"log"
+	"strconv"
 )
 
 type Semantic struct {
@@ -32,6 +33,7 @@ func New() *Semantic {
 	}
 
 	s.builtinHandlers["cast"] = s.analyzeCast
+	s.builtinHandlers["alloc"] = s.analyzeAlloc
 	return s
 }
 
@@ -316,6 +318,14 @@ func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
 		return arr
 	}
 
+	if toSwap == ctypes.TODO() {
+		trueType := s.unwrapAnonymous(t)
+		if _, ok := trueType.(*ctypes.Anonymous); (ok && trueType == t) || trueType == nil {
+			s.error("unknown type "+t.String(), token.Token{})
+		}
+		return trueType
+	}
+
 	return toSwap
 }
 
@@ -371,10 +381,95 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 		return s.analyzeSimpleIdentifier(expressionType)
 	case *ast.Call:
 		return s.analyzeFunctionCall(expressionType)
+	case *ast.ArrayLiteral:
+		return s.analyzeArrayLiteral(expressionType)
+	case *ast.StructLiteral:
+		return s.analyzeStructLiteral(expressionType)
+	case *ast.IndexAccess:
+		return s.analyzeIndexAccess(expressionType)
 	default:
 		log.Fatalln("couldn't analyze expression: " + expressionType.String())
 	}
 	return nil
+}
+
+func (s *Semantic) analyzeIndexAccess(indexAccess *ast.IndexAccess) ctypes.Type {
+	leftType := s.analyzeExpression(indexAccess.Left)
+
+	if !ctypes.IsArray(leftType) && !ctypes.IsPointer(leftType) {
+		s.error("expected a pointer or an array for an index access, instead we got "+leftType.String(), indexAccess.Token)
+	}
+
+	indexType := s.analyzeExpression(indexAccess.Access)
+	if !ctypes.IsNumeric(indexType) {
+		s.typeMismatchError(indexAccess.String(), indexAccess.Token, ctypes.I32, indexType)
+	}
+
+	if arr, ok := leftType.(*ctypes.Array); ok {
+		return arr.Inner
+	}
+
+	if ptr, ok := leftType.(*ctypes.Pointer); ok {
+		return ptr.Inner
+	}
+
+	s.error("mismatched types on index access, internal compiler bug", indexAccess.Token)
+
+	return ctypes.TODO()
+}
+
+func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes.Type {
+	possibleStructType, ok := s.definedTypes[structLiteral.Name]
+
+	if !ok {
+		s.error("undefined struct "+structLiteral.Name+": "+structLiteral.String(), structLiteral.Token)
+		return ctypes.TODO()
+	}
+
+	structType, ok := s.unwrapAnonymous(possibleStructType).(*ctypes.Struct)
+
+	if !ok {
+		s.error("undefined struct "+structLiteral.Name+": "+structLiteral.String(), structLiteral.Token)
+		return ctypes.TODO()
+	}
+
+	structLiteral.Type = structType
+
+	paramMap := map[string]int{}
+	for i, name := range structType.Names {
+		paramMap[name] = i
+	}
+
+	for _, value := range structLiteral.Values {
+		index, ok := paramMap[value.Name]
+		if !ok {
+			s.error("undefined attribute on struct literal "+value.Name, structLiteral.Token)
+		}
+		expression := s.analyzeExpression(value.Expression)
+		if !s.areTypesEqual(structType.Fields[index], expression) {
+			s.typeMismatchError(structLiteral.String(), structLiteral.Token, structType.Fields[index], expression)
+		}
+	}
+
+	return structType
+}
+
+func (s *Semantic) analyzeArrayLiteral(arrayLiteral *ast.ArrayLiteral) ctypes.Type {
+	arrayType := arrayLiteral.Type.(*ctypes.Array)
+	currType := arrayType.Inner
+
+	if int(arrayType.Length) < len(arrayLiteral.Values) {
+		s.error("expected an array of length "+strconv.FormatInt(arrayType.Length, 10)+" or less", arrayLiteral.Token)
+	}
+
+	for _, expr := range arrayLiteral.Values {
+		t := s.analyzeExpression(expr)
+		if !s.areTypesEqual(currType, t) {
+			s.typeMismatchError(arrayLiteral.String(), arrayLiteral.Token, currType, t)
+		}
+	}
+
+	return arrayType
 }
 
 func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
@@ -452,8 +547,47 @@ func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) 
 	if s.isArithmetic(op) {
 		return s.analyzeArithmetic(binaryOperation)
 	}
+
+	if op == ops.Dot {
+		return s.analyzeStructAccess(binaryOperation)
+	}
+
 	s.error("can't analyze operator", binaryOperation.Token)
 	return ctypes.TODO()
+}
+
+func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) ctypes.Type {
+	left := s.analyzeExpression(binaryOperation.Left)
+	var strukt *ctypes.Struct
+	var isStruct bool
+
+	if ptr, isPointer := left.(*ctypes.Pointer); isPointer {
+		strukt, isStruct = s.unwrapAnonymous(ptr.Inner).(*ctypes.Struct)
+		if !isStruct {
+			s.error("expected struct on access, got "+ptr.Inner.String(), binaryOperation.Token)
+			return ctypes.TODO()
+		}
+	} else {
+		strukt, isStruct = left.(*ctypes.Struct)
+		if !isStruct {
+			s.error("expected struct on access, got "+left.String(), binaryOperation.Token)
+			return ctypes.TODO()
+		}
+	}
+
+	identifier, ok := binaryOperation.Right.(*ast.Identifier)
+	if !ok {
+		s.error("expected identifier for struct access, got "+binaryOperation.Right.String(), binaryOperation.Token)
+		return ctypes.TODO()
+	}
+
+	idx, t := strukt.GetField(identifier.Name)
+	if idx < 0 || t == nil {
+		s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
+		return ctypes.TODO()
+	}
+
+	return t
 }
 
 func (s *Semantic) isArithmetic(op ops.Operation) bool {
@@ -483,4 +617,9 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 
 func (s *Semantic) analyzeInteger(integer *ast.Integer) ctypes.Type {
 	return integer.Type
+}
+
+// replaceAnonymous recursively tries to find an anonymous type and will try to replace it with a true type
+func (s *Semantic) replaceAnonymous(t ctypes.Type) ctypes.Type {
+	return s.swapTypes(t, ctypes.TODO())
 }
