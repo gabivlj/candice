@@ -73,8 +73,9 @@ const (
 	IMPORT = TypeToken("IMPORT")
 	FOR    = TypeToken("FOR")
 
-	VOID  = TypeToken("VOID")
-	BREAK = TypeToken("BREAK")
+	VOID   = TypeToken("VOID")
+	BREAK  = TypeToken("BREAK")
+	EXTERN = TypeToken("EXTERN")
 )
 
 var keywords = map[string]TypeToken{
@@ -89,6 +90,7 @@ var keywords = map[string]TypeToken{
 	"struct": STRUCT,
 	"import": IMPORT,
 	"break":  BREAK,
+	"extern": EXTERN,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

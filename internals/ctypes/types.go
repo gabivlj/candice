@@ -189,6 +189,11 @@ func (f *Function) FullString() string {
 func (f *Function) String() string {
 	builder := strings.Builder{}
 	builder.WriteString("func")
+	if f.Name != "" {
+		builder.WriteByte(' ')
+		builder.WriteString(f.Name)
+	}
+
 	builder.WriteString("(")
 	for i := 0; i < len(f.Parameters); i++ {
 		if i >= 1 {
@@ -196,8 +201,13 @@ func (f *Function) String() string {
 		}
 		builder.WriteString(f.Parameters[i].String())
 	}
-	builder.WriteString(") ")
-	builder.WriteString(f.Return.String())
+	builder.WriteString(")")
+
+	if f.Return != nil {
+		builder.WriteByte(' ')
+		builder.WriteString(f.Return.String())
+	}
+
 	return builder.String()
 }
 

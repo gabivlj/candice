@@ -278,6 +278,11 @@ break
 			expected: `arr :<TODO> = [1000]i32 {1, 1, 1, 1, 2};
 `,
 		},
+		{
+			expression: `extern func thing(i32, i32, i32);`,
+			expected: `extern func thing(i32, i32, i32);
+`,
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)

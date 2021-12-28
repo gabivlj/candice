@@ -132,7 +132,11 @@ func TestSemantic_Analyze(t *testing.T) {
 			false,
 		},
 		{
-			`arr := [4]i32{1, 2, 3, 4}
+			`string :*i8 = "hello world"`,
+			true,
+		},
+		{
+			`arr :[4]i32 = [4]i32{1, 2, 3, 4}
 					for i := 0; i < 4; i = i + 1 { arr[i] = 1 }
 					if arr[0] == 0 {
 						arr[1] = 3

@@ -27,3 +27,18 @@ func (s *Semantic) analyzeAlloc(allocCall *ast.BuiltinCall) ctypes.Type {
 	allocCall.Type = &ctypes.Pointer{Inner: t}
 	return allocCall.Type
 }
+
+func (s *Semantic) analyzePrintln(_ *ast.BuiltinCall) ctypes.Type {
+	return ctypes.VoidType
+}
+
+func (s *Semantic) analyzeFree(freeCall *ast.BuiltinCall) ctypes.Type {
+	if len(freeCall.Parameters) != 1 {
+		s.error("expected one parameter for free builtin call", freeCall.Token)
+		return ctypes.TODO()
+	}
+	if !ctypes.IsPointer(s.analyzeExpression(freeCall.Parameters[0])) {
+		s.error("expected pointer type for free call", freeCall.Token)
+	}
+	return ctypes.VoidType
+}

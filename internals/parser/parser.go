@@ -108,6 +108,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		p.skipSemicolon()
 	}()
 	switch p.currentToken.Type {
+	case token.EXTERN:
+		return p.parseExtern()
 	case token.IDENT:
 		return p.parseIdentifierStatement()
 	case token.ASTERISK:
@@ -397,6 +399,10 @@ func (p *Parser) parseType() ctypes.Type {
 
 	if p.currentToken.Type == token.FUNCTION {
 		_ = p.nextToken()
+		name := ""
+		if p.currentToken.Type == token.IDENT {
+			name = p.nextToken().Literal
+		}
 		p.expect(token.LPAREN)
 		p.nextToken()
 		var parameters []ctypes.Type
@@ -414,7 +420,7 @@ func (p *Parser) parseType() ctypes.Type {
 			returnType = p.parseType()
 		}
 		return &ctypes.Function{
-			Name:       "",
+			Name:       name,
 			Parameters: parameters,
 			Names:      []string{},
 			Return:     returnType,
@@ -766,5 +772,24 @@ func (p *Parser) parseFor() ast.Statement {
 		InitializerStatement: assignment,
 		Operation:            operation,
 		Block:                block,
+	}
+}
+
+func (p *Parser) parseExtern() ast.Statement {
+	extern := p.nextToken()
+	p.expect(token.FUNCTION)
+	t := p.parseType()
+	if _, ok := t.(*ctypes.Function); !ok {
+		p.addErrorMessage("expected external function, got " + t.String())
+		return &ast.ExternStatement{}
+	}
+
+	if fun, ok := t.(*ctypes.Function); !ok || fun.Name == "" {
+		p.addErrorMessage("badly formed external function")
+	}
+
+	return &ast.ExternStatement{
+		Token: extern,
+		Type:  t,
 	}
 }

@@ -34,6 +34,9 @@ func New() *Semantic {
 
 	s.builtinHandlers["cast"] = s.analyzeCast
 	s.builtinHandlers["alloc"] = s.analyzeAlloc
+	s.builtinHandlers["println"] = s.analyzePrintln
+	s.builtinHandlers["free"] = s.analyzeFree
+
 	return s
 }
 
@@ -387,6 +390,9 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 		return s.analyzeStructLiteral(expressionType)
 	case *ast.IndexAccess:
 		return s.analyzeIndexAccess(expressionType)
+	case *ast.StringLiteral:
+		return &ctypes.Pointer{Inner: ctypes.I8}
+
 	default:
 		log.Fatalln("couldn't analyze expression: " + expressionType.String())
 	}
