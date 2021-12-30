@@ -1,13 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"github.com/gabivlj/candice/internals/ast"
+	"github.com/gabivlj/candice/internals/compiler"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
+	"github.com/gabivlj/candice/internals/semantic"
+	"github.com/gabivlj/candice/pkg/a"
+	"os"
+	"strings"
 )
 
 func main() {
-	tree := parser.New(lexer.New("thing.thing2.thing3[3].thing4.thing5.thing6")).Parse()
-	fmt.Printf("%v", tree.Statements[0].(*ast.ExpressionStatement).Expression.(*ast.BinaryOperation).Left.(*ast.BinaryOperation).Right)
+	code, _ := os.ReadFile("./sandbox.cd")
+
+	l := lexer.New(string(code))
+	p := parser.New(l)
+	s := semantic.New()
+	tree := p.Parse()
+	s.Analyze(tree)
+	c := compiler.New()
+	c.Compile(tree)
+	bytes, err := c.Execute()
+	a.AssertErr(err)
+	a.Assert(strings.TrimSpace(string(bytes)) == "3")
 }

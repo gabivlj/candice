@@ -1,0 +1,10 @@
+struct Point {
+    x i64
+    y i64
+    points *Point
+}
+
+p := @Point { x: 43, y: 55, points: @alloc(Point, 33) }
+p.x = 3
+x := p.x;
+@println(x)
