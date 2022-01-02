@@ -29,6 +29,7 @@ type Compiler struct {
 	definitionsToBePopped []string
 	stacks                []map[string]value.Value
 	functions             map[string]*Value
+	currentFunction       *ir.Func
 }
 
 func New() *Compiler {
@@ -43,6 +44,7 @@ func New() *Compiler {
 		definitionsToBePopped: []string{"<>"},
 		stacks:                []map[string]value.Value{{}},
 		functions:             map[string]*Value{},
+		currentFunction:       main,
 	}
 	c.initializeBuiltinLib()
 	return c
@@ -69,7 +71,6 @@ func (c *Compiler) removeCurrentSmallContext() {
 }
 
 func (c *Compiler) pushBlock(block *ir.Block) {
-	c.stacks = append(c.stacks, map[string]value.Value{})
 	c.blocks = append(c.blocks, block)
 	c.createSmallContext()
 }
@@ -84,7 +85,7 @@ func (c *Compiler) block() *ir.Block {
 
 func (c *Compiler) popBlock() *ir.Block {
 	b := c.block()
-	c.stacks = c.stacks[:len(c.stacks)-1]
+	c.removeCurrentSmallContext()
 	c.blocks = c.blocks[:len(c.blocks)-1]
 	return b
 }
@@ -225,6 +226,11 @@ func (c *Compiler) Compile(tree ast.Node) {
 		{
 			c.compileReturn(t)
 		}
+
+	case *ast.IfStatement:
+		{
+			c.compileIf(t)
+		}
 	}
 }
 
@@ -239,23 +245,83 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 }
 
 func (c *Compiler) compileFunctionDeclaration(funk *ast.FunctionDeclarationStatement) {
+	// Declare params LLVM IR
 	params := make([]*ir.Param, 0, len(funk.FunctionType.Parameters))
 	for i, param := range funk.FunctionType.Parameters {
 		t := c.ToLLVMType(param)
 		name := funk.FunctionType.Names[i]
 		params = append(params, ir.NewParam(name, t))
 	}
+
+	// Declare llvmFunction
 	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, c.ToLLVMType(funk.FunctionType.Return), params...)
 	llvmFunction.CallingConv = enum.CallingConvC
+
+	// Create a main block to the function
 	c.pushBlock(llvmFunction.NewBlock(funk.FunctionType.Name))
+
+	// Create a variable stack isolated from the rest of variable definitions
+	c.stacks = append(c.stacks, map[string]value.Value{})
+
+	// Declare parameters IR
 	for _, param := range params {
-		c.declare(param.Name(), param)
+		allocatedParameter := c.block().NewAlloca(param.Type())
+		c.block().NewStore(param, allocatedParameter)
+		c.declare(param.Name(), allocatedParameter)
 	}
+
+	// Create function
 	c.functions[funk.FunctionType.Name] = &Value{
 		Value: llvmFunction,
 		Type:  funk.FunctionType,
 	}
+
+	// Set it as current function
+	prevFunction := c.currentFunction
+	c.currentFunction = llvmFunction
+
+	// Compile block
 	for _, statement := range funk.Block.Statements {
+		c.Compile(statement)
+	}
+
+	// If return hasn't been declared, declare a void return
+	if c.block().Term == nil {
+		c.block().NewRet(nil)
+	}
+
+	// Pop block, stack and restore current function
+	c.popBlock()
+	c.stacks = c.stacks[:len(c.stacks)-1]
+	c.currentFunction = prevFunction
+}
+
+func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
+	block := c.currentFunction.NewBlock("if.then")
+	c.compileBlock(ifStatement.Block, block)
+	blockElse := c.currentFunction.NewBlock("if.else")
+	if ifStatement.Else != nil {
+		c.compileBlock(ifStatement.Else, blockElse)
+	}
+	c.block().NewCondBr(c.toBool(c.loadIfPointer(c.compileExpression(ifStatement.Condition))), block, blockElse)
+	leaveBlock := c.currentFunction.NewBlock("leave")
+	c.blocks[len(c.blocks)-1] = leaveBlock
+	if block.Term == nil {
+		block.NewBr(leaveBlock)
+	}
+
+	if blockElse.Term == nil {
+		blockElse.NewBr(leaveBlock)
+	}
+}
+
+func (c *Compiler) toBool(value value.Value) value.Value {
+	return c.block().NewICmp(enum.IPredNE, value, zero)
+}
+
+func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) {
+	c.pushBlock(blockIR)
+	for _, statement := range block.Statements {
 		c.Compile(statement)
 	}
 	c.popBlock()
@@ -489,6 +555,10 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 		{
 			return c.compileStructAccess(expr)
 		}
+	case ops.GreaterThanEqual:
+		return c.block().NewICmp(enum.IPredSGE,
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)))
 	}
 
 	panic("unimplemented: " + expr.Operation.String())

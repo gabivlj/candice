@@ -1,0 +1,14 @@
+arr := @alloc(i32, 3)
+arr[0] = 1
+arr[1] = 2
+arr[2] = 3
+
+func resolve(arr *i32, index i32) {
+    if index >= 3 {
+        return;
+    }
+    @println(arr[index])
+    resolve(arr, index + 1)
+}
+
+resolve(arr, 0)

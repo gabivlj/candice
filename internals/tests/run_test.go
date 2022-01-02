@@ -14,7 +14,8 @@ func TestSrcs(t *testing.T) {
 	expectedOutputs := map[string]string{
 		"struct.cd":    "-3 0 -3 43",
 		"cast.cd":      "32",
-		"functions.cd": "3 4",
+		"functions.cd": "3 4 5 5",
+		"ifstmt.cd":    "1 2 3",
 	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {
@@ -45,6 +46,5 @@ func TestSrcs(t *testing.T) {
 			t.Fatal("test for", elem.Name(), "failed, expected output", expected, "got:", string(output), " ", err)
 		}
 		log.Println("File ", elem.Name(), " passed")
-
 	}
 }
