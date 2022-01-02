@@ -99,6 +99,9 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	case *ast.AssignmentStatement:
 		s.analyzeAssigmentStatement(statementType)
 		return
+	case *ast.ExternStatement:
+		s.analyzeExternStatement(statementType)
+		return
 
 	case *ast.ExpressionStatement:
 		s.analyzeExpression(statementType.Expression)
@@ -124,6 +127,14 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	}
 
 	log.Fatalln("couldn't analyze statement: " + statement.String() + " ")
+}
+
+func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
+	funk, ok := extern.Type.(*ctypes.Function)
+	if !ok {
+		s.typeMismatchError(extern.String(), extern.Token, &ctypes.Function{Name: "function"}, extern.Type)
+	}
+	s.variables.Add(funk.Name, funk)
 }
 
 func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
@@ -539,7 +550,8 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, &ctypes.Pointer{Inner: t}, t)
 			return t
 		} else {
-			return ptr.Inner
+			prefixOperation.Type = ptr.Inner
+			return s.unwrapAnonymous(ptr.Inner)
 		}
 	}
 
@@ -574,7 +586,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 			return ctypes.TODO()
 		}
 	} else {
-		strukt, isStruct = left.(*ctypes.Struct)
+		strukt, isStruct = s.unwrapAnonymous(left).(*ctypes.Struct)
 		if !isStruct {
 			s.error("expected struct on access, got "+left.String(), binaryOperation.Token)
 			return ctypes.TODO()
@@ -592,6 +604,8 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 		s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
 		return ctypes.TODO()
 	}
+
+	binaryOperation.Type = t
 
 	return t
 }

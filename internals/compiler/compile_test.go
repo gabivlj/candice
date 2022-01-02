@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/lexer"
+	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
+	"github.com/gabivlj/candice/internals/parser"
+	"github.com/gabivlj/candice/internals/semantic"
 	"github.com/gabivlj/candice/pkg/a"
 	"testing"
 )
@@ -22,20 +26,20 @@ func TestCompiler_CompileExpression_With_AddSubtractMultiplyDivide(t *testing.T)
 							Left: &ast.BinaryOperation{
 								Left: &ast.BinaryOperation{
 									Operation: ops.Add,
-									Left:      &ast.Integer{Value: 3},
-									Right:     &ast.Integer{Value: 3},
+									Left:      &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
+									Right:     &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 								},
 								Right: &ast.BinaryOperation{
 									Operation: ops.Divide,
 									Left: &ast.BinaryOperation{
 										Operation: ops.Subtract,
-										Left:      &ast.Integer{Value: 332},
-										Right:     &ast.Integer{Value: 1},
+										Left:      &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 332},
+										Right:     &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 1},
 									},
-									Right: &ast.Integer{Value: 3},
+									Right: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 								},
 							},
-							Right: &ast.Integer{Value: 5},
+							Right: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 5},
 						},
 					},
 				},
@@ -59,8 +63,8 @@ func TestCompiler_CompileExpression_With_And(t *testing.T) {
 						Parameters: []ast.Expression{
 							&ast.BinaryOperation{
 								Operation: ops.BinaryAND,
-								Left:      &ast.Integer{Value: 3},
-								Right:     &ast.Integer{Value: 5},
+								Left:      &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
+								Right:     &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 5},
 							},
 						},
 					},
@@ -82,8 +86,8 @@ func TestCompiler_CompileExpression_With_Or(t *testing.T) {
 						Parameters: []ast.Expression{
 							&ast.BinaryOperation{
 								Operation: ops.BinaryOR,
-								Left:      &ast.Integer{Value: 3},
-								Right:     &ast.Integer{Value: 5},
+								Left:      &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
+								Right:     &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 5},
 							},
 						},
 					},
@@ -105,8 +109,8 @@ func TestCompiler_CompileExpression_With_Xor(t *testing.T) {
 						Parameters: []ast.Expression{
 							&ast.BinaryOperation{
 								Operation: ops.BinaryXOR,
-								Left:      &ast.Integer{Value: 3322323},
-								Right:     &ast.Integer{Value: 51231212},
+								Left:      &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3322323},
+								Right:     &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 51231212},
 							},
 						},
 					},
@@ -171,11 +175,11 @@ func TestCompiler_CompileStruct(t *testing.T) {
 					Values: []ast.StructValue{
 						{
 							Name:       "x",
-							Expression: &ast.Integer{Value: 3},
+							Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 						},
 						{
 							Name:       "y",
-							Expression: &ast.Integer{Value: 3},
+							Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 						},
 						{
 							Name: "self",
@@ -184,11 +188,11 @@ func TestCompiler_CompileStruct(t *testing.T) {
 								Values: []ast.StructValue{
 									{
 										Name:       "x",
-										Expression: &ast.Integer{Value: 3},
+										Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 									},
 									{
 										Name:       "y",
-										Expression: &ast.Integer{Value: 3},
+										Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 									},
 								},
 							},
@@ -230,7 +234,7 @@ func TestCompiler_CompileExpression_With_Malloc(t *testing.T) {
 				Expression: &ast.BuiltinCall{
 					Name:           "alloc",
 					TypeParameters: []ctypes.Type{&ctypes.Integer{BitSize: 64}},
-					Parameters:     []ast.Expression{&ast.Integer{Value: 5}},
+					Parameters:     []ast.Expression{&ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 5}},
 				},
 			},
 			&ast.AssignmentStatement{
@@ -238,9 +242,9 @@ func TestCompiler_CompileExpression_With_Malloc(t *testing.T) {
 					Left: &ast.Identifier{
 						Name: "coolStuff",
 					},
-					Access: &ast.Integer{Value: 1},
+					Access: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 1},
 				},
-				Expression: &ast.Integer{Value: 3333},
+				Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3333},
 			},
 			&ast.DeclarationStatement{
 				Name: "coolInside",
@@ -249,7 +253,7 @@ func TestCompiler_CompileExpression_With_Malloc(t *testing.T) {
 					Left: &ast.Identifier{
 						Name: "coolStuff",
 					},
-					Access: &ast.Integer{Value: 1},
+					Access: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 1},
 				},
 			},
 			&ast.ExpressionStatement{Expression: &ast.BuiltinCall{
@@ -286,7 +290,7 @@ func TestCompiler_CompileExpression_With_MallocStruct(t *testing.T) {
 				Expression: &ast.BuiltinCall{
 					Name:           "alloc",
 					TypeParameters: []ctypes.Type{point2Struct.Type},
-					Parameters:     []ast.Expression{&ast.Integer{Value: 5}},
+					Parameters:     []ast.Expression{&ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 5}},
 				},
 			},
 			&ast.AssignmentStatement{
@@ -294,18 +298,18 @@ func TestCompiler_CompileExpression_With_MallocStruct(t *testing.T) {
 					Left: &ast.Identifier{
 						Name: "coolStuff",
 					},
-					Access: &ast.Integer{Value: 1},
+					Access: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 1},
 				},
 				Expression: &ast.StructLiteral{
 					Name: "Point2",
 					Values: []ast.StructValue{
 						{
 							Name:       "x",
-							Expression: &ast.Integer{Value: 3},
+							Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
 						},
 						{
 							Name:       "y",
-							Expression: &ast.Integer{Value: 33},
+							Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 33},
 						},
 					},
 				},
@@ -316,14 +320,14 @@ func TestCompiler_CompileExpression_With_MallocStruct(t *testing.T) {
 						Left: &ast.Identifier{
 							Name: "coolStuff",
 						},
-						Access: &ast.Integer{Value: 1},
+						Access: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 1},
 					},
 					Right: &ast.Identifier{
 						Name: "x",
 					},
 					Operation: ops.Dot,
 				},
-				Expression: &ast.Integer{Value: 34},
+				Expression: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 34},
 			},
 			&ast.DeclarationStatement{
 				Name: "coolInside",
@@ -333,7 +337,7 @@ func TestCompiler_CompileExpression_With_MallocStruct(t *testing.T) {
 						Left: &ast.Identifier{
 							Name: "coolStuff",
 						},
-						Access: &ast.Integer{Value: 1},
+						Access: &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 1},
 					},
 					Right: &ast.Identifier{
 						Name: "x",
@@ -358,8 +362,8 @@ func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
 	c := New()
 	binOp := &ast.BinaryOperation{
 		Operation: ops.Add,
-		Left:      &ast.Integer{Value: 3},
-		Right:     &ast.Integer{Value: 5},
+		Left:      &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 3},
+		Right:     &ast.Integer{Node: &node.Node{Type: ctypes.I64}, Value: 5},
 	}
 	c.Compile(
 		&ast.Program{
@@ -381,4 +385,15 @@ func TestCompiler_CompileExpression_With_Sum_And_Decl(t *testing.T) {
 		},
 	)
 	a.AssertEqual(fmt.Sprintf("%d", 3+5), string(a.UnwrapBytes(c.Execute())))
+}
+
+func TestCompiler_FullPipeline(t *testing.T) {
+	code := `code : i32 = 3; @println(code)`
+	l := lexer.New(code)
+	p := parser.New(l)
+	s := semantic.New()
+	tree := p.Parse()
+	s.Analyze(tree)
+	c := New()
+	c.Compile(tree)
 }

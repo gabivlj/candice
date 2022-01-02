@@ -440,10 +440,6 @@ func (p *Parser) parseType() ctypes.Type {
 		return &ctypes.Array{Length: integer, Inner: p.parseType()}
 	}
 
-	if p.currentToken.Type == token.VOID {
-		return &ctypes.Void{}
-	}
-
 	return nil
 }
 

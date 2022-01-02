@@ -13,10 +13,12 @@ var I32 = &Integer{BitSize: 32}
 var I64 = &Integer{BitSize: 64}
 
 var typeLiteral = map[string]Type{
-	"i8":  I8,
-	"i16": I16,
-	"i32": I32,
-	"i64": I64,
+	"i8":   I8,
+	"i16":  I16,
+	"i32":  I32,
+	"i64":  I64,
+	"void": VoidType,
+	"i0":   VoidType,
 }
 
 func LiteralToType(literal string) Type {

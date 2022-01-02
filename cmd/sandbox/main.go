@@ -6,6 +6,7 @@ import (
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/semantic"
 	"github.com/gabivlj/candice/pkg/a"
+	"log"
 	"os"
 	"strings"
 )
@@ -18,9 +19,13 @@ func main() {
 	s := semantic.New()
 	tree := p.Parse()
 	s.Analyze(tree)
+	if len(s.Errors) > 0 {
+		log.Println(s.Errors)
+		return
+	}
 	c := compiler.New()
 	c.Compile(tree)
 	bytes, err := c.Execute()
 	a.AssertErr(err)
-	a.Assert(strings.TrimSpace(string(bytes)) == "3")
+	a.Assert(strings.TrimSpace(string(bytes)) == "-3 0 -3", strings.TrimSpace(string(bytes)))
 }

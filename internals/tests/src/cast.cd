@@ -1,0 +1,2 @@
+element : i16 = @cast(i16, 32)
+@println(element)

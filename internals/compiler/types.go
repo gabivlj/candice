@@ -3,6 +3,7 @@ package compiler
 import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/llir/llvm/ir/types"
+	"log"
 )
 
 type Type struct {
@@ -66,14 +67,18 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 	case *ctypes.Struct:
 		{
 			if t, ok := c.types[el.Name]; ok {
-
 				return t.llvmType
 			}
-			llvmTypes := make([]types.Type, len(el.Fields))
-			for i, field := range el.Fields {
-				llvmTypes[i] = c.ToLLVMType(field)
+			llvmTypes := make([]types.Type, 0, len(el.Fields))
+			s := types.NewStruct()
+			s.Opaque = true
+			c.types[el.Name] = &Type{llvmType: s, candiceType: ctypes.TODO()}
+			for _, field := range el.Fields {
+				llvmTypes = append(llvmTypes, c.ToLLVMType(field))
 			}
-			s := types.NewStruct(llvmTypes...)
+			log.Println(llvmTypes)
+			s.Fields = llvmTypes
+			s.Opaque = false
 			return s
 		}
 	case *ctypes.Array:

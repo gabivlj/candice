@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"github.com/gabivlj/candice/internals/compiler"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/semantic"
@@ -10,6 +11,10 @@ import (
 )
 
 func TestSrcs(t *testing.T) {
+	expectedOutputs := map[string]string{
+		"struct.cd": "-3 0 -3",
+		"cast.cd":   "32",
+	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {
 		t.Fatal(err)
@@ -29,6 +34,14 @@ func TestSrcs(t *testing.T) {
 		s.Analyze(root)
 		if len(s.Errors) > 0 {
 			t.Fatal(s.Errors)
+		}
+
+		c := compiler.New()
+		c.Compile(root)
+		output, err := c.Execute()
+		expected := expectedOutputs[elem.Name()]
+		if expected != string(output) {
+			t.Fatal("test for", elem.Name(), "failed, expected output", expected, "got:", string(output), " ", err)
 		}
 		log.Println("File ", elem.Name(), " passed")
 	}

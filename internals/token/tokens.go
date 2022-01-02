@@ -73,7 +73,6 @@ const (
 	IMPORT = TypeToken("IMPORT")
 	FOR    = TypeToken("FOR")
 
-	VOID   = TypeToken("VOID")
 	BREAK  = TypeToken("BREAK")
 	EXTERN = TypeToken("EXTERN")
 )
@@ -86,7 +85,6 @@ var keywords = map[string]TypeToken{
 	"else":   ELSE,
 	"for":    FOR,
 	"return": RETURN,
-	"void":   VOID,
 	"struct": STRUCT,
 	"import": IMPORT,
 	"break":  BREAK,

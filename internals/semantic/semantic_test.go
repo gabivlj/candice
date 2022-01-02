@@ -143,6 +143,11 @@ func TestSemantic_Analyze(t *testing.T) {
 					}`,
 			true,
 		},
+		{
+			`extern func print(*void);
+					print(@cast(*void, @alloc(i32, 1)))`,
+			true,
+		},
 	}
 
 	for _, test := range tests {

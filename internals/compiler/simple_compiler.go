@@ -101,12 +101,23 @@ func (c *Compiler) initializeBuiltinLib() {
 			constantString.WriteString("%d ")
 		}
 		s := constantString.String()
+
 		stringWithCharArrayType := constant.NewCharArrayFromString(s)
+
+		// Define as global, we can keep it at all times on memory
+		var globalDef value.Value
+
+		if definition, ok := c.definitions[s]; !ok {
+			globalDef = c.m.NewGlobalDef(s, stringWithCharArrayType)
+			c.definitions[s] = globalDef
+		} else {
+			globalDef = definition
+		}
+
 		i8sType := c.block().NewGetElementPtr(
 			// To be honest this is so strange, we are casting [i8 x len] to *[i8 x len]
 			types.NewArray(uint64(len(s)), types.I8),
-			// Define as global, we can keep it at all times on memory
-			c.m.NewGlobalDef(s, stringWithCharArrayType),
+			globalDef,
 			zero,
 			zero,
 		)
@@ -127,12 +138,17 @@ func (c *Compiler) initializeBuiltinLib() {
 		typeParameter := call.TypeParameters[0]
 		toReturnType := types.NewPointer(c.ToLLVMType(typeParameter))
 		length := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
+		length = c.handleIntegerCast(types.I64, length)
 		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
 		returnedValue := c.block().NewCall(c.definitions["malloc"], totalSize)
 		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
 		alloca := c.block().NewAlloca(castedValue.Type())
 		c.block().NewStore(castedValue, alloca)
 		return alloca
+	}
+
+	c.builtins["cast"] = func(call *ast.BuiltinCall) value.Value {
+		return c.handleCast(call)
 	}
 
 }
@@ -216,28 +232,23 @@ func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
 }
 
 func (c *Compiler) compileType(name string, ct ctypes.Type) {
-	// todo: recursive types
-	//s := &types.StructType{TypeName: "__todo"}
-	//tmp := &Type{
-	//	llvmType:    s,
-	//	candiceType: &ctypes.Pointer{Inner: ct},
-	//}
-	//c.types[name] = tmp
 	t := c.ToLLVMType(ct)
 	c.types[name] = &Type{
 		llvmType:    c.m.NewTypeDef(name, t),
 		candiceType: ct,
 	}
-	//tmp.llvmType = t
-
 }
 
 func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 
 	switch e := expression.(type) {
+	case *ast.PrefixOperation:
+		return c.compilePrefixExpression(e)
 	case *ast.Integer:
 		{
-			return constant.NewInt(types.I64, e.Value)
+			theType := c.ToLLVMType(e.Type)
+			integerType := theType.(*types.IntType)
+			return constant.NewInt(integerType, e.Value)
 		}
 
 	case *ast.BinaryOperation:
@@ -269,6 +280,27 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 		{
 			return c.compileStructLiteral(e)
 		}
+	}
+
+	return nil
+}
+
+func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Value {
+	prefixValue := c.compileExpression(prefix.Right)
+	if prefix.Operation == ops.Subtract {
+		prefixValue = c.loadIfPointer(prefixValue)
+		return c.block().NewMul(prefixValue, constant.NewInt(prefixValue.Type().(*types.IntType), -1))
+	}
+
+	if prefix.Operation == ops.BinaryAND {
+		allocatedValue := c.block().NewAlloca(prefixValue.Type())
+		c.block().NewStore(prefixValue, allocatedValue)
+		return allocatedValue
+	}
+
+	if prefix.Operation == ops.Multiply {
+		prefixValue = c.block().NewLoad(prefixValue.Type().(*types.PointerType).ElemType, prefixValue)
+		return prefixValue
 	}
 
 	return nil
@@ -421,9 +453,20 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 	leftStruct := c.compileExpression(expr.Left)
 	var candiceType *ctypes.Struct
 	if s, ok := leftStruct.Type().(*types.PointerType); ok {
-		candiceType = c.types[s.ElemType.Name()].candiceType.(*ctypes.Struct)
+		if types.IsPointer(s.ElemType) {
+			leftStruct = c.loadIfPointer(leftStruct)
+			s, ok = leftStruct.Type().(*types.PointerType)
+			if !ok {
+				panic("not a struct " + leftStruct.Type().String() + " " + expr.String())
+			}
+		}
+		t := c.types[s.ElemType.Name()]
+		candiceType, ok = t.candiceType.(*ctypes.Struct)
+		if !ok {
+			panic("not candice type ctypes struct: " + t.candiceType.String())
+		}
 	} else {
-		panic("not a struct")
+		panic("not a struct " + leftStruct.Type().String() + " " + expr.String())
 	}
 	for {
 		rightName, last := getName(expr.Right)
@@ -506,4 +549,26 @@ func (c *Compiler) compileShiftLeftBinary(expr *ast.BinaryOperation) value.Value
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	return c.block().NewShl(leftValue, rightValue)
+}
+
+func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
+	typeParameter := call.TypeParameters[0]
+	toReturnType := c.ToLLVMType(typeParameter)
+	variable := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
+	if ctypes.IsNumeric(call.TypeParameters[0]) && types.IsInt(variable.Type()) {
+		return c.handleIntegerCast(toReturnType.(*types.IntType), variable)
+	}
+	panic("cant convert yet to this")
+	return nil
+}
+
+func (c *Compiler) handleIntegerCast(toReturnType *types.IntType, variable value.Value) value.Value {
+	variableType := variable.Type().(*types.IntType)
+	if variableType.BitSize > toReturnType.BitSize {
+		return c.block().NewTrunc(variable, toReturnType)
+	}
+	if variableType.BitSize == toReturnType.BitSize {
+		return variable
+	}
+	return c.block().NewSExt(variable, toReturnType)
 }
