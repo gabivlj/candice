@@ -1,0 +1,15 @@
+struct Point {
+    x i32
+    y i32
+}
+
+func createPoint(x i32, y i32) Point {
+    thePoint := @Point{}
+    thePoint.x = x;
+    thePoint.y = y;
+    return thePoint;
+}
+
+aPoint := createPoint(3, 4)
+@println(aPoint.x)
+@println(aPoint.y)

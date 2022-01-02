@@ -8,6 +8,7 @@ import (
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/llir/llvm/ir"
 	"github.com/llir/llvm/ir/constant"
+	"github.com/llir/llvm/ir/enum"
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
 	"os/exec"
@@ -27,6 +28,7 @@ type Compiler struct {
 	builtins              map[string]func(*ast.BuiltinCall) value.Value
 	definitionsToBePopped []string
 	stacks                []map[string]value.Value
+	functions             map[string]*Value
 }
 
 func New() *Compiler {
@@ -39,7 +41,8 @@ func New() *Compiler {
 		builtins:              map[string]func(*ast.BuiltinCall) value.Value{},
 		types:                 map[string]*Type{},
 		definitionsToBePopped: []string{"<>"},
-		stacks:                []map[string]value.Value{map[string]value.Value{}},
+		stacks:                []map[string]value.Value{{}},
+		functions:             map[string]*Value{},
 	}
 	c.initializeBuiltinLib()
 	return c
@@ -63,6 +66,12 @@ func (c *Compiler) removeCurrentSmallContext() {
 		delete(stack, c.definitionsToBePopped[i])
 	}
 	c.definitionsToBePopped = c.definitionsToBePopped[:i]
+}
+
+func (c *Compiler) pushBlock(block *ir.Block) {
+	c.stacks = append(c.stacks, map[string]value.Value{})
+	c.blocks = append(c.blocks, block)
+	c.createSmallContext()
 }
 
 func (c *Compiler) stack() map[string]value.Value {
@@ -207,24 +216,61 @@ func (c *Compiler) Compile(tree ast.Node) {
 			_ = c.popBlock()
 		}
 
+	case *ast.FunctionDeclarationStatement:
+		{
+			c.compileFunctionDeclaration(t)
+		}
+
+	case *ast.ReturnStatement:
+		{
+			c.compileReturn(t)
+		}
 	}
+}
+
+func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
+	if ret.Expression == nil {
+		c.block().NewRet(nil)
+		return
+	}
+
+	toReturn := c.compileExpression(ret.Expression)
+	c.block().NewRet(c.loadIfPointer(toReturn))
+}
+
+func (c *Compiler) compileFunctionDeclaration(funk *ast.FunctionDeclarationStatement) {
+	params := make([]*ir.Param, 0, len(funk.FunctionType.Parameters))
+	for i, param := range funk.FunctionType.Parameters {
+		t := c.ToLLVMType(param)
+		name := funk.FunctionType.Names[i]
+		params = append(params, ir.NewParam(name, t))
+	}
+	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, c.ToLLVMType(funk.FunctionType.Return), params...)
+	llvmFunction.CallingConv = enum.CallingConvC
+	c.pushBlock(llvmFunction.NewBlock(funk.FunctionType.Name))
+	for _, param := range params {
+		c.declare(param.Name(), param)
+	}
+	c.functions[funk.FunctionType.Name] = &Value{
+		Value: llvmFunction,
+		Type:  funk.FunctionType,
+	}
+	for _, statement := range funk.Block.Statements {
+		c.Compile(statement)
+	}
+	c.popBlock()
 }
 
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
-	//if _, exists := c.types[t.Name()]; exists {
-	//	if _, ok := c.types[t.Name()].candiceType.(*ctypes.Struct); ok {
-	//		// Convert struct to pointer.
-	//		// Reason why is that it's easy to copy a struct,
-	//		// the main convention we should maintain is, a struct is always behind a pointer.
-	//		// And when we copy make a manual copy before calling the function.
-	//		t = types.NewPointer(t)
-	//	}
-	//}
 	val := c.block().NewAlloca(t)
 	c.block().NewStore(c.loadIfPointer(c.compileExpression(decl.Expression)), val)
-	c.stack()[decl.Name] = val
-	c.addToCurrentSmallContext(decl.Name)
+	c.declare(decl.Name, val)
+}
+
+func (c *Compiler) declare(name string, value value.Value) {
+	c.stack()[name] = value
+	c.addToCurrentSmallContext(name)
 }
 
 func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
@@ -309,6 +355,9 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 // NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
+	if fn, ok := c.functions[id.Name]; ok {
+		return fn.Value
+	}
 	return c.compileIdentifierReference(id)
 }
 
@@ -326,7 +375,14 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
-	return nil
+	funk := c.compileExpression(ast.Left)
+	arguments := make([]value.Value, 0, len(ast.Parameters))
+	for _, argument := range ast.Parameters {
+		compiledValue := c.compileExpression(argument)
+		loadedValue := c.loadIfPointer(compiledValue)
+		arguments = append(arguments, loadedValue)
+	}
+	return c.block().NewCall(funk, arguments...)
 }
 
 func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {

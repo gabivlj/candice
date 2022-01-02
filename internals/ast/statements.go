@@ -176,6 +176,7 @@ func (e *ExternStatement) String() string {
 func (e *ExternStatement) statementNode() {}
 
 type ReturnStatement struct {
+	Type       ctypes.Type
 	Token      token.Token
 	Expression Expression
 }

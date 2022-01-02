@@ -27,6 +27,10 @@ func (p *Parser) parsePossibleAssignment() ast.Statement {
 						if prefix.Operation != ops.Multiply {
 							p.addErrorMessage("this prefix is not permitted in an assignment")
 						}
+						return &ast.AssignmentStatement{
+							Left:       bin.Left,
+							Expression: bin.Right,
+						}
 					}
 				}
 			}
@@ -34,11 +38,11 @@ func (p *Parser) parsePossibleAssignment() ast.Statement {
 				Left:       bin.Left,
 				Expression: bin.Right,
 			}
-		} else {
-			return &ast.ExpressionStatement{
-				Token:      p.currentToken,
-				Expression: expr,
-			}
+		}
+
+		return &ast.ExpressionStatement{
+			Token:      p.currentToken,
+			Expression: expr,
 		}
 	}
 

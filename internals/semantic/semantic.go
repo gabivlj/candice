@@ -254,6 +254,7 @@ func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) 
 	if !s.areTypesEqual(theType, s.currentExpectedReturnType) {
 		s.typeMismatchError(returnStatement.String(), returnStatement.Token, s.currentExpectedReturnType, theType)
 	}
+	returnStatement.Type = theType
 	s.returns = true
 }
 

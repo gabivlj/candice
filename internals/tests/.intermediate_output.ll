@@ -121,6 +121,39 @@ _main:
 	%88 = load i64, i64* %84
 	%89 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
 	%90 = call i32 (i8*, ...) @printf(i8* %89, i64 %88)
+	%91 = alloca %Point*
+	%92 = sext i32 1 to i64
+	%93 = mul i64 %92, 0
+	%94 = call i8* @malloc(i64 %93)
+	%95 = bitcast i8* %94 to %Point*
+	%96 = alloca %Point*
+	store %Point* %95, %Point** %96
+	%97 = load %Point*, %Point** %96
+	store %Point* %97, %Point** %91
+	%98 = load %Point*, %Point** %91
+	%99 = alloca %Point
+	%100 = sext i32 43 to i64
+	%101 = getelementptr %Point, %Point* %99, i32 0, i32 0
+	store i64 %100, i64* %101
+	%102 = sext i32 55 to i64
+	%103 = getelementptr %Point, %Point* %99, i32 0, i32 1
+	store i64 %102, i64* %103
+	%104 = sext i32 33 to i64
+	%105 = mul i64 %104, 0
+	%106 = call i8* @malloc(i64 %105)
+	%107 = bitcast i8* %106 to %Point*
+	%108 = alloca %Point*
+	store %Point* %107, %Point** %108
+	%109 = getelementptr %Point, %Point* %99, i32 0, i32 2
+	%110 = load %Point*, %Point** %108
+	store %Point* %110, %Point** %109
+	%111 = load %Point, %Point* %99
+	store %Point %111, %Point* %98
+	%112 = load %Point*, %Point** %91
+	%113 = getelementptr %Point, %Point* %112, i32 0, i32 0
+	%114 = load i64, i64* %113
+	%115 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
+	%116 = call i32 (i8*, ...) @printf(i8* %115, i64 %114)
 	ret i32 0
 }
 

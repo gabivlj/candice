@@ -26,3 +26,7 @@ aBigPoint : *****Point = &(&(&(&(&points[0]))))
 whatPoint  :*Point = (****aBigPoint)
 newX := whatPoint.x
 @println(newX)
+
+pointAlloc := @alloc(Point, 1);
+*pointAlloc = @Point { x: @cast(i64, 43), y: @cast(i64, 55), points: @alloc(Point, 33) }
+@println(pointAlloc.x)

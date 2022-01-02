@@ -3,12 +3,18 @@ package compiler
 import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/llir/llvm/ir/types"
+	"github.com/llir/llvm/ir/value"
 	"log"
 )
 
 type Type struct {
 	llvmType    types.Type
 	candiceType ctypes.Type
+}
+
+type Value struct {
+	Value value.Value
+	Type  ctypes.Type
 }
 
 // UnwrapStruct unwraps the underlying pointer/anonymous/struct type and returns a pure struct.
