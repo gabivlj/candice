@@ -6,6 +6,7 @@ import (
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
+	"github.com/gabivlj/candice/pkg/random"
 	"github.com/llir/llvm/ir"
 	"github.com/llir/llvm/ir/constant"
 	"github.com/llir/llvm/ir/enum"
@@ -302,14 +303,14 @@ func (c *Compiler) compileFunctionDeclaration(funk *ast.FunctionDeclarationState
 }
 
 func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
-	block := c.currentFunction.NewBlock("if.then")
+	block := c.currentFunction.NewBlock("if.then." + random.RandomString(10))
 	c.compileBlock(ifStatement.Block, block)
-	blockElse := c.currentFunction.NewBlock("if.else")
+	blockElse := c.currentFunction.NewBlock("if.else." + random.RandomString(10))
 	if ifStatement.Else != nil {
 		c.compileBlock(ifStatement.Else, blockElse)
 	}
 	c.block().NewCondBr(c.toBool(c.loadIfPointer(c.compileExpression(ifStatement.Condition))), block, blockElse)
-	leaveBlock := c.currentFunction.NewBlock("leave")
+	leaveBlock := c.currentFunction.NewBlock("leave." + random.RandomString(10))
 	c.blocks[len(c.blocks)-1] = leaveBlock
 	if block.Term == nil {
 		block.NewBr(leaveBlock)
@@ -445,6 +446,10 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 		return prefixValue
 	}
 
+	if prefix.Operation == ops.Bang {
+		return c.block().NewICmp(enum.IPredEQ, c.toBool(c.loadIfPointer(prefixValue)), zero)
+	}
+
 	return nil
 }
 
@@ -491,6 +496,7 @@ func (c *Compiler) compileIndexAccess(access *ast.IndexAccess) value.Value {
 	leftArray := c.compileExpression(access.Left)
 	index := c.loadIfPointer(c.compileExpression(access.Access))
 	if types.IsPointer(leftArray.Type()) && types.IsArray(leftArray.Type().(*types.PointerType).ElemType) {
+		// TODO : Optimize instruction
 		return c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, zero, index)
 	}
 	leftArray = c.loadIfPointer(leftArray)
@@ -554,11 +560,6 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 			return c.compileMultiply(expr)
 		}
 
-	case ops.LessThanEqual:
-		{
-
-		}
-
 	case ops.Add:
 		{
 			return c.compileAdd(expr)
@@ -595,6 +596,26 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 		}
 	case ops.GreaterThanEqual:
 		return c.block().NewICmp(enum.IPredSGE,
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)))
+	case ops.GreaterThan:
+		return c.block().NewICmp(enum.IPredSGT,
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)))
+	case ops.LessThan:
+		return c.block().NewICmp(enum.IPredSLT,
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)))
+	case ops.LessThanEqual:
+		return c.block().NewICmp(enum.IPredSLE,
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)))
+	case ops.Equals:
+		return c.block().NewICmp(enum.IPredEQ,
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)))
+	case ops.NotEquals:
+		return c.block().NewICmp(enum.IPredNE,
 			c.loadIfPointer(c.compileExpression(expr.Left)),
 			c.loadIfPointer(c.compileExpression(expr.Right)))
 	}

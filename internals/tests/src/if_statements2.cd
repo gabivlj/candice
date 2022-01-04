@@ -1,0 +1,25 @@
+variable := 3
+variable2 := 4
+if variable == variable2 {
+    @println(variable)
+}
+
+if variable != variable2 {
+    @println(variable2)
+}
+
+if variable <= variable2 {
+    @println(variable2)
+}
+
+if variable >= variable2 {
+    @println(variable)
+}
+
+if !(variable == variable2) {
+    @println(variable2)
+}
+
+if !variable {
+    @println(variable2)
+}
