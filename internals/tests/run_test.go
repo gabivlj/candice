@@ -15,7 +15,7 @@ func TestSrcs(t *testing.T) {
 		"struct.cd":    "-3 0 -3 43",
 		"cast.cd":      "32",
 		"functions.cd": "3 4 5 5",
-		"ifstmt.cd":    "1 2 3",
+		"ifstmt.cd":    "1 2 3 1 2 3 1 2 3",
 	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {

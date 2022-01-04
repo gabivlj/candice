@@ -11,6 +11,7 @@ import (
 	"github.com/llir/llvm/ir/enum"
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
+	"log"
 	"os/exec"
 	"strings"
 )
@@ -30,6 +31,10 @@ type Compiler struct {
 	stacks                []map[string]value.Value
 	functions             map[string]*Value
 	currentFunction       *ir.Func
+
+	// Flag to indicate caller that this value shouldn't be loaded into memory
+	// This flag will be set to false again once loadIfPointer is called.
+	doNotLoadIntoMemory bool
 }
 
 func New() *Compiler {
@@ -388,9 +393,28 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 		{
 			return c.compileStructLiteral(e)
 		}
+
+	case *ast.ArrayLiteral:
+		{
+			return c.compileArrayLiteral(e)
+		}
 	}
 
 	return nil
+}
+
+func (c *Compiler) compileArrayLiteral(arrayLiteral *ast.ArrayLiteral) value.Value {
+	arrayType := c.ToLLVMType(arrayLiteral.Type).(*types.ArrayType)
+	allocaInstance := c.block().NewAlloca(arrayType)
+	for index, value := range arrayLiteral.Values {
+		loadedValue := c.loadIfPointer(c.compileExpression(value))
+		integerIndex := constant.NewInt(types.I32, int64(index))
+		log.Println(index)
+		address := c.block().NewGetElementPtr(arrayType, allocaInstance, zero, integerIndex)
+		c.block().NewStore(loadedValue, address)
+	}
+
+	return allocaInstance
 }
 
 func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Value {
@@ -454,13 +478,21 @@ func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 }
 
 func (c *Compiler) compileIndexAccess(access *ast.IndexAccess) value.Value {
-	leftArray := c.loadIfPointer(c.compileExpression(access.Left))
+	leftArray := c.compileExpression(access.Left)
 	index := c.loadIfPointer(c.compileExpression(access.Access))
+	if types.IsPointer(leftArray.Type()) && types.IsArray(leftArray.Type().(*types.PointerType).ElemType) {
+		return c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, zero, index)
+	}
+	leftArray = c.loadIfPointer(leftArray)
 	pointer := c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, index)
 	return pointer
 }
 
 func (c *Compiler) loadIfPointer(val value.Value) value.Value {
+	if c.doNotLoadIntoMemory {
+		c.doNotLoadIntoMemory = false
+		return val
+	}
 	if types.IsPointer(val.Type()) {
 		return c.block().NewLoad(val.Type().(*types.PointerType).ElemType, val)
 	}
@@ -676,9 +708,18 @@ func (c *Compiler) compileShiftLeftBinary(expr *ast.BinaryOperation) value.Value
 func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 	typeParameter := call.TypeParameters[0]
 	toReturnType := c.ToLLVMType(typeParameter)
-	variable := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
+	variable := c.compileExpression(call.Parameters[0])
+	if types.IsPointer(variable.Type()) && types.IsArray(variable.Type().(*types.PointerType).ElemType) {
+		// We don't want people to take this pointer and load it into memory
+		// Test this because I'm not sure if this works!
+		c.doNotLoadIntoMemory = true
+		return c.block().NewGetElementPtr(variable.Type().(*types.PointerType).ElemType, variable, zero, zero)
+	}
 	if ctypes.IsNumeric(call.TypeParameters[0]) && types.IsInt(variable.Type()) {
 		return c.handleIntegerCast(toReturnType.(*types.IntType), variable)
+	}
+	if ctypes.IsPointer(call.TypeParameters[0]) && types.IsPointer(variable.Type()) {
+		return c.block().NewBitCast(variable, toReturnType)
 	}
 	panic("cant convert yet to this")
 	return nil

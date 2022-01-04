@@ -3,12 +3,27 @@ arr[0] = 1
 arr[1] = 2
 arr[2] = 3
 
+
+matrix := [1][3]i32{}
+val := @cast(*i32, matrix[0])
+val[0] = 100
+val[1] = 200
+val[2] = 300
+matrix[0][0] = matrix[0][0] / 100
+matrix[0][1] = matrix[0][1] / 100
+matrix[0][2] = matrix[0][2] / 100
+
+
+simpleArray : [30]i32 = [30]i32{1, 222, 3}
+simpleArray[1] = 2;
+simpleArrayCasted := @cast(*i32, simpleArray)
+
 func resolve(arr *i32, index i32) {
-    if index >= 3 {
-        return;
-    }
+    if index >= 3 return;
     @println(arr[index])
     resolve(arr, index + 1)
 }
 
-resolve(arr, 0)
+resolve(simpleArrayCasted, 0) // 1 2 3
+resolve(arr, 0) // 1 2 3
+resolve(val, 0) // 1 2 3
