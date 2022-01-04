@@ -330,8 +330,18 @@ func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) {
 
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
+	valueCompiled := c.compileExpression(decl.Expression)
+	_, isAlloca := valueCompiled.(*ir.InstAlloca)
+
+	// If the instance is already an alloca don't allocate
+	if valueCompiled.Type().Equal(types.NewPointer(t)) && isAlloca {
+		c.doNotLoadIntoMemory = false
+		c.declare(decl.Name, valueCompiled)
+		return
+	}
+
 	val := c.block().NewAlloca(t)
-	c.block().NewStore(c.loadIfPointer(c.compileExpression(decl.Expression)), val)
+	c.block().NewStore(c.loadIfPointer(valueCompiled), val)
 	c.declare(decl.Name, val)
 }
 
