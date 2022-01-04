@@ -315,10 +315,6 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 	}
 }
 
-func (c *Compiler) toBool(value value.Value) value.Value {
-	return c.block().NewICmp(enum.IPredNE, value, zero)
-}
-
 func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) {
 	c.pushBlock(blockIR)
 	for _, statement := range block.Statements {
@@ -686,15 +682,4 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 	}
 	panic("cant convert yet to this")
 	return nil
-}
-
-func (c *Compiler) handleIntegerCast(toReturnType *types.IntType, variable value.Value) value.Value {
-	variableType := variable.Type().(*types.IntType)
-	if variableType.BitSize > toReturnType.BitSize {
-		return c.block().NewTrunc(variable, toReturnType)
-	}
-	if variableType.BitSize == toReturnType.BitSize {
-		return variable
-	}
-	return c.block().NewSExt(variable, toReturnType)
 }
