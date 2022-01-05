@@ -217,9 +217,11 @@ func (c *Compiler) Compile(tree ast.Node) {
 			for _, statement := range t.Statements {
 				c.Compile(statement)
 			}
-			if len(c.blocks) == 1 {
+
+			if c.block().Term == nil {
 				c.block().NewRet(constant.NewInt(types.I32, 0))
 			}
+
 			_ = c.popBlock()
 		}
 
@@ -306,19 +308,48 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 	block := c.currentFunction.NewBlock("if.then." + random.RandomString(10))
 	c.compileBlock(ifStatement.Block, block)
 	blockElse := c.currentFunction.NewBlock("if.else." + random.RandomString(10))
+	blocks := []*ir.Block{block}
+	conditions := []ast.Expression{ifStatement.Condition}
 	if ifStatement.Else != nil {
 		c.compileBlock(ifStatement.Else, blockElse)
 	}
-	c.block().NewCondBr(c.toBool(c.loadIfPointer(c.compileExpression(ifStatement.Condition))), block, blockElse)
+
+	for _, elseIf := range ifStatement.ElseIfs {
+		currentBlock := c.currentFunction.NewBlock("elseif.then." + random.RandomString(10))
+		blocks = append(blocks, currentBlock)
+		c.compileBlock(elseIf.Block, currentBlock)
+		conditions = append(conditions, elseIf.Condition)
+	}
+
+	lastJumpToCondition := c.block()
+	for i, currentBlock := range blocks {
+
+		jumpToNextCondition := blockElse
+		if i+1 < len(blocks) {
+			jumpToNextCondition = c.currentFunction.NewBlock("leave." + random.RandomString(10))
+		}
+		// If last block that needs to make a condition
+		// is true jump to this block, else jump to the next one, which would be the next jump condition or
+		// the else
+		lastJumpToCondition.NewCondBr(c.toBool(c.loadIfPointer(c.compileExpression(conditions[i]))), currentBlock, jumpToNextCondition)
+		lastJumpToCondition = jumpToNextCondition
+	}
+
 	leaveBlock := c.currentFunction.NewBlock("leave." + random.RandomString(10))
+	lastJumpToCondition.NewBr(leaveBlock)
+
 	c.blocks[len(c.blocks)-1] = leaveBlock
-	if block.Term == nil {
-		block.NewBr(leaveBlock)
+
+	for _, currentBlock := range blocks {
+		if currentBlock.Term == nil {
+			currentBlock.NewBr(leaveBlock)
+		}
 	}
 
 	if blockElse.Term == nil {
 		blockElse.NewBr(leaveBlock)
 	}
+
 }
 
 func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) {

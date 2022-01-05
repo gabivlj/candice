@@ -17,6 +17,7 @@ func TestSrcs(t *testing.T) {
 		"functions.cd":      "3 4 5 5",
 		"ifstmt.cd":         "1 2 3 1 2 3 1 2 3",
 		"if_statements2.cd": "4 4 4",
+		"if_statements3.cd": "300",
 	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {

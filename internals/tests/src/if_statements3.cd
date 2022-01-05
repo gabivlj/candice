@@ -1,0 +1,11 @@
+variable := 3
+variable2 := 4
+
+if 0 @println(variable)
+else if variable > variable2 @println(100)
+else if variable == variable2 @println(200)
+else if variable >= variable2 @println(variable)
+else if variable <= variable2 @println(300)
+else if variable @println(variable2)
+else @println(1)
+
