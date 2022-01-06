@@ -209,6 +209,10 @@ func (c *Compiler) Execute() ([]byte, error) {
 // are right. Usually you would want to semantically check the tree before
 // calling this.
 func (c *Compiler) Compile(tree ast.Node) {
+	defer func() {
+		// Reset state
+		c.doNotLoadIntoMemory = false
+	}()
 
 	switch t := tree.(type) {
 
@@ -608,11 +612,18 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 		arguments = append(arguments, loadedValue)
 	}
 	thing := c.block().NewCall(funk, arguments...)
-	if !types.IsVoid(thing.Type()) {
-		alloca := c.block().NewAlloca(thing.Type())
-		c.block().NewStore(thing, alloca)
-		return alloca
-	}
+
+	//if !types.IsPointer(thing.Type()) && !types.IsArray(thing.Type()) {
+	//	return thing
+	//}
+	//
+	//if !types.IsVoid(thing.Type()) {
+	//	alloca := c.block().NewAlloca(thing.Type())
+	//	c.block().NewStore(thing, alloca)
+	//	return alloca
+	//}
+
+	c.doNotLoadIntoMemory = true
 	return thing
 }
 

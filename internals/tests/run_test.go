@@ -23,6 +23,7 @@ func TestSrcs(t *testing.T) {
 		"string_literal.cd": "Hello world!",
 		"unsigned_ints.cd":  "4294967200 -96",
 		"linked_list.cd":    "100",
+		"fibonacci.cd":      "75025",
 	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {

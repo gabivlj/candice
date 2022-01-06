@@ -1,8 +1,20 @@
-func fibonacci(current i32) i32 {
-    if current < 2 {
-        return current
-    }
-    return fibonacci(current - 1) + fibonacci(current - 2)
+numero := 3;
+
+listaDeNumeros := [30]i32{};
+
+for i := 0; i < 30; i = i + 1 listaDeNumeros[i] = i;
+
+@println(listaDeNumeros[29]);
+
+struct Punto {
+    x i32
+    y i32
 }
 
-@println(fibonacci(45))
+func CrearPunto(x i32, y i32) Punto {
+    return @Punto{x: x, y: y};
+}
+
+listaDePuntos := [30]Punto{CrearPunto(3, 4)};
+
+@println(listaDePuntos[0].x);

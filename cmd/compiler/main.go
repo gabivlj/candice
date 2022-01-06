@@ -30,7 +30,7 @@ func main() {
 	s.Analyze(tree)
 	if len(s.Errors) > 0 {
 		fmt.Println("Error analyzing file:")
-		for i, err := range p.Errors {
+		for i, err := range s.Errors {
 			fmt.Println("Error", strconv.FormatInt(int64(i), 10), err)
 		}
 		return
