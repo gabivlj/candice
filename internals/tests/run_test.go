@@ -22,6 +22,7 @@ func TestSrcs(t *testing.T) {
 		"for_statement2.cd": "1 2 3 4 5 6 7 8 9 10",
 		"string_literal.cd": "Hello world!",
 		"unsigned_ints.cd":  "4294967200 -96",
+		"linked_list.cd":    "100",
 	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {

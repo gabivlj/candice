@@ -607,7 +607,13 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 		loadedValue := c.loadIfPointer(compiledValue)
 		arguments = append(arguments, loadedValue)
 	}
-	return c.block().NewCall(funk, arguments...)
+	thing := c.block().NewCall(funk, arguments...)
+	if !types.IsVoid(thing.Type()) {
+		alloca := c.block().NewAlloca(thing.Type())
+		c.block().NewStore(thing, alloca)
+		return alloca
+	}
+	return thing
 }
 
 func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
@@ -852,10 +858,24 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 	if ctypes.IsNumeric(call.TypeParameters[0]) && ctypes.IsNumeric(call.Parameters[0].GetType()) {
 		return c.handleIntegerCast(toReturnType.(*types.IntType), variable)
 	}
+
+	if ctypes.IsNumeric(call.TypeParameters[0]) && ctypes.IsPointer(call.Parameters[0].GetType()) {
+		return c.block().NewPtrToInt(variable, toReturnType)
+	}
+
+	if ctypes.IsPointer(call.TypeParameters[0]) && types.IsInt(variable.Type()) {
+		c.doNotLoadIntoMemory = true
+		value := c.block().NewIntToPtr(variable, toReturnType)
+		//storage := c.block().NewAlloca(toReturnType)
+		//c.block().NewStore(value, storage)
+		return value
+	}
+
 	if ctypes.IsPointer(call.TypeParameters[0]) && types.IsPointer(variable.Type()) {
 		c.doNotLoadIntoMemory = true
 		return c.block().NewBitCast(variable, toReturnType)
 	}
-	panic("cant convert yet to this " + call.Parameters[0].GetType().String() + " " + variable.Type().String())
+
+	panic("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
 	return nil
 }

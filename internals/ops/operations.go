@@ -110,3 +110,8 @@ func (o Operation) String() string {
 
 	panic("unknown operand: " + strconv.FormatInt(int64(o), 10))
 }
+
+func (o Operation) IsComparison() bool {
+	return o == GreaterThanEqual || o == Equals || o == NotEquals || o == GreaterThan ||
+		o == LessThanEqual || o == LessThan || o == AND || o == OR
+}

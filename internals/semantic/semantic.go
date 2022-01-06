@@ -650,6 +650,10 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 		s.typeMismatchError(binaryOperation.String(), binaryOperation.Token, right, left)
 	}
 
+	if binaryOperation.Operation.IsComparison() {
+		return ctypes.I1
+	}
+
 	return left
 }
 

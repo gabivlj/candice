@@ -1,0 +1,32 @@
+struct node {
+    next *node
+    value i64
+}
+
+func NullNode() *node {
+    return @cast(*node, 0)
+}
+
+func CreateNode(value i64) *node {
+    theNode := @alloc(node, 1)
+    theNode.value = value
+    theNode.next = NullNode()
+    return theNode
+}
+
+func IsNodeNull(node *node) i1 {
+    return @cast(i32, node) == 0
+}
+
+head :*node = CreateNode(@cast(i64, 1))
+
+func InsertNode(head *node, toInsert *node) {
+    for !IsNodeNull(head.next) {
+       head = head.next
+    }
+    head.next = toInsert
+}
+
+InsertNode(head, CreateNode(@cast(i64, 100)))
+
+@println(head.next.value) // prints '100'

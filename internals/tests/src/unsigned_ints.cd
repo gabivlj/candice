@@ -25,12 +25,9 @@ str := @aStruct{you:3}
 
 strBad :*i32 = @cast(*i32, &str)
 
-if strBad[0] != str.you {
-    @println("this should not print as well")
-}
+if strBad[0] != str.you @println("this should not print as well")
 
 againStr :aStruct = *@cast(*aStruct, strBad)
 
-if againStr.you != str.you {
+if againStr.you != str.you
     @println("this shouldnt print!!!!!")
-}
