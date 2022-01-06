@@ -19,7 +19,9 @@ func TestSrcs(t *testing.T) {
 		"if_statements2.cd": "4 4 4",
 		"if_statements3.cd": "300",
 		"for_statement.cd":  "0 1 2 3 4 0 1 2 3 4 0 1 2 3 4",
-		"for_statement.cd2": "1 2 3 4 5 6 7 8 9 10",
+		"for_statement2.cd": "1 2 3 4 5 6 7 8 9 10",
+		"string_literal.cd": "Hello world!",
+		"unsigned_ints.cd":  "4294967200 -96",
 	}
 	elems, err := os.ReadDir("./src")
 	if err != nil {

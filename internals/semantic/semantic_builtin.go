@@ -28,7 +28,10 @@ func (s *Semantic) analyzeAlloc(allocCall *ast.BuiltinCall) ctypes.Type {
 	return allocCall.Type
 }
 
-func (s *Semantic) analyzePrintln(_ *ast.BuiltinCall) ctypes.Type {
+func (s *Semantic) analyzePrintln(printCall *ast.BuiltinCall) ctypes.Type {
+	for _, param := range printCall.Parameters {
+		s.analyzeExpression(param)
+	}
 	return ctypes.VoidType
 }
 

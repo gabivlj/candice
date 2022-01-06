@@ -113,9 +113,24 @@ func (c *Compiler) initializeBuiltinLib() {
 		constantString := strings.Builder{}
 		// TODO: Here we would write a function that tries to do a toString()
 		// 		for each expression
-		for i := 0; i < len(call.Parameters); i++ {
-			constantString.WriteString("%d ")
+		for i := range call.Parameters {
+			t := expressions[i+1].Type()
+			log.Println(call.Parameters[i].GetType())
+			if types.IsInt(t) {
+				if _, isUnsigned := call.Parameters[i].GetType().(*ctypes.UInteger); isUnsigned {
+					constantString.WriteString("%u ")
+				} else {
+					constantString.WriteString("%d ")
+				}
+			} else if pointer, isPointer := t.(*types.PointerType); isPointer {
+				if _, ok := pointer.ElemType.(*types.IntType); ok {
+					constantString.WriteString("%s ")
+				} else {
+					//
+				}
+			}
 		}
+		constantString.WriteByte(0)
 		s := constantString.String()
 
 		stringWithCharArrayType := constant.NewCharArrayFromString(s)
@@ -124,14 +139,14 @@ func (c *Compiler) initializeBuiltinLib() {
 		var globalDef value.Value
 
 		if definition, ok := c.definitions[s]; !ok {
-			globalDef = c.m.NewGlobalDef(s, stringWithCharArrayType)
+			globalDef = c.m.NewGlobalDef(s[:len(s)-1], stringWithCharArrayType)
 			c.definitions[s] = globalDef
 		} else {
 			globalDef = definition
 		}
 
 		i8sType := c.block().NewGetElementPtr(
-			// To be honest this is so strange, we are casting [i8 x len] to *[i8 x len]
+			// we are casting [i8 x len] to *i8
 			types.NewArray(uint64(len(s)), types.I8),
 			globalDef,
 			zero,
@@ -372,36 +387,46 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 }
 
 func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
+	// Exit point
 	leave := c.currentFunction.NewBlock("leave." + random.RandomString(10))
 	blockDeclaration := c.currentFunction.NewBlock("for.declaration." + random.RandomString(10))
+
 	c.block().NewBr(blockDeclaration)
 	c.pushBlock(blockDeclaration)
 	if forLoop.InitializerStatement != nil {
 		c.Compile(forLoop.InitializerStatement)
 	}
+
 	condition := c.currentFunction.NewBlock("for.condition." + random.RandomString(10))
 	conditionValueFirst := c.toBool(c.loadIfPointer(c.compileExpression(forLoop.Condition)))
-
 	mainLoop := c.currentFunction.NewBlock("for.block." + random.RandomString(10))
 	update := c.currentFunction.NewBlock("for.update." + random.RandomString(10))
 
 	// jumps to main loop
 	c.block().NewCondBr(conditionValueFirst, mainLoop, leave)
 
+	// compile main loop
 	c.compileBlock(forLoop.Block, mainLoop)
 
+	// jump to the update statement
 	mainLoop.NewBr(update)
 
+	// compile update statement
 	c.compileBlock(&ast.Block{Statements: []ast.Statement{forLoop.Operation}}, update)
 
+	// go to the condition again
 	update.NewBr(condition)
 
+	// Compile condition block
 	c.pushBlock(condition)
 	valueCondition := c.toBool(c.loadIfPointer(c.compileExpression(forLoop.Condition)))
 	condition.NewCondBr(valueCondition, mainLoop, leave)
 	c.popBlock()
 
+	// pop for loop block
 	c.popBlock()
+
+	// normalize current block to the leave block
 	c.blocks[len(c.blocks)-1] = leave
 }
 
@@ -493,9 +518,19 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 		{
 			return c.compileArrayLiteral(e)
 		}
+
+	case *ast.StringLiteral:
+		return c.compileStringLiteral(e)
 	}
 
 	return nil
+}
+
+func (c *Compiler) compileStringLiteral(stringLiteral *ast.StringLiteral) value.Value {
+	charArray := constant.NewCharArrayFromString(stringLiteral.Value + string(byte(0)))
+	globalDef := c.m.NewGlobalDef("string.literal."+random.RandomString(10), charArray)
+	c.doNotLoadIntoMemory = true
+	return c.block().NewGetElementPtr(types.NewArray(uint64(len(stringLiteral.Value)+1), types.I8), globalDef, zero, zero)
 }
 
 func (c *Compiler) compileArrayLiteral(arrayLiteral *ast.ArrayLiteral) value.Value {
@@ -520,6 +555,11 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 	}
 
 	if prefix.Operation == ops.BinaryAND {
+		if !types.IsPointer(prefixValue.Type()) {
+			prefixValueTmp := c.block().NewAlloca(prefixValue.Type())
+			c.block().NewStore(prefixValue, prefixValueTmp)
+			prefixValue = prefixValueTmp
+		}
 		allocatedValue := c.block().NewAlloca(prefixValue.Type())
 		c.block().NewStore(prefixValue, allocatedValue)
 		return allocatedValue
@@ -678,34 +718,9 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 		{
 			return c.compileStructAccess(expr)
 		}
-	case ops.GreaterThanEqual:
-		return c.block().NewICmp(enum.IPredSGE,
-			c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)))
-	case ops.GreaterThan:
-		return c.block().NewICmp(enum.IPredSGT,
-			c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)))
-	case ops.LessThan:
-		return c.block().NewICmp(enum.IPredSLT,
-			c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)))
-	case ops.LessThanEqual:
-		return c.block().NewICmp(enum.IPredSLE,
-			c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)))
-	case ops.Equals:
-		return c.block().NewICmp(enum.IPredEQ,
-			c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)))
-	case ops.NotEquals:
-		return c.block().NewICmp(enum.IPredNE,
-			c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)))
+	default:
+		return c.handleComparisonOperations(expr)
 	}
-
-	panic("unimplemented: " + expr.Operation.String())
-	return nil
 }
 
 func getName(expr ast.Expression) (string, bool) {
@@ -782,6 +797,9 @@ func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
 	if types.IsInt(leftValue.Type()) {
+		if _, isUnsigned := expr.Type.(*ctypes.UInteger); isUnsigned {
+			return c.block().NewUDiv(leftValue, rightValue)
+		}
 		return c.block().NewSDiv(leftValue, rightValue)
 	}
 	if types.IsFloat(leftValue.Type()) {
@@ -830,12 +848,14 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		c.doNotLoadIntoMemory = true
 		return c.block().NewGetElementPtr(variable.Type().(*types.PointerType).ElemType, variable, zero, zero)
 	}
-	if ctypes.IsNumeric(call.TypeParameters[0]) && types.IsInt(variable.Type()) {
+	variable = c.loadIfPointer(variable)
+	if ctypes.IsNumeric(call.TypeParameters[0]) && ctypes.IsNumeric(call.Parameters[0].GetType()) {
 		return c.handleIntegerCast(toReturnType.(*types.IntType), variable)
 	}
 	if ctypes.IsPointer(call.TypeParameters[0]) && types.IsPointer(variable.Type()) {
+		c.doNotLoadIntoMemory = true
 		return c.block().NewBitCast(variable, toReturnType)
 	}
-	panic("cant convert yet to this")
+	panic("cant convert yet to this " + call.Parameters[0].GetType().String() + " " + variable.Type().String())
 	return nil
 }

@@ -1,0 +1,36 @@
+
+integer := @cast(u32, 4294967100)
+
+integer = integer + @cast(u32, 100)
+
+if integer == integer {
+    @println(integer)
+    @println(@cast(i32, integer))
+}
+
+func loadByPointer(i *i32) i32 {
+    return *i
+}
+
+returnValue := loadByPointer(&3)
+
+if returnValue != 3 @println("this shouldn't print")
+
+struct aStruct {
+    you i32
+    me  i64
+}
+
+str := @aStruct{you:3}
+
+strBad :*i32 = @cast(*i32, &str)
+
+if strBad[0] != str.you {
+    @println("this should not print as well")
+}
+
+againStr :aStruct = *@cast(*aStruct, strBad)
+
+if againStr.you != str.you {
+    @println("this shouldnt print!!!!!")
+}

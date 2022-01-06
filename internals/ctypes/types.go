@@ -7,16 +7,26 @@ import (
 
 /// Candice types
 
+var I1 = &Integer{BitSize: 1}
 var I8 = &Integer{BitSize: 8}
 var I16 = &Integer{BitSize: 16}
 var I32 = &Integer{BitSize: 32}
 var I64 = &Integer{BitSize: 64}
+var U64 = &UInteger{BitSize: 64}
+var U32 = &UInteger{BitSize: 32}
+var U16 = &UInteger{BitSize: 16}
+var U8 = &UInteger{BitSize: 8}
 
 var typeLiteral = map[string]Type{
+	"i1":   I1,
 	"i8":   I8,
 	"i16":  I16,
 	"i32":  I32,
 	"i64":  I64,
+	"u8":   U8,
+	"u16":  U16,
+	"u32":  U32,
+	"u64":  U64,
 	"void": VoidType,
 	"i0":   VoidType,
 }

@@ -1,9 +1,9 @@
-@"%d " = global [3 x i8] c"%d "
+@"%d " = global [4 x i8] c"%d \00"
 
 define i32 @main() {
 _main:
 	%0 = call i32 @fibonacci(i32 45)
-	%1 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
+	%1 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%2 = call i32 (i8*, ...) @printf(i8* %1, i32 %0)
 	ret i32 0
 }
@@ -18,16 +18,16 @@ fibonacci:
 	store i32 %current, i32* %0
 	%1 = load i32, i32* %0
 	%2 = icmp slt i32 %1, 2
-	br i1 %2, label %if.then.ftKhafgmtJ, label %if.else.UmPSuZRqAY
+	br i1 %2, label %if.then.xkezMbivNL, label %if.else.cbFfuzKhBg
 
-if.then.ftKhafgmtJ:
+if.then.xkezMbivNL:
 	%3 = load i32, i32* %0
 	ret i32 %3
 
-if.else.UmPSuZRqAY:
-	br label %leave.iqQSyrOKFE
+if.else.cbFfuzKhBg:
+	br label %leave.oUUjvQMktq
 
-leave.iqQSyrOKFE:
+leave.oUUjvQMktq:
 	%4 = load i32, i32* %0
 	%5 = sub i32 %4, 1
 	%6 = call i32 @fibonacci(i32 %5)

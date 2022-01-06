@@ -13,6 +13,10 @@ type Identifier struct {
 	Name string
 }
 
+func (i *Identifier) GetType() ctypes.Type {
+	return i.Node.Type
+}
+
 func (i *Identifier) expressionNode() {}
 
 func (i *Identifier) String() string {
@@ -24,6 +28,10 @@ type BinaryOperation struct {
 	Left      Expression
 	Right     Expression
 	Operation ops.Operation
+}
+
+func (b *BinaryOperation) GetType() ctypes.Type {
+	return b.Node.Type
 }
 
 func (b *BinaryOperation) expressionNode() {}
@@ -38,6 +46,10 @@ type PrefixOperation struct {
 	Operation ops.Operation
 }
 
+func (p *PrefixOperation) GetType() ctypes.Type {
+	return p.Node.Type
+}
+
 func (p *PrefixOperation) expressionNode() {}
 
 func (p *PrefixOperation) String() string {
@@ -48,6 +60,10 @@ type IndexAccess struct {
 	*node.Node
 	Left   Expression
 	Access Expression
+}
+
+func (i *IndexAccess) GetType() ctypes.Type {
+	return i.Node.Type
 }
 
 func (i *IndexAccess) expressionNode() {}
@@ -63,6 +79,10 @@ type BuiltinCall struct {
 	Name           string
 	TypeParameters []ctypes.Type
 	Parameters     []Expression
+}
+
+func (bc *BuiltinCall) GetType() ctypes.Type {
+	return bc.Node.Type
 }
 
 func (bc *BuiltinCall) expressionNode() {}
@@ -95,6 +115,10 @@ type Call struct {
 	Parameters []Expression
 }
 
+func (c *Call) GetType() ctypes.Type {
+	return c.Node.Type
+}
+
 func (c *Call) expressionNode() {}
 
 func (c *Call) String() string {
@@ -116,6 +140,10 @@ type Integer struct {
 	Value int64
 }
 
+func (i *Integer) GetType() ctypes.Type {
+	return i.Node.Type
+}
+
 func (i *Integer) expressionNode() {}
 
 func (i *Integer) String() string {
@@ -125,6 +153,10 @@ func (i *Integer) String() string {
 type StringLiteral struct {
 	*node.Node
 	Value string
+}
+
+func (s *StringLiteral) GetType() ctypes.Type {
+	return s.Node.Type
 }
 
 func (s *StringLiteral) String() string { return "\"" + s.Value + "\"" }
@@ -140,6 +172,10 @@ type StructLiteral struct {
 	*node.Node
 	Name   string
 	Values []StructValue
+}
+
+func (s *StructLiteral) GetType() ctypes.Type {
+	return s.Node.Type
 }
 
 func (_ *StructLiteral) expressionNode() {}
@@ -162,6 +198,10 @@ func (s *StructLiteral) String() string {
 type ArrayLiteral struct {
 	*node.Node
 	Values []Expression
+}
+
+func (a *ArrayLiteral) GetType() ctypes.Type {
+	return a.Node.Type
 }
 
 func (a *ArrayLiteral) expressionNode() {}

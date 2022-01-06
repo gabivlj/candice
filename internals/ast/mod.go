@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/token"
 	"strings"
 )
@@ -12,6 +13,7 @@ type Node interface {
 type Expression interface {
 	Node
 	expressionNode()
+	GetType() ctypes.Type
 }
 
 type Statement interface {

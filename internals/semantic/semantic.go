@@ -280,7 +280,9 @@ func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
 
 func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
 	if builtinHandler, ok := s.builtinHandlers[call.Name]; ok {
-		return builtinHandler(call)
+		t := builtinHandler(call)
+		call.Type = t
+		return t
 	}
 	s.error("unknown builtin call", call.Token)
 	return ctypes.TODO()
@@ -408,7 +410,9 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 	case *ast.IndexAccess:
 		return s.analyzeIndexAccess(expressionType)
 	case *ast.StringLiteral:
-		return &ctypes.Pointer{Inner: ctypes.I8}
+		stringLiteralType := &ctypes.Pointer{Inner: ctypes.I8}
+		expressionType.Type = stringLiteralType
+		return stringLiteralType
 
 	default:
 		log.Fatalln("couldn't analyze expression: " + expressionType.String())
@@ -429,10 +433,12 @@ func (s *Semantic) analyzeIndexAccess(indexAccess *ast.IndexAccess) ctypes.Type 
 	}
 
 	if arr, ok := leftType.(*ctypes.Array); ok {
+		indexAccess.Type = arr.Inner
 		return arr.Inner
 	}
 
 	if ptr, ok := leftType.(*ctypes.Pointer); ok {
+		indexAccess.Type = ptr.Inner
 		return ptr.Inner
 	}
 
@@ -492,6 +498,7 @@ func (s *Semantic) analyzeArrayLiteral(arrayLiteral *ast.ArrayLiteral) ctypes.Ty
 		}
 	}
 
+	arrayLiteral.Type = arrayType
 	return arrayType
 }
 
@@ -522,6 +529,7 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 
 func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Type {
 	if identifierType := s.variables.Get(identifier.Name); identifierType != nil {
+		identifier.Type = identifierType
 		return identifierType
 	}
 	s.error("undefined variable "+identifier.Name, identifier.Token)
@@ -530,11 +538,11 @@ func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Ty
 
 func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) ctypes.Type {
 	t := s.analyzeExpression(prefixOperation.Right)
+	prefixOperation.Type = t
 	if prefixOperation.Operation == ops.Bang || prefixOperation.Operation == ops.Add {
 		if !ctypes.IsNumeric(t) {
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 		}
-
 		return t
 	}
 
@@ -543,12 +551,12 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 		if !ctypes.IsNumeric(t) {
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 		}
-
 		return t
 	}
 
 	if prefixOperation.Operation == ops.BinaryAND {
-		return &ctypes.Pointer{Inner: t}
+		prefixOperation.Type = &ctypes.Pointer{Inner: t}
+		return prefixOperation.Type
 	}
 
 	if prefixOperation.Operation == ops.Multiply {
@@ -556,8 +564,8 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, &ctypes.Pointer{Inner: t}, t)
 			return t
 		} else {
-			prefixOperation.Type = ptr.Inner
-			return s.unwrapAnonymous(ptr.Inner)
+			prefixOperation.Type = s.unwrapAnonymous(ptr.Inner)
+			return prefixOperation.Type
 		}
 	}
 
@@ -569,11 +577,15 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	op := binaryOperation.Operation
 	if s.isArithmetic(op) {
-		return s.analyzeArithmetic(binaryOperation)
+		t := s.analyzeArithmetic(binaryOperation)
+		binaryOperation.Type = t
+		return t
 	}
 
 	if op == ops.Dot {
-		return s.analyzeStructAccess(binaryOperation)
+		t := s.analyzeStructAccess(binaryOperation)
+		binaryOperation.Type = t
+		return t
 	}
 
 	s.error("can't analyze operator", binaryOperation.Token)

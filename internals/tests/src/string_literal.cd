@@ -1,0 +1,3 @@
+value : *i8 = "Hello world!";
+
+@println(value)
