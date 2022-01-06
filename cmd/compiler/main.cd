@@ -1,0 +1,8 @@
+func fibonacci(current i32) i32 {
+    if current < 2 {
+        return current
+    }
+    return fibonacci(current - 1) + fibonacci(current - 2)
+}
+
+@println(fibonacci(45))

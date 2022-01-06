@@ -171,6 +171,11 @@ func (c *Compiler) initializeBuiltinLib() {
 
 /// Public methods for the compiler
 
+func (c *Compiler) GenerateExecutable() error {
+	err := GenerateExecutable(c.m, "exec")
+	return err
+}
+
 // Execute generates and executes the executable
 func (c *Compiler) Execute() ([]byte, error) {
 	err := GenerateExecutable(c.m, "exec")
@@ -195,21 +200,25 @@ func (c *Compiler) Compile(tree ast.Node) {
 	case *ast.ExpressionStatement:
 		{
 			c.compileExpression(t.Expression)
+			return
 		}
 
 	case *ast.StructStatement:
 		{
 			c.compileStruct(t)
+			return
 		}
 
 	case *ast.DeclarationStatement:
 		{
 			c.compileDeclaration(t)
+			return
 		}
 
 	case *ast.AssignmentStatement:
 		{
 			c.compileAssignment(t)
+			return
 		}
 
 	case *ast.Program:
@@ -223,21 +232,31 @@ func (c *Compiler) Compile(tree ast.Node) {
 			}
 
 			_ = c.popBlock()
+			return
 		}
 
 	case *ast.FunctionDeclarationStatement:
 		{
 			c.compileFunctionDeclaration(t)
+			return
 		}
 
 	case *ast.ReturnStatement:
 		{
 			c.compileReturn(t)
+			return
 		}
 
 	case *ast.IfStatement:
 		{
 			c.compileIf(t)
+			return
+		}
+
+	case *ast.ForStatement:
+		{
+			c.compileFor(t)
+			return
 		}
 	}
 }
@@ -350,6 +369,40 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 		blockElse.NewBr(leaveBlock)
 	}
 
+}
+
+func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
+	leave := c.currentFunction.NewBlock("leave." + random.RandomString(10))
+	blockDeclaration := c.currentFunction.NewBlock("for.declaration." + random.RandomString(10))
+	c.block().NewBr(blockDeclaration)
+	c.pushBlock(blockDeclaration)
+	if forLoop.InitializerStatement != nil {
+		c.Compile(forLoop.InitializerStatement)
+	}
+	condition := c.currentFunction.NewBlock("for.condition." + random.RandomString(10))
+	conditionValueFirst := c.toBool(c.loadIfPointer(c.compileExpression(forLoop.Condition)))
+
+	mainLoop := c.currentFunction.NewBlock("for.block." + random.RandomString(10))
+	update := c.currentFunction.NewBlock("for.update." + random.RandomString(10))
+
+	// jumps to main loop
+	c.block().NewCondBr(conditionValueFirst, mainLoop, leave)
+
+	c.compileBlock(forLoop.Block, mainLoop)
+
+	mainLoop.NewBr(update)
+
+	c.compileBlock(&ast.Block{Statements: []ast.Statement{forLoop.Operation}}, update)
+
+	update.NewBr(condition)
+
+	c.pushBlock(condition)
+	valueCondition := c.toBool(c.loadIfPointer(c.compileExpression(forLoop.Condition)))
+	condition.NewCondBr(valueCondition, mainLoop, leave)
+	c.popBlock()
+
+	c.popBlock()
+	c.blocks[len(c.blocks)-1] = leave
 }
 
 func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
@@ -161,6 +162,10 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 	s.enterFrame()
 
 	s.analyzeStatement(forStatement.InitializerStatement)
+
+	if forStatement.Condition == nil {
+		forStatement.Condition = &ast.Integer{Value: 1, Node: &node.Node{Type: ctypes.I32}}
+	}
 
 	condition := s.analyzeExpression(forStatement.Condition)
 

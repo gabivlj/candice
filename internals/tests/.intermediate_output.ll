@@ -2,84 +2,104 @@
 
 define i32 @main() {
 _main:
-	%0 = alloca i32
-	store i32 3, i32* %0
-	%1 = alloca i32
-	store i32 4, i32* %1
-	%2 = icmp ne i32 0, 0
-	%3 = load i32, i32* %0
-	%4 = load i32, i32* %1
-	%5 = icmp sgt i32 %3, %4
-	%6 = load i32, i32* %0
-	%7 = load i32, i32* %1
-	%8 = icmp eq i32 %6, %7
-	%9 = load i32, i32* %0
-	%10 = load i32, i32* %1
-	%11 = icmp sge i32 %9, %10
-	%12 = load i32, i32* %0
-	%13 = load i32, i32* %1
-	%14 = icmp sle i32 %12, %13
-	%15 = load i32, i32* %0
-	%16 = icmp ne i32 %15, 0
-	br i1 %2, label %if.then.mMThlunwKU, label %leave.hQxngVNOqq
-
-if.then.mMThlunwKU:
-	%17 = load i32, i32* %0
-	%18 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%19 = call i32 (i8*, ...) @printf(i8* %18, i32 %17)
-	br label %leave.OOHYwciEZk
-
-if.else.vhNngJduLX:
-	%20 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%21 = call i32 (i8*, ...) @printf(i8* %20, i32 1)
-	br label %leave.OOHYwciEZk
-
-elseif.then.OdraDksUTF:
-	%22 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%23 = call i32 (i8*, ...) @printf(i8* %22, i32 100)
-	br label %leave.OOHYwciEZk
-
-elseif.then.KMUrSJAnPU:
-	%24 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%25 = call i32 (i8*, ...) @printf(i8* %24, i32 200)
-	br label %leave.OOHYwciEZk
-
-elseif.then.mXGmoDoKrr:
-	%26 = load i32, i32* %0
-	%27 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%28 = call i32 (i8*, ...) @printf(i8* %27, i32 %26)
-	br label %leave.OOHYwciEZk
-
-elseif.then.OtsIRBpufa:
-	%29 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%30 = call i32 (i8*, ...) @printf(i8* %29, i32 301)
-	br label %leave.OOHYwciEZk
-
-elseif.then.VpWENxcpaW:
-	%31 = load i32, i32* %1
-	%32 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
-	%33 = call i32 (i8*, ...) @printf(i8* %32, i32 %31)
-	br label %leave.OOHYwciEZk
-
-leave.hQxngVNOqq:
-	br i1 %5, label %elseif.then.OdraDksUTF, label %leave.imfLuYgzkp
-
-leave.imfLuYgzkp:
-	br i1 %8, label %elseif.then.KMUrSJAnPU, label %leave.DFcrhYrysw
-
-leave.DFcrhYrysw:
-	br i1 %11, label %elseif.then.mXGmoDoKrr, label %leave.FlfwfKdPdK
-
-leave.FlfwfKdPdK:
-	br i1 %14, label %elseif.then.OtsIRBpufa, label %leave.muYBDwCLac
-
-leave.muYBDwCLac:
-	br i1 %16, label %elseif.then.VpWENxcpaW, label %if.else.vhNngJduLX
-
-leave.OOHYwciEZk:
+	%0 = sext i32 10 to i64
+	%1 = mul i64 %0, 4
+	%2 = call i8* @malloc(i64 %1)
+	%3 = bitcast i8* %2 to i32*
+	%4 = alloca i32*
+	store i32* %3, i32** %4
+	%5 = load i32*, i32** %4
+	call void @fillArray(i32* %5, i32 10, i32 1)
+	%6 = load i32*, i32** %4
+	call void @printArray(i32* %6, i32 10)
 	ret i32 0
 }
 
 declare i32 @printf(i8* %0, ...)
 
 declare i8* @malloc(i64 %0)
+
+define ccc void @fillArray(i32* %array, i32 %len, i32 %value) {
+fillArray:
+	%0 = alloca i32*
+	store i32* %array, i32** %0
+	%1 = alloca i32
+	store i32 %len, i32* %1
+	%2 = alloca i32
+	store i32 %value, i32* %2
+	br label %for.declaration.MMOhOkJaqv
+
+leave.KcjkKLLHiq:
+	ret void
+
+for.declaration.MMOhOkJaqv:
+	%3 = alloca i32
+	store i32 0, i32* %3
+	%4 = load i32, i32* %3
+	%5 = load i32, i32* %1
+	%6 = icmp slt i32 %4, %5
+	br i1 %6, label %for.block.oiZVPXfqQq, label %leave.KcjkKLLHiq
+
+for.condition.ltHoNLzVDy:
+	%7 = load i32, i32* %3
+	%8 = load i32, i32* %1
+	%9 = icmp slt i32 %7, %8
+	br i1 %9, label %for.block.oiZVPXfqQq, label %leave.KcjkKLLHiq
+
+for.block.oiZVPXfqQq:
+	%10 = load i32, i32* %3
+	%11 = load i32*, i32** %0
+	%12 = getelementptr i32, i32* %11, i32 %10
+	%13 = load i32, i32* %2
+	%14 = load i32, i32* %3
+	%15 = add i32 %13, %14
+	store i32 %15, i32* %12
+	br label %for.update.otLjYdYJrA
+
+for.update.otLjYdYJrA:
+	%16 = load i32, i32* %3
+	%17 = add i32 %16, 1
+	store i32 %17, i32* %3
+	br label %for.condition.ltHoNLzVDy
+}
+
+define ccc void @printArray(i32* %array, i32 %len) {
+printArray:
+	%0 = alloca i32*
+	store i32* %array, i32** %0
+	%1 = alloca i32
+	store i32 %len, i32* %1
+	br label %for.declaration.qzADMXDoUB
+
+leave.woBGVpPGfN:
+	ret void
+
+for.declaration.qzADMXDoUB:
+	%2 = alloca i32
+	store i32 0, i32* %2
+	%3 = load i32, i32* %2
+	%4 = load i32, i32* %1
+	%5 = icmp slt i32 %3, %4
+	br i1 %5, label %for.block.ijieWEgJfL, label %leave.woBGVpPGfN
+
+for.condition.DLjnbvhXpr:
+	%6 = load i32, i32* %2
+	%7 = load i32, i32* %1
+	%8 = icmp slt i32 %6, %7
+	br i1 %8, label %for.block.ijieWEgJfL, label %leave.woBGVpPGfN
+
+for.block.ijieWEgJfL:
+	%9 = load i32, i32* %2
+	%10 = load i32*, i32** %0
+	%11 = getelementptr i32, i32* %10, i32 %9
+	%12 = load i32, i32* %11
+	%13 = getelementptr [3 x i8], [3 x i8]* @"%d ", i32 0, i32 0
+	%14 = call i32 (i8*, ...) @printf(i8* %13, i32 %12)
+	br label %for.update.OSmbKTveXK
+
+for.update.OSmbKTveXK:
+	%15 = load i32, i32* %2
+	%16 = add i32 %15, 1
+	store i32 %16, i32* %2
+	br label %for.condition.DLjnbvhXpr
+}
