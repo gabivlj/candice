@@ -1,3 +1,12 @@
+func resolve(arr *i32, index i32) {
+    if index >= 3 return;
+    @println(arr[index])
+    resolve(arr, index + 1)
+}
+
+
+func main() {
+
 arr := @alloc(i32, 3)
 arr[0] = 1
 arr[1] = 2
@@ -17,13 +26,8 @@ matrix[0][2] = matrix[0][2] / 100
 simpleArray : [30]i32 = [30]i32{1, 222, 3}
 simpleArray[1] = 2;
 simpleArrayCasted := @cast(*i32, simpleArray)
-
-func resolve(arr *i32, index i32) {
-    if index >= 3 return;
-    @println(arr[index])
-    resolve(arr, index + 1)
-}
-
 resolve(simpleArrayCasted, 0) // 1 2 3
 resolve(arr, 0) // 1 2 3
 resolve(val, 0) // 1 2 3
+
+}

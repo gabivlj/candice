@@ -15,6 +15,7 @@ func changePoint(point *Point, x i32, y i32) {
     point.y = y;
     return;
 }
+func main() {
 
 aPoint := createPoint(3, 4)
 @println(aPoint.x) // 3
@@ -22,3 +23,4 @@ aPoint := createPoint(3, 4)
 changePoint(&aPoint, 5, 5)
 @println(aPoint.x) // 5
 @println(aPoint.y) // 5
+}

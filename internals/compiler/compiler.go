@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
@@ -40,17 +41,16 @@ type Compiler struct {
 
 func New() *Compiler {
 	m := ir.NewModule()
-	main := m.NewFunc("main", types.I32)
 	c := &Compiler{
 		m:                     m,
-		blocks:                []*ir.Block{main.NewBlock("_main")},
+		blocks:                []*ir.Block{},
 		definitions:           map[string]value.Value{},
 		builtins:              map[string]func(*ast.BuiltinCall) value.Value{},
 		types:                 map[string]*Type{},
 		definitionsToBePopped: []string{"<>"},
 		stacks:                []map[string]value.Value{{}},
 		functions:             map[string]*Value{},
-		currentFunction:       main,
+		currentFunction:       nil,
 	}
 	c.initializeBuiltinLib()
 	return c
@@ -90,6 +90,9 @@ func (c *Compiler) block() *ir.Block {
 }
 
 func (c *Compiler) popBlock() *ir.Block {
+	if len(c.blocks) == 0 {
+		return nil
+	}
 	b := c.block()
 	c.removeCurrentSmallContext()
 	c.blocks = c.blocks[:len(c.blocks)-1]
@@ -191,6 +194,21 @@ func (c *Compiler) GenerateExecutable() error {
 	return err
 }
 
+func (c *Compiler) GenerateExecutableExperimental(output string, objectPaths []string) error {
+	err := GenerateObjectLLVM(c.m, "output.o")
+	command := append(objectPaths, "output.o")
+	command = append(command, "-o", output)
+	cmd := exec.Command("clang++", command...)
+	outputBuffer := bytes.Buffer{}
+	cmd.Stdout = &outputBuffer
+	cmd.Stderr = &outputBuffer
+	err = cmd.Run()
+	if err != nil {
+		return errors.New("error compiling " + strings.Join(command, " ") + " :\n" + outputBuffer.String())
+	}
+	return err
+}
+
 // Execute generates and executes the executable
 func (c *Compiler) Execute() ([]byte, error) {
 	err := GenerateExecutable(c.m, "exec")
@@ -246,7 +264,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 				c.Compile(statement)
 			}
 
-			if c.block().Term == nil {
+			if len(c.blocks) > 0 && c.block().Term == nil {
 				c.block().NewRet(constant.NewInt(types.I32, 0))
 			}
 
@@ -277,7 +295,26 @@ func (c *Compiler) Compile(tree ast.Node) {
 			c.compileFor(t)
 			return
 		}
+
+	case *ast.ExternStatement:
+		{
+			c.compileExternFunc(t)
+			return
+		}
 	}
+}
+
+func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
+	funcType := externFunc.Type.(*ctypes.Function)
+	returnType := c.ToLLVMType(funcType.Return)
+	params := []*ir.Param{}
+	for _, parameter := range funcType.Parameters {
+		parameterType := c.ToLLVMType(parameter)
+		params = append(params, ir.NewParam("", parameterType))
+	}
+	f := c.m.NewFunc(funcType.Name, returnType, params...)
+	f.CallingConv = enum.CallingConvC
+	c.functions[funcType.Name] = &Value{Value: f, Type: funcType}
 }
 
 func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {

@@ -418,6 +418,10 @@ func (p *Parser) parseType() ctypes.Type {
 		var returnType ctypes.Type
 		if p.currentToken.Type == token.IDENT {
 			returnType = p.parseType()
+		} else if p.currentToken.Type == token.ASTERISK {
+			returnType = p.parseType()
+		} else if p.currentToken.Type == token.LBRACKET {
+			returnType = p.parseType()
 		}
 		return &ctypes.Function{
 			Name:       name,

@@ -4,5 +4,8 @@ func fibonacci(current i32) i32 {
     }
     return fibonacci(current - 1) + fibonacci(current - 2)
 }
+func main() {
 
 @println(fibonacci(25))
+
+}

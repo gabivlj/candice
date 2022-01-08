@@ -4,7 +4,7 @@ struct Point {
     points *Point
 }
 
-
+func main() {
 p := @Point { x: @cast(i64, 43), y: @cast(i64, 55), points: @alloc(Point, 33) }
 p.x = @cast(i64, 3)
 p.y = @cast(i64, 3)
@@ -30,3 +30,4 @@ newX := whatPoint.x
 pointAlloc := @alloc(Point, 1);
 *pointAlloc = @Point { x: @cast(i64, 43), y: @cast(i64, 55), points: @alloc(Point, 33) }
 @println(pointAlloc.x)
+}

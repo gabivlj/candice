@@ -132,6 +132,7 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 
 func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
 	funk, ok := extern.Type.(*ctypes.Function)
+	log.Println(funk)
 	if !ok {
 		s.typeMismatchError(extern.String(), extern.Token, &ctypes.Function{Name: "function"}, extern.Type)
 	}
