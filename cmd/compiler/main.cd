@@ -3,11 +3,20 @@ struct HelloWorlds {
     i i32
 }
 
-// clang -c main.c -o anobject.o
-// c
+// Compile C: clang -c main.c -o anobject.o
 extern func helloWorldsFunction() *HelloWorlds;
+
+struct FILE {}
+
+extern func fopen(*i8, *i8) *FILE;
+extern func fwrite(*i8, i64, i64, *FILE) void;
+extern func fclose(*FILE) void;
 
 func main() {
     helloWorld := helloWorldsFunction()
     @println(helloWorld.i)
+    theFile := fopen("./pog", "w")
+    @println("./pog");
+    fwrite("hello!", @cast(i64, 1), @cast(i64, 6), theFile);
+    fclose(theFile)
 }
