@@ -193,11 +193,11 @@ func (c *Compiler) GenerateExecutable() error {
 }
 
 func (c *Compiler) GenerateExecutableExperimental(output string, objectPaths []string) error {
-	err := GenerateObjectLLVM(c.m, "output.o")
+	pathOutput, err := GenerateObjectLLVM(c.m, "output.o")
 	if err != nil {
 		return err
 	}
-	command := append(objectPaths, "output.o")
+	command := append(objectPaths, pathOutput)
 	command = append(command, "-o", output)
 	cmd := exec.Command("clang++", command...)
 	outputBuffer := bytes.Buffer{}
