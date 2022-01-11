@@ -54,6 +54,9 @@ func (s *Semantic) leaveFrame() {
 }
 
 func (s *Semantic) error(msg string, tok token.Token) {
+	if len(s.Errors) > 1 {
+		return
+	}
 	s.Errors = append(s.Errors, errors.New(fmt.Sprintf("error analyzing on %d:%d (at %s): %s", tok.Line, tok.Position, tok.Type, msg)))
 }
 
@@ -109,20 +112,6 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		return
 
 	case *ast.ReturnStatement:
-		// NOTE the idea here would be having a "current" expected return type,
-		// when we find a return we check with the expected return type.
-		// If they don't match we add an error.
-		// When analyzing a block we would analyze if all its
-		// branches return true. Finding a return type guarantees that on a block it will return something.
-		// Then when someone analyzes that block will guess that it always returns something.
-		// When we find an if, we need to check that every block analyzed returns something (an else must exist)
-		// When we find a block we analyze statement and check if the return flag is true, then statement means that this
-		// block always returns.
-		// ```
-		// for analyzeStmt(), if thisStatementReturns: return...
-		// if EOF thisStatementReturns = false
-		//
-		// ```
 		s.analyzeReturnStatement(statementType)
 		return
 	}
@@ -132,7 +121,6 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 
 func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
 	funk, ok := extern.Type.(*ctypes.Function)
-	log.Println(funk)
 	if !ok {
 		s.typeMismatchError(extern.String(), extern.Token, &ctypes.Function{Name: "function"}, extern.Type)
 	}
@@ -507,7 +495,6 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 	possibleFuncType := s.analyzeExpression(call.Left)
 
 	if funcType, ok := possibleFuncType.(*ctypes.Function); !ok {
-		log.Println(call.Left, s.definedTypes)
 		s.error("can't call non function "+call.Left.String()+" of type "+possibleFuncType.String(), call.Token)
 	} else {
 		if len(call.Parameters) != len(funcType.Parameters) {

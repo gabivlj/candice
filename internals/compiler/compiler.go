@@ -13,7 +13,6 @@ import (
 	"github.com/llir/llvm/ir/enum"
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
-	"log"
 	"os/exec"
 	"strings"
 )
@@ -118,7 +117,6 @@ func (c *Compiler) initializeBuiltinLib() {
 		// 		for each expression
 		for i := range call.Parameters {
 			t := expressions[i+1].Type()
-			log.Println(call.Parameters[i].GetType())
 			if types.IsInt(t) {
 				if _, isUnsigned := call.Parameters[i].GetType().(*ctypes.UInteger); isUnsigned {
 					constantString.WriteString("%u ")
@@ -196,6 +194,9 @@ func (c *Compiler) GenerateExecutable() error {
 
 func (c *Compiler) GenerateExecutableExperimental(output string, objectPaths []string) error {
 	err := GenerateObjectLLVM(c.m, "output.o")
+	if err != nil {
+		return err
+	}
 	command := append(objectPaths, "output.o")
 	command = append(command, "-o", output)
 	cmd := exec.Command("clang++", command...)
@@ -580,7 +581,6 @@ func (c *Compiler) compileArrayLiteral(arrayLiteral *ast.ArrayLiteral) value.Val
 	for index, value := range arrayLiteral.Values {
 		loadedValue := c.loadIfPointer(c.compileExpression(value))
 		integerIndex := constant.NewInt(types.I32, int64(index))
-		log.Println(index)
 		address := c.block().NewGetElementPtr(arrayType, allocaInstance, zero, integerIndex)
 		c.block().NewStore(loadedValue, address)
 	}

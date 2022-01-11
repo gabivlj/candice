@@ -11,12 +11,51 @@ struct FILE {}
 extern func fopen(*i8, *i8) *FILE;
 extern func fwrite(*i8, i64, i64, *FILE) void;
 extern func fclose(*FILE) void;
+extern func fread(*i8, i64, i64, *FILE) i64;
+extern func rewind(*FILE) i64;
+extern func fgets(*i8, i32, *FILE) *i8;
+extern func free(*i8) void;
 
-func main() {
+func doStuff() {
     helloWorld := helloWorldsFunction()
     @println(helloWorld.i)
-    theFile := fopen("./pog", "w")
-    @println("./pog");
+    theFile := fopen("./aFile", "a+");
+    rewind(theFile);
+    output := @alloc(i8, 300);
+    for @cast(i32, fgets(output, 10, theFile)) != 0 {
+        @println(output);
+    }
     fwrite("hello!", @cast(i64, 1), @cast(i64, 6), theFile);
+    free(output);
     fclose(theFile)
+}
+
+struct Point {
+    x i32
+    y i32
+}
+
+struct Points {
+    points [300]Point
+}
+
+struct Player {
+    position Point
+    rotation i32
+    name     *i8
+}
+
+func main() {
+    player := @Player{
+        position: @oint {
+            x: 3,
+            y: 3,
+        },
+        rotation: 35,
+        name: "Hello world",
+    };
+
+    @println(player.name);
+    player.position.x = player.position.y + 5;
+    @println(player.position.x);
 }

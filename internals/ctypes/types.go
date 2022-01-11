@@ -38,7 +38,7 @@ func LiteralToType(literal string) Type {
 	return &Anonymous{Name: literal}
 }
 
-var todoType = &Anonymous{Name: "<TODO>"}
+var todoType = &Anonymous{Name: "errors"}
 
 func TODO() Type {
 	return todoType

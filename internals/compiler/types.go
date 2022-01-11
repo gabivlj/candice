@@ -4,7 +4,6 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
-	"log"
 )
 
 type Type struct {
@@ -82,7 +81,6 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 			for _, field := range el.Fields {
 				llvmTypes = append(llvmTypes, c.ToLLVMType(field))
 			}
-			log.Println(llvmTypes)
 			s.Fields = llvmTypes
 			s.Opaque = false
 			return s
