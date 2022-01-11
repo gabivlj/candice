@@ -46,5 +46,16 @@ struct Player {
 }
 
 func main() {
-    @println("Hello candice!\n")
+    player := @Player{
+        position: @Point {
+            x: 3,
+            y: 3,
+        },
+        rotation: 35,
+        name: "Hello world",
+    };
+
+    @println(player.name);
+    player.position.x = player.position.y + 5;
+    @println(player.position.x);
 }
