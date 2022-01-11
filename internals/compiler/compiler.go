@@ -14,6 +14,7 @@ import (
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
 	"os/exec"
+
 	"strings"
 )
 
@@ -381,19 +382,21 @@ func (c *Compiler) compileFunctionDeclaration(funk *ast.FunctionDeclarationState
 }
 
 func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
+	strandedBlocks := []*ir.Block{}
 	block := c.currentFunction.NewBlock("if.then." + random.RandomString(10))
-	c.compileBlock(ifStatement.Block, block)
+	strandedBlocks = append(strandedBlocks, c.compileBlock(ifStatement.Block, block))
 	blockElse := c.currentFunction.NewBlock("if.else." + random.RandomString(10))
 	blocks := []*ir.Block{block}
 	conditions := []ast.Expression{ifStatement.Condition}
 	if ifStatement.Else != nil {
-		c.compileBlock(ifStatement.Else, blockElse)
+		strandedBlocks = append(strandedBlocks, c.compileBlock(ifStatement.Else, blockElse))
+
 	}
 
 	for _, elseIf := range ifStatement.ElseIfs {
 		currentBlock := c.currentFunction.NewBlock("elseif.then." + random.RandomString(10))
-		blocks = append(blocks, currentBlock)
 		c.compileBlock(elseIf.Block, currentBlock)
+		blocks = append(blocks, currentBlock)
 		conditions = append(conditions, elseIf.Condition)
 	}
 
@@ -411,12 +414,18 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 		lastJumpToCondition = jumpToNextCondition
 	}
 
-	leaveBlock := c.currentFunction.NewBlock("leave." + random.RandomString(10))
+	leaveBlock := c.currentFunction.NewBlock("lastLeave." + random.RandomString(10))
 	lastJumpToCondition.NewBr(leaveBlock)
 
 	c.blocks[len(c.blocks)-1] = leaveBlock
 
 	for _, currentBlock := range blocks {
+		if currentBlock.Term == nil {
+			currentBlock.NewBr(leaveBlock)
+		}
+	}
+
+	for _, currentBlock := range strandedBlocks {
 		if currentBlock.Term == nil {
 			currentBlock.NewBr(leaveBlock)
 		}
@@ -448,13 +457,17 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	c.block().NewCondBr(conditionValueFirst, mainLoop, leave)
 
 	// compile main loop
-	c.compileBlock(forLoop.Block, mainLoop)
-
-	// jump to the update statement
-	mainLoop.NewBr(update)
+	possibleNewBlock := c.compileBlock(forLoop.Block, mainLoop)
 
 	// compile update statement
 	c.compileBlock(&ast.Block{Statements: []ast.Statement{forLoop.Operation}}, update)
+
+	// jump to the update statement
+	if possibleNewBlock.Term == nil {
+		possibleNewBlock.NewBr(update)
+	} else {
+		mainLoop.NewBr(update)
+	}
 
 	// go to the condition again
 	update.NewBr(condition)
@@ -472,12 +485,12 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	c.blocks[len(c.blocks)-1] = leave
 }
 
-func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) {
+func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) *ir.Block {
 	c.pushBlock(blockIR)
 	for _, statement := range block.Statements {
 		c.Compile(statement)
 	}
-	c.popBlock()
+	return c.popBlock()
 }
 
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {

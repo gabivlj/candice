@@ -9,6 +9,7 @@ import (
 )
 
 func GenerateObjectLLVM(writer io.WriterTo, path string) (string, error) {
+
 	_ = os.Remove(".intermediate_output.ll")
 	intermediateOutputFd, err := os.Create(".intermediate_output.ll")
 	if err != nil {

@@ -1,0 +1,15 @@
+func main() {
+
+    for i := 0; i <= 100; i = i + 1 {
+
+        @println(i);
+        for j := 0; j <= 100; j = j + 1 {
+            if i + j <= 10 {
+                @println(i + j);
+            } else {
+
+            }
+        }
+    }
+
+}

@@ -1,0 +1,30 @@
+func main() {
+    if 1 {
+        if 0 {
+            @println("2ok");
+        } else if 0 {
+            @println("2ok");
+        } else if 0 {
+            @println("2ok");
+        } else if 1 {
+            @println("ok");
+        } else {
+            @println("2ok");
+        }
+        @println("nice");
+    }
+     if 1 {
+            if 0 {
+                @println("2ok");
+            } else if 0 {
+                @println("2ok");
+            } else if 0 {
+                @println("2ok");
+            } else if 0 {
+                @println("2ok");
+            } else {
+                @println("ok");
+            }
+            @println("nice");
+        }
+}
