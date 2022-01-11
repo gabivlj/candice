@@ -5,11 +5,11 @@
 %Player = type { %Point, i32, i8* }
 
 @"%d " = global [4 x i8] c"%d \00"
-@string.literal.hLZnytlvZn = global [8 x i8] c"./aFile\00"
-@string.literal.mTJKFXKNLs = global [3 x i8] c"a+\00"
+@string.literal.eaIDJlnPpb = global [8 x i8] c"./aFile\00"
+@string.literal.UGtcVCfwZM = global [3 x i8] c"a+\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.PSCPoacBRw = global [7 x i8] c"hello!\00"
-@string.literal.lSPoDZTQvT = global [12 x i8] c"Hello world\00"
+@string.literal.fYidiVJLBT = global [7 x i8] c"hello!\00"
+@string.literal.uUYQYJapYR = global [17 x i8] c"Hello candice!\5Cn\00"
 
 declare i32 @printf(i8* %0, ...)
 
@@ -41,8 +41,8 @@ doStuff:
 	%4 = load i32, i32* %3
 	%5 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%6 = call i32 (i8*, ...) @printf(i8* %5, i32 %4)
-	%7 = getelementptr [8 x i8], [8 x i8]* @string.literal.hLZnytlvZn, i32 0, i32 0
-	%8 = getelementptr [3 x i8], [3 x i8]* @string.literal.mTJKFXKNLs, i32 0, i32 0
+	%7 = getelementptr [8 x i8], [8 x i8]* @string.literal.eaIDJlnPpb, i32 0, i32 0
+	%8 = getelementptr [3 x i8], [3 x i8]* @string.literal.UGtcVCfwZM, i32 0, i32 0
 	%9 = call %FILE* @fopen(i8* %7, i8* %8)
 	%10 = alloca %FILE*
 	store %FILE* %9, %FILE** %10
@@ -54,10 +54,10 @@ doStuff:
 	%16 = bitcast i8* %15 to i8*
 	%17 = alloca i8*
 	store i8* %16, i8** %17
-	br label %for.declaration.xIJSXAMedh
+	br label %for.declaration.hpkmOpIxEX
 
-leave.vqpeXNriJL:
-	%18 = getelementptr [7 x i8], [7 x i8]* @string.literal.PSCPoacBRw, i32 0, i32 0
+leave.xTmigElchH:
+	%18 = getelementptr [7 x i8], [7 x i8]* @string.literal.fYidiVJLBT, i32 0, i32 0
 	%19 = sext i32 1 to i64
 	%20 = sext i32 6 to i64
 	%21 = load %FILE*, %FILE** %10
@@ -68,63 +68,36 @@ leave.vqpeXNriJL:
 	call void @fclose(%FILE* %23)
 	ret void
 
-for.declaration.xIJSXAMedh:
+for.declaration.hpkmOpIxEX:
 	%24 = load i8*, i8** %17
 	%25 = load %FILE*, %FILE** %10
 	%26 = call i8* @fgets(i8* %24, i32 10, %FILE* %25)
 	%27 = ptrtoint i8* %26 to i32
 	%28 = icmp ne i32 %27, 0
-	br i1 %28, label %for.block.ZZfBYDDGHv, label %leave.vqpeXNriJL
+	br i1 %28, label %for.block.RwrApyPiBo, label %leave.xTmigElchH
 
-for.condition.EWUrpubMjg:
+for.condition.yzRqXHODRR:
 	%29 = load i8*, i8** %17
 	%30 = load %FILE*, %FILE** %10
 	%31 = call i8* @fgets(i8* %29, i32 10, %FILE* %30)
 	%32 = ptrtoint i8* %31 to i32
 	%33 = icmp ne i32 %32, 0
-	br i1 %33, label %for.block.ZZfBYDDGHv, label %leave.vqpeXNriJL
+	br i1 %33, label %for.block.RwrApyPiBo, label %leave.xTmigElchH
 
-for.block.ZZfBYDDGHv:
+for.block.RwrApyPiBo:
 	%34 = load i8*, i8** %17
 	%35 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%36 = call i32 (i8*, ...) @printf(i8* %35, i8* %34)
-	br label %for.update.FSXxLKMauJ
+	br label %for.update.pZZvINqjmi
 
-for.update.FSXxLKMauJ:
-	br label %for.condition.EWUrpubMjg
+for.update.pZZvINqjmi:
+	br label %for.condition.yzRqXHODRR
 }
 
 define ccc void @main() {
 main:
-	%0 = alloca %Player
-	%1 = alloca %Point
-	%2 = getelementptr %Point, %Point* %1, i32 0, i32 0
-	store i32 3, i32* %2
-	%3 = getelementptr %Point, %Point* %1, i32 0, i32 1
-	store i32 3, i32* %3
-	%4 = getelementptr %Player, %Player* %0, i32 0, i32 0
-	%5 = load %Point, %Point* %1
-	store %Point %5, %Point* %4
-	%6 = getelementptr %Player, %Player* %0, i32 0, i32 1
-	store i32 35, i32* %6
-	%7 = getelementptr [12 x i8], [12 x i8]* @string.literal.lSPoDZTQvT, i32 0, i32 0
-	%8 = getelementptr %Player, %Player* %0, i32 0, i32 2
-	store i8* %7, i8** %8
-	%9 = getelementptr %Player, %Player* %0, i32 0, i32 2
-	%10 = load i8*, i8** %9
-	%11 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
-	%12 = call i32 (i8*, ...) @printf(i8* %11, i8* %10)
-	%13 = getelementptr %Player, %Player* %0, i32 0, i32 0
-	%14 = getelementptr %Point, %Point* %13, i32 0, i32 0
-	%15 = getelementptr %Player, %Player* %0, i32 0, i32 0
-	%16 = getelementptr %Point, %Point* %15, i32 0, i32 1
-	%17 = load i32, i32* %16
-	%18 = add i32 %17, 5
-	store i32 %18, i32* %14
-	%19 = getelementptr %Player, %Player* %0, i32 0, i32 0
-	%20 = getelementptr %Point, %Point* %19, i32 0, i32 0
-	%21 = load i32, i32* %20
-	%22 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
-	%23 = call i32 (i8*, ...) @printf(i8* %22, i32 %21)
+	%0 = getelementptr [17 x i8], [17 x i8]* @string.literal.uUYQYJapYR, i32 0, i32 0
+	%1 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
+	%2 = call i32 (i8*, ...) @printf(i8* %1, i8* %0)
 	ret void
 }
