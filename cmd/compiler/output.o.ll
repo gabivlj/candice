@@ -5,17 +5,17 @@
 %Player = type { %Point, i32, i8* }
 
 @"%d " = global [4 x i8] c"%d \00"
-@string.literal.apIxhlNIFa = global [8 x i8] c"./aFile\00"
-@string.literal.gkIQfbcHRF = global [3 x i8] c"a+\00"
+@string.literal.OPOVxskFWk = global [8 x i8] c"./aFile\00"
+@string.literal.uBnckAyoAl = global [3 x i8] c"a+\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.CtMJzDULdP = global [7 x i8] c"hello!\00"
-@string.literal.JxPXJVdvRT = global [12 x i8] c"Hello world\00"
-@string.literal.ClpZJigvWZ = global [4 x i8] c"2ok\00"
-@string.literal.TUjZgdrXhe = global [4 x i8] c"2ok\00"
-@string.literal.KJVHcKEBbR = global [4 x i8] c"2ok\00"
-@string.literal.yLSGkmLvDv = global [4 x i8] c"2ok\00"
-@string.literal.TvRokhiNQW = global [3 x i8] c"ok\00"
-@string.literal.LscQRIvFKe = global [5 x i8] c"nice\00"
+@string.literal.oIkQONXRCA = global [7 x i8] c"hello!\00"
+@string.literal.PiswxNbCYw = global [12 x i8] c"Hello world\00"
+@string.literal.zHIFmKFBKn = global [4 x i8] c"2ok\00"
+@string.literal.yqcRXVyxTN = global [4 x i8] c"2ok\00"
+@string.literal.QXFEnpUOLs = global [4 x i8] c"2ok\00"
+@string.literal.HDRwRpyYaI = global [4 x i8] c"2ok\00"
+@string.literal.XyYOZIQbyh = global [3 x i8] c"ok\00"
+@string.literal.mYcKHNWzEm = global [5 x i8] c"nice\00"
 
 declare i32 @printf(i8* %0, ...)
 
@@ -47,8 +47,8 @@ doStuff:
 	%4 = load i32, i32* %3
 	%5 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%6 = call i32 (i8*, ...) @printf(i8* %5, i32 %4)
-	%7 = getelementptr [8 x i8], [8 x i8]* @string.literal.apIxhlNIFa, i32 0, i32 0
-	%8 = getelementptr [3 x i8], [3 x i8]* @string.literal.gkIQfbcHRF, i32 0, i32 0
+	%7 = getelementptr [8 x i8], [8 x i8]* @string.literal.OPOVxskFWk, i32 0, i32 0
+	%8 = getelementptr [3 x i8], [3 x i8]* @string.literal.uBnckAyoAl, i32 0, i32 0
 	%9 = call %FILE* @fopen(i8* %7, i8* %8)
 	%10 = alloca %FILE*
 	store %FILE* %9, %FILE** %10
@@ -60,10 +60,10 @@ doStuff:
 	%16 = bitcast i8* %15 to i8*
 	%17 = alloca i8*
 	store i8* %16, i8** %17
-	br label %for.declaration.fhrlohdMsY
+	br label %for.declaration.VgQdgOmfuv
 
-leave.BQfbbKXeDA:
-	%18 = getelementptr [7 x i8], [7 x i8]* @string.literal.CtMJzDULdP, i32 0, i32 0
+leave.xhCFMadgPR:
+	%18 = getelementptr [7 x i8], [7 x i8]* @string.literal.oIkQONXRCA, i32 0, i32 0
 	%19 = sext i32 1 to i64
 	%20 = sext i32 6 to i64
 	%21 = load %FILE*, %FILE** %10
@@ -74,30 +74,30 @@ leave.BQfbbKXeDA:
 	call void @fclose(%FILE* %23)
 	ret void
 
-for.declaration.fhrlohdMsY:
+for.declaration.VgQdgOmfuv:
 	%24 = load i8*, i8** %17
 	%25 = load %FILE*, %FILE** %10
 	%26 = call i8* @fgets(i8* %24, i32 10, %FILE* %25)
 	%27 = ptrtoint i8* %26 to i32
 	%28 = icmp ne i32 %27, 0
-	br i1 %28, label %for.block.RVfoKjvnhw, label %leave.BQfbbKXeDA
+	br i1 %28, label %for.block.UDygIlpGgC, label %leave.xhCFMadgPR
 
-for.condition.DMlOdzQNWP:
+for.condition.iczaTaxsqF:
 	%29 = load i8*, i8** %17
 	%30 = load %FILE*, %FILE** %10
 	%31 = call i8* @fgets(i8* %29, i32 10, %FILE* %30)
 	%32 = ptrtoint i8* %31 to i32
 	%33 = icmp ne i32 %32, 0
-	br i1 %33, label %for.block.RVfoKjvnhw, label %leave.BQfbbKXeDA
+	br i1 %33, label %for.block.UDygIlpGgC, label %leave.xhCFMadgPR
 
-for.block.RVfoKjvnhw:
+for.block.UDygIlpGgC:
 	%34 = load i8*, i8** %17
 	%35 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%36 = call i32 (i8*, ...) @printf(i8* %35, i8* %34)
-	br label %for.update.iNfkXuGvZw
+	br label %for.update.gBDBoHNviA
 
-for.update.iNfkXuGvZw:
-	br label %for.condition.DMlOdzQNWP
+for.update.gBDBoHNviA:
+	br label %for.condition.iczaTaxsqF
 }
 
 define ccc void @main() {
@@ -113,7 +113,7 @@ main:
 	store %Point %5, %Point* %4
 	%6 = getelementptr %Player, %Player* %0, i32 0, i32 1
 	store i32 35, i32* %6
-	%7 = getelementptr [12 x i8], [12 x i8]* @string.literal.JxPXJVdvRT, i32 0, i32 0
+	%7 = getelementptr [12 x i8], [12 x i8]* @string.literal.PiswxNbCYw, i32 0, i32 0
 	%8 = getelementptr %Player, %Player* %0, i32 0, i32 2
 	store i8* %7, i8** %8
 	%9 = getelementptr %Player, %Player* %0, i32 0, i32 2
@@ -132,133 +132,133 @@ main:
 	%21 = load i32, i32* %20
 	%22 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%23 = call i32 (i8*, ...) @printf(i8* %22, i32 %21)
-	br label %for.declaration.yriIIxUZOU
+	br label %for.declaration.raerakxfpX
 
-leave.XxPqoxNlfi:
+leave.CgMbnduOAO:
 	%24 = icmp ne i32 1, 0
-	br i1 %24, label %if.then.vnjvXhtKIr, label %if.else.coCFmjQoKN
+	br i1 %24, label %if.then.VcxmNpBPdU, label %if.else.jhrxIGlzAI
 
-for.declaration.yriIIxUZOU:
+for.declaration.raerakxfpX:
 	%25 = alloca i32
 	store i32 0, i32* %25
 	%26 = load i32, i32* %25
 	%27 = icmp sle i32 %26, 100
-	br i1 %27, label %for.block.eabwMjDDzr, label %leave.XxPqoxNlfi
+	br i1 %27, label %for.block.AQxWIRmRTL, label %leave.CgMbnduOAO
 
-for.condition.iUvMxFiHvV:
+for.condition.lZvmFgIMTU:
 	%28 = load i32, i32* %25
 	%29 = icmp sle i32 %28, 100
-	br i1 %29, label %for.block.eabwMjDDzr, label %leave.XxPqoxNlfi
+	br i1 %29, label %for.block.AQxWIRmRTL, label %leave.CgMbnduOAO
 
-for.block.eabwMjDDzr:
+for.block.AQxWIRmRTL:
 	%30 = load i32, i32* %25
 	%31 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%32 = call i32 (i8*, ...) @printf(i8* %31, i32 %30)
-	br label %for.declaration.JGYlPoDkjh
+	br label %for.declaration.WetdVUhxYv
 
-for.update.OVHXouSMSY:
+for.update.SayYCbxcqP:
 	%33 = load i32, i32* %25
 	%34 = add i32 %33, 1
 	store i32 %34, i32* %25
-	br label %for.condition.iUvMxFiHvV
+	br label %for.condition.lZvmFgIMTU
 
-leave.gzlMcdBHWr:
-	br label %for.update.OVHXouSMSY
+leave.zRFkgyvkHw:
+	br label %for.update.SayYCbxcqP
 
-for.declaration.JGYlPoDkjh:
+for.declaration.WetdVUhxYv:
 	%35 = alloca i32
 	store i32 0, i32* %35
 	%36 = load i32, i32* %35
 	%37 = icmp sle i32 %36, 100
-	br i1 %37, label %for.block.mTWNpUJRKe, label %leave.gzlMcdBHWr
+	br i1 %37, label %for.block.LjzuwOcQCG, label %leave.zRFkgyvkHw
 
-for.condition.sfXHCNvipH:
+for.condition.SvqeskxECk:
 	%38 = load i32, i32* %35
 	%39 = icmp sle i32 %38, 100
-	br i1 %39, label %for.block.mTWNpUJRKe, label %leave.gzlMcdBHWr
+	br i1 %39, label %for.block.LjzuwOcQCG, label %leave.zRFkgyvkHw
 
-for.block.mTWNpUJRKe:
+for.block.LjzuwOcQCG:
 	%40 = load i32, i32* %25
 	%41 = load i32, i32* %35
 	%42 = add i32 %40, %41
 	%43 = icmp sle i32 %42, 10
-	br i1 %43, label %if.then.fbFgzADAVx, label %if.else.pzwfoDmtMz
+	br i1 %43, label %if.then.HuVRCvXWcq, label %if.else.bQVQHrcmut
 
-for.update.MbEAMIeYGa:
+for.update.yiVVoqsTTo:
 	%44 = load i32, i32* %35
 	%45 = add i32 %44, 1
 	store i32 %45, i32* %35
-	br label %for.condition.sfXHCNvipH
+	br label %for.condition.SvqeskxECk
 
-if.then.fbFgzADAVx:
+if.then.HuVRCvXWcq:
 	%46 = load i32, i32* %25
 	%47 = load i32, i32* %35
 	%48 = add i32 %46, %47
 	%49 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%50 = call i32 (i8*, ...) @printf(i8* %49, i32 %48)
-	br label %lastLeave.qBUNAcRXft
+	br label %lastLeave.QUylTHHqnW
 
-if.else.pzwfoDmtMz:
-	br label %lastLeave.qBUNAcRXft
+if.else.bQVQHrcmut:
+	br label %lastLeave.QUylTHHqnW
 
-lastLeave.qBUNAcRXft:
-	br label %for.update.MbEAMIeYGa
+lastLeave.QUylTHHqnW:
+	br label %for.update.yiVVoqsTTo
 
-if.then.vnjvXhtKIr:
+if.then.VcxmNpBPdU:
 	%51 = icmp ne i32 0, 0
 	%52 = icmp ne i32 0, 0
 	%53 = icmp ne i32 0, 0
 	%54 = icmp ne i32 1, 0
-	br i1 %51, label %if.then.BEVwRzbMLZ, label %leave.qRPekdlkmy
+	br i1 %51, label %if.then.pudgqEEkfI, label %leave.NjffhwifxD
 
-if.then.BEVwRzbMLZ:
-	%55 = getelementptr [4 x i8], [4 x i8]* @string.literal.ClpZJigvWZ, i32 0, i32 0
+if.then.pudgqEEkfI:
+	%55 = getelementptr [4 x i8], [4 x i8]* @string.literal.zHIFmKFBKn, i32 0, i32 0
 	%56 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%57 = call i32 (i8*, ...) @printf(i8* %56, i8* %55)
-	br label %lastLeave.irSMnZZtEV
+	br label %lastLeave.lsfolrBPgC
 
-if.else.OkjKqLhcCx:
-	%58 = getelementptr [4 x i8], [4 x i8]* @string.literal.TUjZgdrXhe, i32 0, i32 0
+if.else.skXiCLNQHg:
+	%58 = getelementptr [4 x i8], [4 x i8]* @string.literal.yqcRXVyxTN, i32 0, i32 0
 	%59 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%60 = call i32 (i8*, ...) @printf(i8* %59, i8* %58)
-	br label %lastLeave.irSMnZZtEV
+	br label %lastLeave.lsfolrBPgC
 
-elseif.then.UxadkzLVfM:
-	%61 = getelementptr [4 x i8], [4 x i8]* @string.literal.KJVHcKEBbR, i32 0, i32 0
+elseif.then.zTReCPqRCq:
+	%61 = getelementptr [4 x i8], [4 x i8]* @string.literal.QXFEnpUOLs, i32 0, i32 0
 	%62 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%63 = call i32 (i8*, ...) @printf(i8* %62, i8* %61)
-	br label %lastLeave.irSMnZZtEV
+	br label %lastLeave.lsfolrBPgC
 
-elseif.then.OnpTnycPvD:
-	%64 = getelementptr [4 x i8], [4 x i8]* @string.literal.yLSGkmLvDv, i32 0, i32 0
+elseif.then.bsDILNIAQG:
+	%64 = getelementptr [4 x i8], [4 x i8]* @string.literal.HDRwRpyYaI, i32 0, i32 0
 	%65 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%66 = call i32 (i8*, ...) @printf(i8* %65, i8* %64)
-	br label %lastLeave.irSMnZZtEV
+	br label %lastLeave.lsfolrBPgC
 
-elseif.then.ORPWzxfCvV:
-	%67 = getelementptr [3 x i8], [3 x i8]* @string.literal.TvRokhiNQW, i32 0, i32 0
+elseif.then.EmMxEFdBAt:
+	%67 = getelementptr [3 x i8], [3 x i8]* @string.literal.XyYOZIQbyh, i32 0, i32 0
 	%68 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%69 = call i32 (i8*, ...) @printf(i8* %68, i8* %67)
-	br label %lastLeave.irSMnZZtEV
+	br label %lastLeave.lsfolrBPgC
 
-leave.qRPekdlkmy:
-	br i1 %52, label %elseif.then.UxadkzLVfM, label %leave.IxBBZCEbcr
+leave.NjffhwifxD:
+	br i1 %52, label %elseif.then.zTReCPqRCq, label %leave.uvgdZksMIn
 
-leave.IxBBZCEbcr:
-	br i1 %53, label %elseif.then.OnpTnycPvD, label %leave.FwmPgyIHyW
+leave.uvgdZksMIn:
+	br i1 %53, label %elseif.then.bsDILNIAQG, label %leave.nyJmxHspPy
 
-leave.FwmPgyIHyW:
-	br i1 %54, label %elseif.then.ORPWzxfCvV, label %if.else.OkjKqLhcCx
+leave.nyJmxHspPy:
+	br i1 %54, label %elseif.then.EmMxEFdBAt, label %if.else.skXiCLNQHg
 
-lastLeave.irSMnZZtEV:
-	%70 = getelementptr [5 x i8], [5 x i8]* @string.literal.LscQRIvFKe, i32 0, i32 0
+lastLeave.lsfolrBPgC:
+	%70 = getelementptr [5 x i8], [5 x i8]* @string.literal.mYcKHNWzEm, i32 0, i32 0
 	%71 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%72 = call i32 (i8*, ...) @printf(i8* %71, i8* %70)
-	br label %lastLeave.sytjFzilNM
+	br label %lastLeave.uCIMcicchU
 
-if.else.coCFmjQoKN:
-	br label %lastLeave.sytjFzilNM
+if.else.jhrxIGlzAI:
+	br label %lastLeave.uCIMcicchU
 
-lastLeave.sytjFzilNM:
+lastLeave.uCIMcicchU:
 	ret void
 }

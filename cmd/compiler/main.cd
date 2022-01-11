@@ -58,4 +58,33 @@ func main() {
     @println(player.name);
     player.position.x = player.position.y + 5;
     @println(player.position.x);
+
+
+    for i := 0; i <= 100; i = i + 1 {
+
+        @println(i);
+        for j := 0; j <= 100; j = j + 1 {
+            if i + j <= 10 {
+                @println(i + j);
+            } else {
+
+            }
+        }
+    }
+
+    if 1 {
+        if 0 {
+            @println("2ok");
+        } else if 0 {
+            @println("2ok");
+        } else if 0 {
+            @println("2ok");
+        } else if 1 {
+            @println("ok");
+        } else {
+            @println("2ok");
+        }
+        @println("nice");
+    }
+
 }
