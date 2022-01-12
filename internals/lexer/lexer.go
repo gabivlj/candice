@@ -139,16 +139,21 @@ func (l *Lexer) NextToken() token.Token {
 			return tok
 		}
 		if isDigit(l.ch) {
-			tok.Type = token.INT
-			tok.Literal = l.readNumber()
-			tok.Position = l.column
-			tok.Line = l.line
+			tok = l.parseNumericToken()
 			return tok
 		}
 		tok = l.newToken(token.ILLEGAL, l.ch)
 	}
 	l.readChar()
 
+	return tok
+}
+
+func (l *Lexer) parseNumericToken() token.Token {
+	var tok token.Token
+	tok.Literal, tok.Type = l.readNumber()
+	tok.Position = l.column
+	tok.Line = l.line
 	return tok
 }
 
@@ -170,12 +175,20 @@ func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
 }
 
-func (l *Lexer) readNumber() string {
+func (l *Lexer) readNumber() (string, token.TypeToken) {
 	position := l.position
+	tokenType := token.INT
 	for isDigit(l.ch) {
 		l.readChar()
 	}
-	return l.input[position:l.position]
+	if l.ch == '.' {
+		l.readChar()
+		tokenType = token.FLOAT
+	}
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position], tokenType
 }
 
 func (l *Lexer) readChar() {

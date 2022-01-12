@@ -7,15 +7,21 @@ import (
 
 /// Candice types
 
-var I1 = &Integer{BitSize: 1}
-var I8 = &Integer{BitSize: 8}
-var I16 = &Integer{BitSize: 16}
-var I32 = &Integer{BitSize: 32}
 var I64 = &Integer{BitSize: 64}
+var I32 = &Integer{BitSize: 32}
+var I16 = &Integer{BitSize: 16}
+var I8 = &Integer{BitSize: 8}
+var I1 = &Integer{BitSize: 1}
 var U64 = &UInteger{BitSize: 64}
 var U32 = &UInteger{BitSize: 32}
 var U16 = &UInteger{BitSize: 16}
 var U8 = &UInteger{BitSize: 8}
+var F64 = &Float{BitSize: 64}
+var F32 = &Float{BitSize: 32}
+
+// NOTE: I don't think this should be possible
+//var F16 = &Float{BitSize: 16}
+//var F8 = &Float{BitSize: 8}
 
 var typeLiteral = map[string]Type{
 	"i1":   I1,
@@ -27,6 +33,8 @@ var typeLiteral = map[string]Type{
 	"u16":  U16,
 	"u32":  U32,
 	"u64":  U64,
+	"f32":  F32,
+	"f64":  F64,
 	"void": VoidType,
 	"i0":   VoidType,
 }
@@ -128,16 +136,18 @@ func (_ *Pointer) SizeOf() int64 { return 8 }
 
 func (_ *Pointer) candiceType() {}
 
-type Float struct{}
+type Float struct {
+	BitSize uint
+}
 
 func (_ *Float) candiceType() {}
 
 func (f *Float) SizeOf() int64 {
-	return 8
+	return int64(f.BitSize / 8)
 }
 
 func (f *Float) String() string {
-	return "f64"
+	return fmt.Sprintf("f%d", f.BitSize)
 }
 
 func (_ *Float) Alignment() int64 {
@@ -311,6 +321,11 @@ func IsNumeric(t Type) bool {
 	return false
 }
 
+func IsFloat(t Type) bool {
+	_, isFloat := t.(*Float)
+	return isFloat
+}
+
 func IsPointer(t Type) bool {
 	_, ok := t.(*Pointer)
 	return ok
@@ -318,5 +333,10 @@ func IsPointer(t Type) bool {
 
 func IsArray(t Type) bool {
 	_, ok := t.(*Array)
+	return ok
+}
+
+func IsUnsignedInteger(t Type) bool {
+	_, ok := t.(*UInteger)
 	return ok
 }

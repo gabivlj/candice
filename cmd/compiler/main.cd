@@ -46,6 +46,11 @@ struct Player {
 }
 
 func main() {
+
+    float :f32 = 1.2;
+    floatCasted :i16 = @cast(i16, float);
+    @println(floatCasted);
+
     player := @Player{
         position: @Point {
             x: 3,

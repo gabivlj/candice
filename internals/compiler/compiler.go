@@ -137,6 +137,11 @@ func (c *Compiler) initializeBuiltinLib() {
 				} else {
 					//
 				}
+			} else if float, isFloat := t.(*types.FloatType); isFloat {
+				if float.Kind != types.FloatKindDouble {
+					expressions[i+1] = c.handleFloatCast(types.Double, expressions[i+1])
+				}
+				constantString.WriteString("%.3f ")
 			}
 		}
 		constantString.WriteByte(0)
@@ -517,7 +522,6 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
 	valueCompiled := c.compileExpression(decl.Expression)
 	_, isAlloca := valueCompiled.(*ir.InstAlloca)
-
 	// If the instance is already an alloca don't allocate
 	if valueCompiled.Type().Equal(types.NewPointer(t)) && isAlloca {
 		c.doNotLoadIntoMemory = false
@@ -557,6 +561,13 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 			theType := c.ToLLVMType(e.Type)
 			integerType := theType.(*types.IntType)
 			return constant.NewInt(integerType, e.Value)
+		}
+
+	case *ast.Float:
+		{
+			theType := c.ToLLVMType(e.Type)
+			floatType := theType.(*types.FloatType)
+			return constant.NewFloat(floatType, e.Value)
 		}
 
 	case *ast.BinaryOperation:
@@ -625,7 +636,15 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 	prefixValue := c.compileExpression(prefix.Right)
 	if prefix.Operation == ops.Subtract {
 		prefixValue = c.loadIfPointer(prefixValue)
-		return c.block().NewMul(prefixValue, constant.NewInt(prefixValue.Type().(*types.IntType), -1))
+		var negativeOne value.Value
+		if ctypes.IsFloat(prefix.GetType()) {
+			negativeOne = constant.NewFloat(prefixValue.Type().(*types.FloatType), -1)
+			return c.block().NewFMul(prefixValue, negativeOne)
+		}
+
+		negativeOne = constant.NewInt(prefixValue.Type().(*types.IntType), -1)
+
+		return c.block().NewMul(prefixValue, negativeOne)
 	}
 
 	if prefix.Operation == ops.BinaryAND {
@@ -871,12 +890,18 @@ func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
 func (c *Compiler) compileMultiply(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+	if types.IsFloat(leftValue.Type()) {
+		return c.block().NewFMul(leftValue, rightValue)
+	}
 	return c.block().NewMul(leftValue, rightValue)
 }
 
 func (c *Compiler) compileSubtract(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+	if types.IsFloat(leftValue.Type()) {
+		return c.block().NewFSub(leftValue, rightValue)
+	}
 	return c.block().NewSub(leftValue, rightValue)
 }
 
@@ -890,9 +915,9 @@ func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
 		return c.block().NewSDiv(leftValue, rightValue)
 	}
 	if types.IsFloat(leftValue.Type()) {
-		panic("float arithmetic not implemented")
+		return c.block().NewFDiv(leftValue, rightValue)
 	}
-	return nil
+	panic("can't divide these types")
 }
 
 func (c *Compiler) compileAndBinary(expr *ast.BinaryOperation) value.Value {
@@ -936,16 +961,31 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		return c.block().NewGetElementPtr(variable.Type().(*types.PointerType).ElemType, variable, zero, zero)
 	}
 	variable = c.loadIfPointer(variable)
+
 	if ctypes.IsNumeric(call.TypeParameters[0]) && ctypes.IsNumeric(call.Parameters[0].GetType()) {
-		return c.handleIntegerCast(toReturnType.(*types.IntType), variable)
+		if ctypes.IsFloat(call.TypeParameters[0]) != ctypes.IsFloat(call.Parameters[0].GetType()) {
+			return c.handleFloatIntCast(call.TypeParameters[0], call.Parameters[0].GetType(), variable, toReturnType)
+		}
+		return c.handleNumericBitCast(toReturnType, variable)
 	}
 
 	if ctypes.IsNumeric(call.TypeParameters[0]) && ctypes.IsPointer(call.Parameters[0].GetType()) {
-		return c.block().NewPtrToInt(variable, toReturnType)
+		integer := c.block().NewPtrToInt(variable, toReturnType)
+		if _, isFloat := call.TypeParameters[0].(*ctypes.Float); isFloat {
+			return c.block().NewSIToFP(integer, toReturnType)
+		}
+		return integer
 	}
 
-	if ctypes.IsPointer(call.TypeParameters[0]) && types.IsInt(variable.Type()) {
+	if ctypes.IsPointer(call.TypeParameters[0]) && ctypes.IsNumeric(call.Parameters[0].GetType()) { ///types.IsInt(variable.Type()) {
+		// do not load into memory because our conversion doesn't let us put the pointer above its level
+		// for example we should target to return i32** instead of i32* (if our pointer type was i32*)
+		// if we had this to false
 		c.doNotLoadIntoMemory = true
+
+		if fl, isFloat := call.Parameters[0].GetType().(*ctypes.Float); isFloat {
+			variable = c.block().NewFPToSI(variable, types.NewInt(uint64(fl.BitSize)))
+		}
 		value := c.block().NewIntToPtr(variable, toReturnType)
 		//storage := c.block().NewAlloca(toReturnType)
 		//c.block().NewStore(value, storage)

@@ -95,6 +95,14 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		}
 	case *ctypes.Float:
 		{
+			if el.BitSize >= 64 {
+				return types.Double
+			}
+
+			if el.BitSize >= 128 {
+				return types.FP128
+			}
+
 			return types.Float
 		}
 	case *ctypes.Anonymous:

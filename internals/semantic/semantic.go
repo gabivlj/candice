@@ -395,6 +395,8 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 	switch expressionType := expression.(type) {
 	case *ast.Integer:
 		return s.analyzeInteger(expressionType)
+	case *ast.Float:
+		return s.analyzeFloat(expressionType)
 	case *ast.BuiltinCall:
 		return s.analyzeBuiltinCall(expressionType)
 	case *ast.BinaryOperation:
@@ -660,6 +662,10 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 
 func (s *Semantic) analyzeInteger(integer *ast.Integer) ctypes.Type {
 	return integer.Type
+}
+
+func (s *Semantic) analyzeFloat(float *ast.Float) ctypes.Type {
+	return float.Type
 }
 
 // replaceAnonymous recursively tries to find an anonymous type and will try to replace it with a true type

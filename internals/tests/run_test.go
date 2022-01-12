@@ -5,7 +5,7 @@ import (
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/semantic"
-	"log"
+	"github.com/gabivlj/candice/pkg/logger"
 	"os"
 	"testing"
 )
@@ -13,7 +13,7 @@ import (
 func TestSrcs(t *testing.T) {
 	expectedOutputs := map[string]string{
 		"struct.cd":         "-3 0 -3 43",
-		"cast.cd":           "32",
+		"cast.cd":           "32 255 65535 -1 -1 1 1 1 1 -10.000 1.000",
 		"functions.cd":      "3 4 5 5",
 		"ifstmt.cd":         "1 2 3 1 2 3 1 2 3",
 		"if_statements2.cd": "4 4 4",
@@ -28,6 +28,7 @@ func TestSrcs(t *testing.T) {
 		"if_statements4.cd": "ok nice ok nice",
 	}
 	elems, err := os.ReadDir("./src")
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,6 +40,7 @@ func TestSrcs(t *testing.T) {
 		s := semantic.New()
 		p := parser.New(lexer.New(string(txt)))
 		root := p.Parse()
+		logger.Warning("Running " + elem.Name())
 		if len(p.Errors) > 0 {
 			t.Fatal(p.Errors)
 		}
@@ -55,6 +57,6 @@ func TestSrcs(t *testing.T) {
 		if expected != string(output) {
 			t.Fatal("test for", elem.Name(), "failed, expected output", expected, "got:", string(output), " ", err)
 		}
-		log.Println("File ", elem.Name(), " passed")
+		logger.Success("File " + elem.Name() + " passed")
 	}
 }

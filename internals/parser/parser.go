@@ -80,7 +80,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.ASSIGN, p.parseInfix)
 	p.registerInfixHandler(token.LBRACKET, p.parseIndex)
 	p.registerInfixHandler(token.LPAREN, p.parseCall)
-	//p.registerInfixHandler(token.LPAREN, p.parseInfix)
+
 	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.ANDBIN, p.parsePrefixExpression)
@@ -90,6 +90,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.AT, p.parseAt)
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
 	p.registerPrefixHandler(token.INT, p.parseInteger)
+	p.registerPrefixHandler(token.FLOAT, p.parseFloat)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
 	p.registerPrefixHandler(token.LBRACKET, p.parseStaticArray)
 	return p
@@ -548,6 +549,21 @@ func (p *Parser) parseInteger() ast.Expression {
 			Token: t,
 		},
 		Value: integer,
+	}
+}
+
+func (p *Parser) parseFloat() ast.Expression {
+	t := p.nextToken()
+	float, err := strconv.ParseFloat(t.Literal, 64)
+	if err != nil {
+		p.addErrorMessage("couldn't parse float " + t.Literal + ", because of given error: " + err.Error())
+	}
+	return &ast.Float{
+		Node: &node.Node{
+			Type:  ctypes.F32,
+			Token: t,
+		},
+		Value: float,
 	}
 }
 

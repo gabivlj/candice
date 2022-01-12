@@ -2,4 +2,26 @@ func main() {
 
     element : i16 = @cast(i16, 32)
     @println(element)
+    floatToIntegeri8 : i8 = @cast(i8, -1.2);
+    floatToIntegeri16 : i16 = @cast(i16, -1.2);
+    floatToIntegeri32 : i32 = @cast(i32, -1.2);
+    floatToIntegeri64 : i64 = @cast(i64, -1.2);
+    @println(floatToIntegeri8);
+    @println(floatToIntegeri16);
+    @println(floatToIntegeri32);
+    @println(floatToIntegeri64);
+
+    floatToIntegeru8 : u8 = @cast(u8, 1.2);
+    floatToIntegeru16 : u16 = @cast(u16, 1.2);
+    floatToIntegeru32 : u32 = @cast(u32, 1.2);
+    floatToIntegeru64 : u64 = @cast(u64, 1.2);
+    @println(floatToIntegeru8);
+    @println(floatToIntegeru16);
+    @println(floatToIntegeru32);
+    @println(floatToIntegeru64);
+
+    integerToFloat32 : f32 = @cast(f32, -100) * 0.1;
+    integerToFloat64 : f64 = @cast(f64, 100) * @cast(f64, 0.01);
+    @println(integerToFloat32)
+    @println(integerToFloat64)
 }

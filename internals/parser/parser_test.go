@@ -5,6 +5,7 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/pkg/a"
+	"log"
 	"testing"
 )
 
@@ -101,13 +102,13 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		{
 			expression: `
 						if 3 {
-						} else if 3+3+3==3/4/3/3.hello.hello == 4 {
+						} else if 3+3+3==3/4/3/3.0+hello.hello == 4 {
 						} else {
 						}
 					`,
 			expected: `if 3 {
 
-} else if ((((3+3)+3)==(((3/4)/3)/((3.hello).hello)))==4) {
+} else if ((((3+3)+3)==((((3/4)/3)/3)+(hello.hello)))==4) {
 
 } else {
 
@@ -298,6 +299,7 @@ func evaluate(t *testing.T, expression, expected string) {
 	p := New(lexer.New(expression))
 	program := p.Parse()
 	if len(p.Errors) != 0 {
+		log.Println("error on expression ", expression)
 		panic(fmt.Sprintf("%v", p.Errors))
 	}
 	output := program.String()

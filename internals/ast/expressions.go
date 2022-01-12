@@ -150,6 +150,21 @@ func (i *Integer) String() string {
 	return strconv.FormatInt(i.Value, 10)
 }
 
+type Float struct {
+	*node.Node
+	Value float64
+}
+
+func (i *Float) GetType() ctypes.Type {
+	return i.Node.Type
+}
+
+func (i *Float) expressionNode() {}
+
+func (i *Float) String() string {
+	return strconv.FormatFloat(i.Value, 'f', -1, 64)
+}
+
 type StringLiteral struct {
 	*node.Node
 	Value string
