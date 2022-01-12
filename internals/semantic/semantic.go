@@ -21,6 +21,7 @@ type Semantic struct {
 	returns                   bool
 	currentExpectedReturnType ctypes.Type
 	Errors                    []error
+	insideBreakableBlock      bool
 }
 
 func New() *Semantic {
@@ -89,8 +90,7 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	case *ast.StructStatement:
 		s.analyzeStructStatement(statementType)
 		return
-	case *ast.BreakStatement:
-		return
+
 	case *ast.IfStatement:
 		s.analyzeIfStatement(statementType)
 		return
@@ -113,6 +113,12 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 
 	case *ast.ReturnStatement:
 		s.analyzeReturnStatement(statementType)
+		return
+
+	case *ast.BreakStatement:
+		if !s.insideBreakableBlock {
+			s.error("Unexpected break statement", statementType.Token)
+		}
 		return
 	}
 
@@ -163,9 +169,10 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 	}
 
 	s.analyzeStatement(forStatement.Operation)
-
+	tempInsideBlock := s.insideBreakableBlock
+	s.insideBreakableBlock = true
 	s.analyzeBlock(forStatement.Block)
-
+	s.insideBreakableBlock = tempInsideBlock
 	s.leaveFrame()
 }
 

@@ -74,17 +74,26 @@ func main() {
 
     if 1 {
         if 0 {
-            @println("2ok");
+            @println("notok");
         } else if 0 {
-            @println("2ok");
+            @println("notok");
         } else if 0 {
-            @println("2ok");
+            @println("notok");
         } else if 1 {
             @println("ok");
         } else {
-            @println("2ok");
+            @println("notok");
         }
         @println("nice");
     }
 
+    matrix := [300][300]i32{}
+    for i := 0; i < 300; i = i + 1{
+        for j := 0; j < 300; j = j + 1 {
+            if i == 200 matrix[i][j] = 1;
+            else matrix[i][j] = i + j;
+        }
+    }    
+    @println(matrix[200][200]);
+    @println(matrix[201][201]);
 }

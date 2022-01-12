@@ -12,4 +12,15 @@ func main() {
         }
     }
 
+    for {
+        if 1 {
+            for {
+                if 2 if 2 if 2 if 2 break;
+                @println("shouldn't print");
+            }
+            break;
+        }
+        @println("shouldn't print");
+    }
+
 }

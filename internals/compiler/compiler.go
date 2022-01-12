@@ -22,12 +22,16 @@ var zero value.Value = constant.NewInt(types.I32, 0)
 var one value.Value = constant.NewInt(types.I32, 1)
 
 type Compiler struct {
-	errors                []error
-	m                     *ir.Module
-	blocks                []*ir.Block
-	main                  *ir.Func
-	types                 map[string]*Type
-	definitions           map[string]value.Value
+	errors []error
+	m      *ir.Module
+	blocks []*ir.Block
+
+	// Current defined types
+	types map[string]*Type
+
+	// Defined values
+	definitions map[string]value.Value
+
 	builtins              map[string]func(*ast.BuiltinCall) value.Value
 	definitionsToBePopped []string
 	stacks                []map[string]value.Value
@@ -37,6 +41,8 @@ type Compiler struct {
 	// Flag to indicate caller that this value shouldn't be loaded into memory
 	// This flag will be set to false again once loadIfPointer is called.
 	doNotLoadIntoMemory bool
+
+	currentBreakLeaveBlock *ir.Block
 }
 
 func New() *Compiler {
@@ -235,6 +241,12 @@ func (c *Compiler) Compile(tree ast.Node) {
 	}()
 
 	switch t := tree.(type) {
+
+	case *ast.BreakStatement:
+		{
+			c.block().NewBr(c.currentBreakLeaveBlock)
+			return
+		}
 
 	case *ast.ExpressionStatement:
 		{
@@ -456,8 +468,11 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	// jumps to main loop
 	c.block().NewCondBr(conditionValueFirst, mainLoop, leave)
 
+	previousBreak := c.currentBreakLeaveBlock
+	c.currentBreakLeaveBlock = leave
 	// compile main loop
 	possibleNewBlock := c.compileBlock(forLoop.Block, mainLoop)
+	c.currentBreakLeaveBlock = previousBreak
 
 	// compile update statement
 	c.compileBlock(&ast.Block{Statements: []ast.Statement{forLoop.Operation}}, update)
@@ -465,8 +480,6 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	// jump to the update statement
 	if possibleNewBlock.Term == nil {
 		possibleNewBlock.NewBr(update)
-	} else {
-		mainLoop.NewBr(update)
 	}
 
 	// go to the condition again

@@ -20,6 +20,7 @@ func GenerateObjectLLVM(writer io.WriterTo, path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	l.InitializeAllTargetInfos()
 	l.InitializeAllTargets()
 	l.InitializeAllTargetMCs()
