@@ -42,7 +42,8 @@ type Compiler struct {
 	// This flag will be set to false again once loadIfPointer is called.
 	doNotLoadIntoMemory bool
 
-	currentBreakLeaveBlock *ir.Block
+	currentBreakLeaveBlock     *ir.Block
+	currentContinueEscapeBlock *ir.Block
 }
 
 func New() *Compiler {
@@ -245,6 +246,12 @@ func (c *Compiler) Compile(tree ast.Node) {
 	case *ast.BreakStatement:
 		{
 			c.block().NewBr(c.currentBreakLeaveBlock)
+			return
+		}
+
+	case *ast.ContinueStatement:
+		{
+			c.block().NewBr(c.currentContinueEscapeBlock)
 			return
 		}
 
@@ -468,11 +475,11 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	// jumps to main loop
 	c.block().NewCondBr(conditionValueFirst, mainLoop, leave)
 
-	previousBreak := c.currentBreakLeaveBlock
-	c.currentBreakLeaveBlock = leave
+	previousBreak, previousContinue := c.currentBreakLeaveBlock, c.currentContinueEscapeBlock
+	c.currentBreakLeaveBlock, c.currentContinueEscapeBlock = leave, update
 	// compile main loop
 	possibleNewBlock := c.compileBlock(forLoop.Block, mainLoop)
-	c.currentBreakLeaveBlock = previousBreak
+	c.currentBreakLeaveBlock, c.currentContinueEscapeBlock = previousBreak, previousContinue
 
 	// compile update statement
 	c.compileBlock(&ast.Block{Statements: []ast.Statement{forLoop.Operation}}, update)

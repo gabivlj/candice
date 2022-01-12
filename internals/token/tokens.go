@@ -73,22 +73,24 @@ const (
 	IMPORT = TypeToken("IMPORT")
 	FOR    = TypeToken("FOR")
 
-	BREAK  = TypeToken("BREAK")
-	EXTERN = TypeToken("EXTERN")
+	BREAK    = TypeToken("BREAK")
+	CONTINUE = TypeToken("CONTINUE")
+	EXTERN   = TypeToken("EXTERN")
 )
 
 var keywords = map[string]TypeToken{
-	"func":   FUNCTION,
-	"true":   TRUE,
-	"false":  FALSE,
-	"if":     IF,
-	"else":   ELSE,
-	"for":    FOR,
-	"return": RETURN,
-	"struct": STRUCT,
-	"import": IMPORT,
-	"break":  BREAK,
-	"extern": EXTERN,
+	"func":     FUNCTION,
+	"true":     TRUE,
+	"false":    FALSE,
+	"if":       IF,
+	"else":     ELSE,
+	"for":      FOR,
+	"return":   RETURN,
+	"struct":   STRUCT,
+	"import":   IMPORT,
+	"break":    BREAK,
+	"extern":   EXTERN,
+	"continue": CONTINUE,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

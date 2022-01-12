@@ -120,6 +120,12 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 			s.error("Unexpected break statement", statementType.Token)
 		}
 		return
+
+	case *ast.ContinueStatement:
+		if !s.insideBreakableBlock {
+			s.error("Unexpected continue statement", statementType.Token)
+		}
+		return
 	}
 
 	log.Fatalln("couldn't analyze statement: " + statement.String() + " ")

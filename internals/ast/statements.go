@@ -215,3 +215,11 @@ type BreakStatement struct {
 func (b *BreakStatement) statementNode() {}
 
 func (b *BreakStatement) String() string { return b.Token.Literal }
+
+type ContinueStatement struct {
+	Token token.Token
+}
+
+func (c *ContinueStatement) statementNode() {}
+
+func (c *ContinueStatement) String() string { return c.Token.Literal }

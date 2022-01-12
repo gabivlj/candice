@@ -23,4 +23,11 @@ func main() {
         @println("shouldn't print");
     }
 
+    for i := 0; i < 100; i = i + 1 {
+        if 1 {
+            continue;
+        }
+        @println("shouldn't print btw");
+    }
+
 }
