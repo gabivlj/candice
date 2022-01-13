@@ -47,8 +47,8 @@ struct Player {
 
 func main() {
 
-    float :f32 = 1.2;
-    floatCasted :i16 = @cast(i16, float);
+    float : f32 = 1.2;
+    floatCasted : i16 = @cast(i16, float);
     @println(floatCasted);
 
     player := @Player{
@@ -101,4 +101,8 @@ func main() {
     }    
     @println(matrix[200][200]);
     @println(matrix[201][201]);
+
+    isDaniGood := @cast(i1, 1);
+    isGabiGood := @cast(i1, 1);
+    if 0 if 1 { @println("w") } else {@println("q")} else {@println("e")}
 }
