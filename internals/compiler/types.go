@@ -109,6 +109,18 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		{
 			return c.types[el.Name].llvmType
 		}
+
+	case *ctypes.Function:
+		{
+			returnType := c.ToLLVMType(el.Return)
+			parameters := make([]types.Type, 0, len(el.Parameters))
+			for _, param := range el.Parameters {
+				parameters = append(parameters, c.ToLLVMType(param))
+			}
+			function := types.NewPointer(types.NewFunc(returnType, parameters...))
+			return function
+		}
 	}
+
 	return nil
 }

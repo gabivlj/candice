@@ -1,0 +1,14 @@
+
+func passIt(c func (i32, *i32) i32) i32 {
+    array := [1]i32{5};
+    return c(0, @cast(*i32, array));
+}
+
+func callback(i i32, j *i32) i32 {
+    return j[i] + j[i];
+}
+
+func main() {
+    value := passIt(callback);
+    @println(value);
+}

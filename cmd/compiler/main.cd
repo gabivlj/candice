@@ -45,64 +45,15 @@ struct Player {
     name     *i8
 }
 
+func someStuff(value i32, callback func(i32) i32) i32 {
+    return callback(value)
+}
+
+func yeah(param i32) i32 {
+    return param + param
+}
+
 func main() {
-
-    float : f32 = 1.2;
-    floatCasted : i16 = @cast(i16, float);
-    @println(floatCasted);
-
-    player := @Player{
-        position: @Point {
-            x: 3,
-            y: 3,
-        },
-        rotation: 35,
-        name: "Hello world",
-    };
-
-    @println(player.name);
-    player.position.x = player.position.y + 5;
-    @println(player.position.x);
-
-
-    for i := 0; i <= 100; i = i + 1 {
-
-        @println(i);
-        for j := 0; j <= 100; j = j + 1 {
-            if i + j <= 10 {
-                @println(i + j);
-            } else {
-
-            }
-        }
-    }
-
-    if 1 {
-        if 0 {
-            @println("notok");
-        } else if 0 {
-            @println("notok");
-        } else if 0 {
-            @println("notok");
-        } else if 1 {
-            @println("ok");
-        } else {
-            @println("notok");
-        }
-        @println("nice");
-    }
-
-    matrix := [300][300]i32{}
-    for i := 0; i < 300; i = i + 1{
-        for j := 0; j < 300; j = j + 1 {
-            if i == 200 matrix[i][j] = 1;
-            else matrix[i][j] = i + j;
-        }
-    }    
-    @println(matrix[200][200]);
-    @println(matrix[201][201]);
-
-    isDaniGood := @cast(i1, 1);
-    isGabiGood := @cast(i1, 1);
-    if 0 if 1 { @println("w") } else {@println("q")} else {@println("e")}
+    result := someStuff(3, yeah)
+    @println(result)
 }

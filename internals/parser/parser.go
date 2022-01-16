@@ -3,12 +3,13 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/token"
-	"strconv"
 )
 
 type prefixFunc = func() ast.Expression
@@ -638,6 +639,7 @@ func (p *Parser) parseIf() ast.Statement {
 		p.nextToken()
 		if p.currentToken.Type != token.IF {
 			elseBlock = p.parseBlock()
+			break
 		} else if p.currentToken.Type == token.IF {
 			p.nextToken()
 			expression := p.parseExpression(0)

@@ -75,6 +75,7 @@ func (l *Lexer) NextToken() token.Token {
 	l.skipWhiteSpace()
 	for l.ch == '/' && l.peekChar() == '/' {
 		l.skipUntilJL()
+		l.skipWhiteSpace()
 	}
 	l.skipWhiteSpace()
 	switch l.ch {

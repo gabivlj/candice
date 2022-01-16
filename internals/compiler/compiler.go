@@ -674,6 +674,7 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
 	if fn, ok := c.functions[id.Name]; ok {
+		c.doNotLoadIntoMemory = true
 		return fn.Value
 	}
 	return c.compileIdentifierReference(id)
@@ -693,7 +694,7 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
-	funk := c.compileExpression(ast.Left)
+	funk := c.loadIfPointer(c.compileExpression(ast.Left))
 	arguments := make([]value.Value, 0, len(ast.Parameters))
 	for _, argument := range ast.Parameters {
 		compiledValue := c.compileExpression(argument)
