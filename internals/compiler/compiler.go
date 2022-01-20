@@ -114,7 +114,7 @@ func (c *Compiler) initializeBuiltinLib() {
 	)
 	c.definitions["printf"] = printf
 	printf.Sig.Variadic = true
-
+	printf.CallingConv = enum.CallingConvC
 	c.builtins["println"] = func(call *ast.BuiltinCall) value.Value {
 		expressions := make([]value.Value, len(call.Parameters)+1)
 		for i := 0; i < len(call.Parameters); i++ {
@@ -126,10 +126,18 @@ func (c *Compiler) initializeBuiltinLib() {
 		for i := range call.Parameters {
 			t := expressions[i+1].Type()
 			if types.IsInt(t) {
-				if _, isUnsigned := call.Parameters[i].GetType().(*ctypes.UInteger); isUnsigned {
-					constantString.WriteString("%u ")
-				} else {
-					constantString.WriteString("%d ")
+				if integer, isUnsigned := call.Parameters[i].GetType().(*ctypes.UInteger); isUnsigned {
+					if integer.BitSize > 32 {
+						constantString.WriteString("%llu ")
+					} else {
+						constantString.WriteString("%u ")
+					}
+				} else if integer, isSigned := call.Parameters[i].GetType().(*ctypes.Integer); isSigned {
+					if integer.BitSize > 32 {
+						constantString.WriteString("%lld ")
+					} else {
+						constantString.WriteString("%d ")
+					}
 				}
 			} else if pointer, isPointer := t.(*types.PointerType); isPointer {
 				if _, ok := pointer.ElemType.(*types.IntType); ok {
@@ -177,7 +185,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		ir.NewParam("", types.I64),
 	)
 	c.definitions["malloc"] = malloc
-
+	printf.CallingConv = enum.CallingConvC
 	// alloc accepts one type parameter, and how many you want to allocate
 	c.builtins["alloc"] = func(call *ast.BuiltinCall) value.Value {
 		typeParameter := call.TypeParameters[0]
@@ -212,6 +220,7 @@ func (c *Compiler) GenerateExecutableExperimental(output string, objectPaths []s
 	}
 	command := append(objectPaths, pathOutput)
 	command = append(command, "-o", output)
+	command = append(command, "-O3")
 	cmd := exec.Command("clang++", command...)
 	outputBuffer := bytes.Buffer{}
 	cmd.Stdout = &outputBuffer
@@ -521,13 +530,7 @@ func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) *ir.Block {
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
 	valueCompiled := c.compileExpression(decl.Expression)
-	_, isAlloca := valueCompiled.(*ir.InstAlloca)
-	// If the instance is already an alloca don't allocate
-	if valueCompiled.Type().Equal(types.NewPointer(t)) && isAlloca {
-		c.doNotLoadIntoMemory = false
-		c.declare(decl.Name, valueCompiled)
-		return
-	}
+	//_, isAlloca := valueCompiled.(*ir.InstAlloca)
 
 	val := c.block().NewAlloca(t)
 	c.block().NewStore(c.loadIfPointer(valueCompiled), val)

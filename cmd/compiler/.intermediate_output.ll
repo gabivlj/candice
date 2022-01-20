@@ -5,10 +5,10 @@
 %Player = type { %Point, i32, i8* }
 
 @"%d " = global [4 x i8] c"%d \00"
-@string.literal.nXUbuMCdit = global [8 x i8] c"./aFile\00"
-@string.literal.YtkUyUfxEP = global [3 x i8] c"a+\00"
+@string.literal.WfsyOhuiWG = global [8 x i8] c"./aFile\00"
+@string.literal.TjuufXuMPw = global [3 x i8] c"a+\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.bBDGlDUoBk = global [7 x i8] c"hello!\00"
+@string.literal.sPFemvxoSk = global [7 x i8] c"hello!\00"
 
 declare i32 @printf(i8* %0, ...)
 
@@ -40,8 +40,8 @@ doStuff:
 	%4 = load i32, i32* %3
 	%5 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%6 = call i32 (i8*, ...) @printf(i8* %5, i32 %4)
-	%7 = getelementptr [8 x i8], [8 x i8]* @string.literal.nXUbuMCdit, i32 0, i32 0
-	%8 = getelementptr [3 x i8], [3 x i8]* @string.literal.YtkUyUfxEP, i32 0, i32 0
+	%7 = getelementptr [8 x i8], [8 x i8]* @string.literal.WfsyOhuiWG, i32 0, i32 0
+	%8 = getelementptr [3 x i8], [3 x i8]* @string.literal.TjuufXuMPw, i32 0, i32 0
 	%9 = call %FILE* @fopen(i8* %7, i8* %8)
 	%10 = alloca %FILE*
 	store %FILE* %9, %FILE** %10
@@ -53,10 +53,10 @@ doStuff:
 	%16 = bitcast i8* %15 to i8*
 	%17 = alloca i8*
 	store i8* %16, i8** %17
-	br label %for.declaration.EYiwwXLBvo
+	br label %for.declaration.gGTyvgTIOw
 
-leave.mYrDtVAqmM:
-	%18 = getelementptr [7 x i8], [7 x i8]* @string.literal.bBDGlDUoBk, i32 0, i32 0
+leave.QNvyPlbQwF:
+	%18 = getelementptr [7 x i8], [7 x i8]* @string.literal.sPFemvxoSk, i32 0, i32 0
 	%19 = sext i32 1 to i64
 	%20 = sext i32 6 to i64
 	%21 = load %FILE*, %FILE** %10
@@ -67,30 +67,30 @@ leave.mYrDtVAqmM:
 	call void @fclose(%FILE* %23)
 	ret void
 
-for.declaration.EYiwwXLBvo:
+for.declaration.gGTyvgTIOw:
 	%24 = load i8*, i8** %17
 	%25 = load %FILE*, %FILE** %10
 	%26 = call i8* @fgets(i8* %24, i32 10, %FILE* %25)
 	%27 = ptrtoint i8* %26 to i32
 	%28 = icmp ne i32 %27, 0
-	br i1 %28, label %for.block.jgwEcGfJrM, label %leave.mYrDtVAqmM
+	br i1 %28, label %for.block.nobUlXEDaS, label %leave.QNvyPlbQwF
 
-for.condition.ZyMXbdJNHj:
+for.condition.dyxVuOHUsz:
 	%29 = load i8*, i8** %17
 	%30 = load %FILE*, %FILE** %10
 	%31 = call i8* @fgets(i8* %29, i32 10, %FILE* %30)
 	%32 = ptrtoint i8* %31 to i32
 	%33 = icmp ne i32 %32, 0
-	br i1 %33, label %for.block.jgwEcGfJrM, label %leave.mYrDtVAqmM
+	br i1 %33, label %for.block.nobUlXEDaS, label %leave.QNvyPlbQwF
 
-for.block.jgwEcGfJrM:
+for.block.nobUlXEDaS:
 	%34 = load i8*, i8** %17
 	%35 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%36 = call i32 (i8*, ...) @printf(i8* %35, i8* %34)
-	br label %for.update.syKvOAnCFD
+	br label %for.update.VnMbkjxixw
 
-for.update.syKvOAnCFD:
-	br label %for.condition.ZyMXbdJNHj
+for.update.VnMbkjxixw:
+	br label %for.condition.dyxVuOHUsz
 }
 
 define ccc i32 @someStuff(i32 %value, i32 (i32)* %callback) {

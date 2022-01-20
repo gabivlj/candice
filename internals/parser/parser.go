@@ -543,10 +543,25 @@ func (p *Parser) parseIndex(expression ast.Expression) ast.Expression {
 
 func (p *Parser) parseInteger() ast.Expression {
 	t := p.nextToken()
-	integer, _ := strconv.ParseInt(t.Literal, 10, 64)
+	integer, err := strconv.ParseInt(t.Literal, 10, 64)
+	var ty ctypes.Type = ctypes.I32
+	if err != nil {
+		if numErr, isNumErr := err.(*strconv.NumError); isNumErr && numErr.Err == strconv.ErrRange {
+			uinteger, err := strconv.ParseUint(t.Literal, 10, 64)
+			if err != nil {
+				p.addErrorMessage(err.Error())
+			} else {
+				integer = int64(uinteger)
+				ty = ctypes.U64
+			}
+		} else {
+			p.addErrorMessage(err.Error())
+		}
+	}
+
 	return &ast.Integer{
 		Node: &node.Node{
-			Type:  ctypes.I32,
+			Type:  ty,
 			Token: t,
 		},
 		Value: integer,

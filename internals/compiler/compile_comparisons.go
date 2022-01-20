@@ -14,7 +14,7 @@ func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.V
 		panic("can't use floats yet")
 	}
 
-	return c.block().NewICmp(c.getIPredComparison(expr.Operation, expr.GetType()),
+	return c.block().NewICmp(c.getIPredComparison(expr.Operation, expr.Left.GetType()),
 		c.loadIfPointer(c.compileExpression(expr.Left)),
 		c.loadIfPointer(c.compileExpression(expr.Right)))
 }
@@ -54,5 +54,5 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 		}
 	}
 
-	panic("cant handle this type of integer")
+	panic("cant handle this type of integer " + t.String() + " op: " + op.String())
 }

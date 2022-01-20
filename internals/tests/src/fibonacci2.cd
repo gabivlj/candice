@@ -1,0 +1,24 @@
+func fibonacci(value i32) i32 {
+    if value <= 1 {
+        return value
+    }
+    return fibonacci(value-1) +
+         fibonacci(value-2);
+}
+
+func fib_iter(n i32) u64 {
+    a := @cast(u64, 0)
+    b := @cast(u64, 1)
+    for i := 1; i < n; i = i + 1 {
+        tmp : u64 = a
+        a = b
+        b = tmp + b
+    }
+    return b
+}
+
+func main() {
+    for i := 0; i < 10000000; i = i + 1 if fib_iter(93) != @cast(u64, 12200160415121876738) {
+        @println("bad")
+    }
+}
