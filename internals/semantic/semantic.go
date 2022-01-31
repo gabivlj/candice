@@ -676,10 +676,9 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 		s.error("expected identifier for module access, got "+binaryOp.Right.String(), binaryOp.Token)
 		return ctypes.TODO()
 	}
-
 	accessedElement := module.variables.Get(identifier.Name)
-
 	if accessedElement == nil {
+		log.Println(module.variables, identifier)
 		s.error(identifier.Name+" does not exist in the specified module", binaryOp.Token)
 		return ctypes.TODO()
 	}
@@ -717,8 +716,8 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 		s.error("expected identifier for struct access, got "+binaryOperation.Right.String(), binaryOperation.Token)
 		return ctypes.TODO()
 	}
-
-	idx, t := strukt.GetField(ast.RetrieveID(identifier.Name))
+	identifier.Name = ast.RetrieveID(identifier.Name)
+	idx, t := strukt.GetField(identifier.Name)
 	if idx < 0 || t == nil {
 		s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
 		return ctypes.TODO()

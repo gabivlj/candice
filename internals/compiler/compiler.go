@@ -14,6 +14,7 @@ import (
 	"github.com/llir/llvm/ir/enum"
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
+	"log"
 	"os/exec"
 
 	"strings"
@@ -862,7 +863,7 @@ func getName(expr ast.Expression) (string, bool) {
 }
 
 func (c *Compiler) compileModuleAccess(expr *ast.BinaryOperation) value.Value {
-	moduleName := expr.Left.String()
+	moduleName := expr.Left.(*ast.Identifier).Name
 	module := c.modules[moduleName]
 	identifier := module.compileIdentifier(expr.Right.(*ast.Identifier))
 	c.doNotLoadIntoMemory = module.doNotLoadIntoMemory
@@ -905,9 +906,8 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		rightName, last := getName(expr.Right)
 		i, field := candiceType.GetField(rightName)
 		var inner types.Type
-
 		inner = leftStruct.Type().(*types.PointerType).ElemType
-
+		log.Println(inner)
 		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.NewInt(32), int64(i)))
 		leftStruct = ptr
 

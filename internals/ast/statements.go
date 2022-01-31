@@ -59,7 +59,7 @@ type DeclarationStatement struct {
 func (_ *DeclarationStatement) statementNode() {}
 
 func (d *DeclarationStatement) String() string {
-	return fmt.Sprintf("%s :%s = %s;", d.Name, d.Type.String(), d.Expression.String())
+	return fmt.Sprintf("%s :%s = %s;", RetrieveID(d.Name), d.Type.String(), d.Expression.String())
 }
 
 type AssignmentStatement struct {
@@ -205,7 +205,7 @@ func (i *ImportStatement) String() string {
 	for _, t := range i.Types {
 		types = append(types, t.String())
 	}
-	return "import " + i.Name + ", " + strings.Join(types, ", ") + ", " + i.Path.String()
+	return "import " + RetrieveID(i.Name) + ", " + strings.Join(types, ", ") + ", " + i.Path.String()
 }
 
 type BreakStatement struct {

@@ -2,6 +2,7 @@ package ctypes
 
 import (
 	"fmt"
+	"github.com/gabivlj/candice/internals/helper"
 	"strings"
 )
 
@@ -191,16 +192,16 @@ func (f *Function) Alignment() int64 {
 
 func (f *Function) FullString() string {
 	builder := strings.Builder{}
-	builder.WriteString("func")
+	builder.WriteString("func ")
 	if f.Name != "" {
-		builder.WriteString(strings.Split(f.Name, "-")[0])
+		builder.WriteString(helper.RetrieveID(f.Name))
 	}
 	builder.WriteString("(")
 	for i := 0; i < len(f.Names); i++ {
 		if i >= 1 {
 			builder.WriteString(", ")
 		}
-		builder.WriteString(f.Names[i])
+		builder.WriteString(helper.RetrieveID(f.Names[i]))
 		builder.WriteString(" ")
 		builder.WriteString(f.Parameters[i].String())
 	}
@@ -211,10 +212,11 @@ func (f *Function) FullString() string {
 
 func (f *Function) String() string {
 	builder := strings.Builder{}
+	visualName := helper.RetrieveID(f.Name)
 	builder.WriteString("func")
-	if f.Name != "" {
+	if visualName != "" {
 		builder.WriteByte(' ')
-		builder.WriteString(strings.Split(f.Name, "-")[0])
+		builder.WriteString(visualName)
 	}
 
 	builder.WriteString("(")
@@ -242,8 +244,14 @@ type Anonymous struct {
 	Modules []string
 }
 
-func (_ *Anonymous) CandiceType()     {}
-func (a *Anonymous) String() string   { return strings.Join(append(a.Modules, a.Name), ".") }
+func (_ *Anonymous) CandiceType() {}
+func (a *Anonymous) String() string {
+	showcase := make([]string, len(a.Modules))
+	for i, module := range a.Modules {
+		showcase[i] = helper.RetrieveID(module)
+	}
+	return strings.Join(append(showcase, helper.RetrieveID(a.Name)), ".")
+}
 func (a *Anonymous) Alignment() int64 { return 0 }
 func (a *Anonymous) SizeOf() int64    { return 0 }
 

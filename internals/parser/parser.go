@@ -190,7 +190,7 @@ func (p *Parser) parseImport() ast.Statement {
 	}
 
 	return &ast.ImportStatement{
-		Name:  identifier.Literal,
+		Name:  ast.CreateIdentifier(identifier.Literal, ""),
 		Types: types,
 		Path:  path,
 		Token: imp,
@@ -387,26 +387,26 @@ func (p *Parser) parseType() ctypes.Type {
 	if p.currentToken.Type == token.IDENT {
 
 		t := p.nextToken()
-		modules := []string{t.Literal}
+		modules := []string{ast.CreateIdentifier(t.Literal, "")}
 		for p.currentToken.Type == token.DOT {
 			p.nextToken()
 			p.expect(token.IDENT)
 			identifier := p.nextToken()
-			modules = append(modules, identifier.Literal)
+			modules = append(modules, ast.CreateIdentifier(identifier.Literal, ""))
 		}
 		if len(modules) > 1 {
 			return &ctypes.Anonymous{
 				Modules: modules[:len(modules)-1],
-				Name:    ast.CreateIdentifier(modules[len(modules)-1], ""),
+				Name:    modules[len(modules)-1],
 			}
 		}
 
-		if t := ctypes.LiteralToType(modules[0]); t != nil {
+		if t := ctypes.LiteralToType(ast.RetrieveID(modules[0])); t != nil {
 			return t
 		}
 
 		return &ctypes.Anonymous{
-			Name: ast.CreateIdentifier(modules[0], ""),
+			Name: modules[0],
 		}
 	}
 
