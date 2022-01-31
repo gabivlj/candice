@@ -42,6 +42,7 @@ const (
 	NOTEQ    = TypeToken("!=")
 	LTE      = TypeToken("<=")
 	GTE      = TypeToken(">=")
+	TYPE     = TypeToken("type")
 
 	DOT = TypeToken(".")
 	// Delimiters
@@ -91,6 +92,7 @@ var keywords = map[string]TypeToken{
 	"break":    BREAK,
 	"extern":   EXTERN,
 	"continue": CONTINUE,
+	"type":     TYPE,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

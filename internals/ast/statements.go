@@ -2,9 +2,10 @@ package ast
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/token"
-	"strings"
 )
 
 type Block struct {
@@ -223,3 +224,13 @@ type ContinueStatement struct {
 func (c *ContinueStatement) statementNode() {}
 
 func (c *ContinueStatement) String() string { return c.Token.Literal }
+
+type GenericTypeDefinition struct {
+	Token        token.Token
+	Name         string
+	ReplacedType ctypes.Type
+}
+
+func (g *GenericTypeDefinition) statementNode() {}
+
+func (g *GenericTypeDefinition) String() string { return g.Name }

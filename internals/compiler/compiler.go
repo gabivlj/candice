@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os/exec"
 
 	"github.com/gabivlj/candice/internals/ast"
@@ -33,7 +32,7 @@ type Compiler struct {
 	types map[string]*Type
 
 	// Defined values
-	definitions map[string]value.Value
+	globalBuiltinDefinitions map[string]value.Value
 
 	builtins              map[string]func(*Compiler, *ast.BuiltinCall) value.Value
 	definitionsToBePopped []string
@@ -54,33 +53,34 @@ type Compiler struct {
 func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	var m *ir.Module
 	var builtins map[string]func(*Compiler, *ast.BuiltinCall) value.Value
+	var globalBuiltinDefinitions map[string]value.Value
 	if len(parent) > 0 {
 		m = parent[0].m
 		builtins = parent[0].builtins
+		globalBuiltinDefinitions = parent[0].globalBuiltinDefinitions
 	} else {
 		m = ir.NewModule()
 		builtins = map[string]func(*Compiler, *ast.BuiltinCall) value.Value{}
+		globalBuiltinDefinitions = map[string]value.Value{}
 	}
 
 	c := &Compiler{
-		m:                     m,
-		blocks:                []*ir.Block{},
-		definitions:           map[string]value.Value{},
-		builtins:              builtins,
-		types:                 map[string]*Type{},
-		definitionsToBePopped: []string{"<>"},
-		stacks:                []map[string]value.Value{{}},
-		globalVariables:       map[string]*Value{},
-		currentFunction:       nil,
-		context:               context,
-		modules:               map[string]*Compiler{},
+		m:                        m,
+		blocks:                   []*ir.Block{},
+		globalBuiltinDefinitions: globalBuiltinDefinitions,
+		builtins:                 builtins,
+		types:                    map[string]*Type{},
+		definitionsToBePopped:    []string{"<>"},
+		stacks:                   []map[string]value.Value{{}},
+		globalVariables:          map[string]*Value{},
+		currentFunction:          nil,
+		context:                  context,
+		modules:                  map[string]*Compiler{},
 	}
 
 	c.initializeBuiltinLib()
 	return c
 }
-
-/// Frequent private utils
 
 // A small context stores variables stored by the current scope defined by if and for statements.
 func (c *Compiler) createSmallContext() {
@@ -133,7 +133,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		types.I32,
 		ir.NewParam("", types.NewPointer(types.I8)),
 	)
-	c.definitions["printf"] = printf
+	c.globalBuiltinDefinitions["printf"] = printf
 	printf.Sig.Variadic = true
 	printf.CallingConv = enum.CallingConvC
 	c.builtins["println"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
@@ -181,9 +181,9 @@ func (c *Compiler) initializeBuiltinLib() {
 		// Define as global, we can keep it at all times on memory
 		var globalDef value.Value
 
-		if definition, ok := c.definitions[s]; !ok {
+		if definition, ok := c.globalBuiltinDefinitions[s]; !ok {
 			globalDef = c.m.NewGlobalDef(s[:len(s)-1], stringWithCharArrayType)
-			c.definitions[s] = globalDef
+			c.globalBuiltinDefinitions[s] = globalDef
 		} else {
 			globalDef = definition
 		}
@@ -205,7 +205,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		types.NewPointer(types.I8),
 		ir.NewParam("", types.I64),
 	)
-	c.definitions["malloc"] = malloc
+	c.globalBuiltinDefinitions["malloc"] = malloc
 	printf.CallingConv = enum.CallingConvC
 	// alloc accepts one type parameter, and how many you want to allocate
 	c.builtins["alloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
@@ -302,6 +302,12 @@ func (c *Compiler) Compile(tree ast.Node) {
 	case *ast.ExpressionStatement:
 		{
 			c.compileExpression(t.Expression)
+			return
+		}
+
+	case *ast.GenericTypeDefinition:
+		{
+			c.compileType(t.Name, t.ReplacedType)
 			return
 		}
 
@@ -560,8 +566,6 @@ func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) *ir.Block {
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
 	valueCompiled := c.compileExpression(decl.Expression)
-	//_, isAlloca := valueCompiled.(*ir.InstAlloca)
-
 	val := c.block().NewAlloca(t)
 	c.block().NewStore(c.loadIfPointer(valueCompiled), val)
 	c.declare(decl.Name, val)
@@ -914,7 +918,6 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		i, field := candiceType.GetField(rightName)
 		var inner types.Type
 		inner = leftStruct.Type().(*types.PointerType).ElemType
-		log.Println(inner)
 		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.NewInt(32), int64(i)))
 		leftStruct = ptr
 
@@ -1048,5 +1051,4 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 	}
 
 	panic("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
-	return nil
 }
