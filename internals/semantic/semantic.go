@@ -85,7 +85,6 @@ func (s *Semantic) error(msg string, tok token.Token) {
 }
 
 func (s *Semantic) typeMismatchError(node string, tok token.Token, expected, got ctypes.Type) {
-	log.Println(s.definedTypes)
 	message := fmt.Sprintf("_%s_ :: mismatched types, expected=%s, got=%s", node, expected.String(), got.String())
 	s.error(message, tok)
 }
@@ -148,6 +147,9 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	case *ast.ReturnStatement:
 		s.analyzeReturnStatement(statementType)
 		return
+	case *ast.GenericTypeDefinition:
+		s.analyzeGenericTypeDefinition(statementType)
+		return
 
 	case *ast.BreakStatement:
 		if !s.insideBreakableBlock {
@@ -163,6 +165,10 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	}
 
 	log.Fatalln("couldn't analyze statement: " + statement.String() + " ")
+}
+
+func (s *Semantic) analyzeGenericTypeDefinition(genericType *ast.GenericTypeDefinition) {
+	return
 }
 
 func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
@@ -352,9 +358,12 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		}
 		semantic := s.retrieveModule(module)
 		name := semantic.TranslateName(anonymous.Name)
+
 		// replace anonymous type name to the module one.
 		anonymous.Name = name
-		return semantic.definedTypes[name]
+		t := semantic.definedTypes[name]
+
+		return t
 	}
 
 	return t
@@ -749,6 +758,10 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	}
 	l := lexer.New(string(text))
 	p := parser.New(l)
+	p.TypeParameters = make([]ctypes.Type, 0, len(importStatement.Types))
+	for _, t := range importStatement.Types {
+		p.TypeParameters = append(p.TypeParameters, s.UnwrapAnonymous(t))
+	}
 	tree := p.Parse()
 	if len(p.Errors) > 0 {
 		s.error("error parsing file imported on path "+importStatement.Path.String(), importStatement.Token)
@@ -756,8 +769,9 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 		return
 	}
 	internalSemantic := New()
+
 	internalSemantic.Analyze(tree)
-	if len(p.Errors) > 0 {
+	if len(internalSemantic.Errors) > 0 {
 		s.error("error analyzing file imported on path "+importStatement.Path.String(), importStatement.Token)
 		s.Errors = append(s.Errors, internalSemantic.Errors...)
 		return
@@ -766,8 +780,8 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 }
 
 func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctypes.Type {
-	left := s.analyzeExpression(binaryOperation.Left)
-	right := s.analyzeExpression(binaryOperation.Right)
+	left := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Left))
+	right := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Right))
 	if !ctypes.IsNumeric(left) {
 		s.error("expected numeric type, got: "+left.String(), binaryOperation.Token)
 	}

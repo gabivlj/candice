@@ -74,6 +74,14 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 			if t, ok := c.types[el.Name]; ok {
 				return t.llvmType
 			}
+
+			// TODO: Optimize this to use a single lookup
+			for _, module := range c.modules {
+				if t, ok := module.types[el.Name]; ok {
+					return t.llvmType
+				}
+			}
+
 			llvmTypes := make([]types.Type, 0, len(el.Fields))
 			s := types.NewStruct()
 			s.Opaque = true
@@ -112,7 +120,6 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 				l := c.modules[el.Modules[0]].ToLLVMType(el)
 				return l
 			}
-
 			return t.llvmType
 		}
 
