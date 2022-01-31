@@ -3,8 +3,9 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"github.com/gabivlj/candice/pkg/random"
 	"strconv"
+
+	"github.com/gabivlj/candice/pkg/random"
 
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
@@ -276,6 +277,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 }
 
 func (p *Parser) parseStructLiteral(module string) ast.Expression {
+
 	literal := p.nextToken()
 	p.expect(token.LBRACE)
 	p.nextToken()
@@ -308,6 +310,7 @@ func (p *Parser) parseStructLiteral(module string) ast.Expression {
 			Type:  &ctypes.Anonymous{Name: ast.CreateIdentifier(literal.Literal, p.ID)},
 			Token: literal,
 		},
+		Module: module,
 		Name:   ast.CreateIdentifier(literal.Literal, p.ID),
 		Values: structValues,
 	}
@@ -619,7 +622,8 @@ func (p *Parser) parseAt() ast.Expression {
 	p.expect(token.IDENT)
 	module := ""
 	if p.peekToken.Type == token.DOT {
-		module = p.nextToken().Literal
+		module = ast.CreateIdentifier(p.nextToken().Literal, p.ID)
+		p.nextToken()
 	}
 
 	if p.peekToken.Type == token.LBRACE {

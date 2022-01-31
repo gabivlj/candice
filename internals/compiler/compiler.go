@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
+	"os/exec"
+
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
@@ -14,8 +17,6 @@ import (
 	"github.com/llir/llvm/ir/enum"
 	"github.com/llir/llvm/ir/types"
 	"github.com/llir/llvm/ir/value"
-	"log"
-	"os/exec"
 
 	"strings"
 )
@@ -60,6 +61,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		m = ir.NewModule()
 		builtins = map[string]func(*Compiler, *ast.BuiltinCall) value.Value{}
 	}
+
 	c := &Compiler{
 		m:                     m,
 		blocks:                []*ir.Block{},
@@ -770,7 +772,11 @@ func (c *Compiler) loadIfPointer(val value.Value) value.Value {
 }
 
 func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
-	possibleStruct := c.types[strukt.Name]
+	module := c
+	if strukt.Module != "" {
+		module = c.modules[strukt.Module]
+	}
+	possibleStruct := module.types[strukt.Name]
 	struktType, ok := possibleStruct.candiceType.(*ctypes.Struct)
 
 	if !ok {

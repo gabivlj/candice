@@ -3,6 +3,10 @@ package semantic
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
@@ -12,13 +16,10 @@ import (
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
-	"log"
-	"os"
-	"strconv"
 )
 
 type Semantic struct {
-	variables                 *undomap.UndoMap
+	variables                 *undomap.UndoMap[string, ctypes.Type]
 	functionBodies            map[string]*ast.FunctionDeclarationStatement
 	definedTypes              map[string]ctypes.Type
 	builtinHandlers           map[string]func(builtin *ast.BuiltinCall) ctypes.Type
@@ -46,7 +47,7 @@ func (s *Semantic) String() string { return "MODULE" }
 
 func New() *Semantic {
 	s := &Semantic{
-		variables:                 undomap.New(),
+		variables:                 undomap.New[string, ctypes.Type](),
 		definedTypes:              map[string]ctypes.Type{},
 		builtinHandlers:           map[string]func(builtin *ast.BuiltinCall) ctypes.Type{},
 		Errors:                    []error{},
@@ -511,7 +512,9 @@ func (s *Semantic) retrieveModule(moduleName string) *Semantic {
 func (s *Semantic) retrieveTypeFromStruct(structLiteral *ast.StructLiteral) (ctypes.Type, error) {
 	module := s.retrieveModule(structLiteral.Module)
 	// TODO: change here to translate into different code
-	structType, ok := module.definedTypes[module.TranslateName(structLiteral.Name)]
+	structLiteral.Name = module.TranslateName(structLiteral.Name)
+	structType, ok := module.definedTypes[structLiteral.Name]
+
 	if !ok {
 		return nil, errors.New("undefined struct " + structLiteral.Name + ": " + structLiteral.String())
 	}
