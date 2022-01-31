@@ -51,7 +51,7 @@ func TestSrcs(t *testing.T) {
 			t.Fatal(s.Errors)
 		}
 
-		c := compiler.New()
+		c := compiler.New(s)
 		c.Compile(root)
 		output, err := c.Execute()
 		expected := expectedOutputs[elem.Name()]

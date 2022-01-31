@@ -20,7 +20,7 @@ func (i *Identifier) GetType() ctypes.Type {
 func (i *Identifier) expressionNode() {}
 
 func (i *Identifier) String() string {
-	return i.Name
+	return RetrieveID(i.Name)
 }
 
 type BinaryOperation struct {
@@ -123,7 +123,7 @@ func (c *Call) expressionNode() {}
 
 func (c *Call) String() string {
 	builder := strings.Builder{}
-	builder.WriteString(c.Left.String())
+	builder.WriteString(RetrieveID(c.Left.String()))
 	builder.WriteString("(")
 	for i, param := range c.Parameters {
 		if i >= 1 {
@@ -187,6 +187,7 @@ type StructLiteral struct {
 	*node.Node
 	Name   string
 	Values []StructValue
+	Module string
 }
 
 func (s *StructLiteral) GetType() ctypes.Type {
@@ -198,7 +199,7 @@ func (_ *StructLiteral) expressionNode() {}
 func (s *StructLiteral) String() string {
 	output := strings.Builder{}
 	output.WriteByte('@')
-	output.WriteString(s.Name)
+	output.WriteString(RetrieveID(s.Name))
 	output.WriteString("{\n")
 	for _, value := range s.Values {
 		output.WriteString(value.Name)

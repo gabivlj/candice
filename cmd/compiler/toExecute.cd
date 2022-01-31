@@ -1,0 +1,13 @@
+import someModule, i64, "./toImport.cd";
+import someModulei32, i32, "./toImport.cd";
+
+func something() someModule.Something {
+    return @someModule.Something { integer: @cast(i64, 3) };
+}
+
+func main() {
+    somethingVariable : someModule.Something = someModule.something();
+    somethingVariableI32 : someModulei32.Something = someModulei32.something();    
+    localSomethingFunction : someModule.Something = something()
+    @println(somethingVariableI32.integer + @cast(i32, somethingVariable.integer) + @cast(i32, localSomethingFunction.integer));    
+}

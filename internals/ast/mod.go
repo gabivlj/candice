@@ -22,6 +22,7 @@ type Statement interface {
 }
 
 type Program struct {
+	ID         string
 	Statements []Statement
 }
 
@@ -42,4 +43,15 @@ func (p *Program) String() string {
 		builder.WriteString(s.String() + "\n")
 	}
 	return builder.String()
+}
+
+func CreateIdentifier(name string, id string) string {
+	if name == "main" {
+		return name
+	}
+	return name + "-" + id
+}
+
+func RetrieveID(name string) string {
+	return strings.Split(name, "-")[0]
 }

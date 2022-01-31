@@ -2,6 +2,7 @@ package ctypes
 
 import (
 	"fmt"
+	"github.com/gabivlj/candice/internals/helper"
 	"strings"
 )
 
@@ -43,7 +44,7 @@ func LiteralToType(literal string) Type {
 	if t, ok := typeLiteral[literal]; ok {
 		return t
 	}
-	return &Anonymous{Name: literal}
+	return nil
 }
 
 var todoType = &Anonymous{Name: "errors"}
@@ -54,8 +55,7 @@ func TODO() Type {
 
 // Type is the implementation of a candice type
 type Type interface {
-	// candiceType private flag
-	candiceType()
+	CandiceType()
 
 	// SizeOf returns the size in bytes
 	SizeOf() int64
@@ -72,7 +72,7 @@ type Void struct{}
 
 func (_ *Void) String() string { return "void" }
 
-func (_ *Void) candiceType() {}
+func (_ *Void) CandiceType() {}
 
 func (_ *Void) SizeOf() int64 {
 	return 0
@@ -91,7 +91,7 @@ func (i *Integer) String() string {
 	return fmt.Sprintf("i%d", i.BitSize)
 }
 
-func (_ *Integer) candiceType() {}
+func (_ *Integer) CandiceType() {}
 
 func (i *Integer) SizeOf() int64 {
 	return int64(i.BitSize / 8)
@@ -118,7 +118,7 @@ func (i *UInteger) Alignment() int64 {
 	return int64(i.BitSize / 8)
 }
 
-func (_ *UInteger) candiceType() {}
+func (_ *UInteger) CandiceType() {}
 
 type Pointer struct {
 	Inner Type
@@ -134,13 +134,13 @@ func (_ *Pointer) Alignment() int64 {
 
 func (_ *Pointer) SizeOf() int64 { return 8 }
 
-func (_ *Pointer) candiceType() {}
+func (_ *Pointer) CandiceType() {}
 
 type Float struct {
 	BitSize uint
 }
 
-func (_ *Float) candiceType() {}
+func (_ *Float) CandiceType() {}
 
 func (f *Float) SizeOf() int64 {
 	return int64(f.BitSize / 8)
@@ -171,7 +171,7 @@ func (a *Array) Alignment() int64 {
 	return a.Inner.Alignment()
 }
 
-func (_ *Array) candiceType() {}
+func (_ *Array) CandiceType() {}
 
 type Function struct {
 	Name       string
@@ -180,7 +180,7 @@ type Function struct {
 	Return     Type
 }
 
-func (_ *Function) candiceType() {}
+func (_ *Function) CandiceType() {}
 
 func (f *Function) SizeOf() int64 {
 	return 8
@@ -193,13 +193,15 @@ func (f *Function) Alignment() int64 {
 func (f *Function) FullString() string {
 	builder := strings.Builder{}
 	builder.WriteString("func ")
-	builder.WriteString(f.Name)
+	if f.Name != "" {
+		builder.WriteString(helper.RetrieveID(f.Name))
+	}
 	builder.WriteString("(")
 	for i := 0; i < len(f.Names); i++ {
 		if i >= 1 {
 			builder.WriteString(", ")
 		}
-		builder.WriteString(f.Names[i])
+		builder.WriteString(helper.RetrieveID(f.Names[i]))
 		builder.WriteString(" ")
 		builder.WriteString(f.Parameters[i].String())
 	}
@@ -210,10 +212,11 @@ func (f *Function) FullString() string {
 
 func (f *Function) String() string {
 	builder := strings.Builder{}
+	visualName := helper.RetrieveID(f.Name)
 	builder.WriteString("func")
-	if f.Name != "" {
+	if visualName != "" {
 		builder.WriteByte(' ')
-		builder.WriteString(f.Name)
+		builder.WriteString(visualName)
 	}
 
 	builder.WriteString("(")
@@ -241,8 +244,14 @@ type Anonymous struct {
 	Modules []string
 }
 
-func (_ *Anonymous) candiceType()     {}
-func (a *Anonymous) String() string   { return strings.Join(append(a.Modules, a.Name), ".") }
+func (_ *Anonymous) CandiceType() {}
+func (a *Anonymous) String() string {
+	showcase := make([]string, len(a.Modules))
+	for i, module := range a.Modules {
+		showcase[i] = helper.RetrieveID(module)
+	}
+	return strings.Join(append(showcase, helper.RetrieveID(a.Name)), ".")
+}
 func (a *Anonymous) Alignment() int64 { return 0 }
 func (a *Anonymous) SizeOf() int64    { return 0 }
 
@@ -250,6 +259,7 @@ type Struct struct {
 	Fields []Type
 	Names  []string
 	Name   string
+	ID     string
 }
 
 func (s *Struct) GetField(fieldName string) (int, Type) {
@@ -263,7 +273,7 @@ func (s *Struct) GetField(fieldName string) (int, Type) {
 
 func (s *Struct) FullString() string {
 	str := strings.Builder{}
-	str.WriteString("struct " + s.Name + " {\n")
+	str.WriteString("struct " + strings.Split(s.Name, "-")[0] + " {\n")
 	for i, field := range s.Fields {
 		if i >= 1 {
 			str.WriteByte('\n')
@@ -278,7 +288,7 @@ func (s *Struct) String() string {
 	return s.Name
 }
 
-func (_ *Struct) candiceType() {}
+func (_ *Struct) CandiceType() {}
 
 func (s *Struct) SizeOf() int64 {
 	currentAddress := int64(0)

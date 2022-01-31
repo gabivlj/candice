@@ -55,7 +55,7 @@ func Init() {
 		return
 	}
 
-	c := compiler.New()
+	c := compiler.New(s)
 	c.Compile(tree)
 	err = c.GenerateExecutableExperimental(programName, objects)
 	if err != nil {

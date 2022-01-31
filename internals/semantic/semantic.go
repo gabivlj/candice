@@ -3,35 +3,58 @@ package semantic
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
+	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
-	"log"
-	"strconv"
 )
 
 type Semantic struct {
-	variables                 *undomap.UndoMap
+	variables                 *undomap.UndoMap[string, ctypes.Type]
+	functionBodies            map[string]*ast.FunctionDeclarationStatement
 	definedTypes              map[string]ctypes.Type
 	builtinHandlers           map[string]func(builtin *ast.BuiltinCall) ctypes.Type
 	returns                   bool
 	currentExpectedReturnType ctypes.Type
 	Errors                    []error
 	insideBreakableBlock      bool
+	modules                   map[string]*Semantic
+	Root                      *ast.Program
 }
+
+func (s *Semantic) GetFunction(name string) *ast.FunctionDeclarationStatement {
+	return s.functionBodies[name]
+}
+
+func (s *Semantic) SizeOf() int64 {
+	return 0
+}
+
+func (s *Semantic) CandiceType() {}
+
+func (s *Semantic) Alignment() int64 { return 0 }
+
+func (s *Semantic) String() string { return "MODULE" }
 
 func New() *Semantic {
 	s := &Semantic{
-		variables:                 undomap.New(),
+		variables:                 undomap.New[string, ctypes.Type](),
 		definedTypes:              map[string]ctypes.Type{},
 		builtinHandlers:           map[string]func(builtin *ast.BuiltinCall) ctypes.Type{},
 		Errors:                    []error{},
 		currentExpectedReturnType: ctypes.VoidType,
 		returns:                   false,
+		modules:                   map[string]*Semantic{},
+		functionBodies:            map[string]*ast.FunctionDeclarationStatement{},
 	}
 
 	s.builtinHandlers["cast"] = s.analyzeCast
@@ -62,19 +85,27 @@ func (s *Semantic) error(msg string, tok token.Token) {
 }
 
 func (s *Semantic) typeMismatchError(node string, tok token.Token, expected, got ctypes.Type) {
+	log.Println(s.definedTypes)
 	message := fmt.Sprintf("_%s_ :: mismatched types, expected=%s, got=%s", node, expected.String(), got.String())
 	s.error(message, tok)
 }
 
+func (s *Semantic) GetModule(name string) *Semantic {
+	return s.modules[name]
+}
+
 func (s *Semantic) Analyze(program *ast.Program) {
-	s.enterFrame()
+	s.Root = program
 	for _, statement := range program.Statements {
 		s.analyzeStatement(statement)
 		if len(s.Errors) > 0 {
 			return
 		}
 	}
-	s.leaveFrame()
+}
+
+func (s *Semantic) TranslateName(name string) string {
+	return ast.CreateIdentifier(ast.RetrieveID(name), s.Root.ID)
 }
 
 func (s *Semantic) analyzeStatement(statement ast.Statement) {
@@ -84,6 +115,9 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	}
 
 	switch statementType := statement.(type) {
+	case *ast.ImportStatement:
+		s.analyzeImport(statementType)
+		return
 	case *ast.DeclarationStatement:
 		s.analyzeDeclarationStatement(statementType)
 		return
@@ -188,6 +222,7 @@ func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatemen
 	}
 
 	s.variables.Add(fun.FunctionType.Name, fun.FunctionType)
+	s.functionBodies[fun.FunctionType.Name] = fun
 
 	s.enterFrame()
 
@@ -210,7 +245,7 @@ func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatemen
 	if !s.returns && fun.FunctionType.Return != ctypes.VoidType {
 		s.error("not all paths of the function '"+fun.FunctionType.String()+"'  return a variable", fun.Token)
 	}
-
+	fun.FunctionType.Return = s.UnwrapAnonymous(fun.FunctionType.Return)
 	s.returns = false
 	s.leaveFrame()
 
@@ -257,20 +292,21 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 }
 
 func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) {
-	theType := s.analyzeExpression(returnStatement.Expression)
+	theType := s.UnwrapAnonymous(s.analyzeExpression(returnStatement.Expression))
 	if !s.areTypesEqual(theType, s.currentExpectedReturnType) {
 		s.typeMismatchError(returnStatement.String(), returnStatement.Token, s.currentExpectedReturnType, theType)
 	}
-	returnStatement.Type = theType
+	returnStatement.Type = s.UnwrapAnonymous(theType)
 	s.returns = true
 }
 
 func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
+
 	s.definedTypes[statementType.Type.Name] = statementType.Type
 	for _, t := range statementType.Type.Fields {
 		unwrappedType := s.unwrap(t)
 		if anonymous, ok := unwrappedType.(*ctypes.Anonymous); ok {
-			definedType := s.unwrapAnonymous(anonymous)
+			definedType := s.UnwrapAnonymous(anonymous)
 			if definedType == statementType.Type && t == anonymous {
 				s.error("recursive type detected", statementType.Token)
 				return
@@ -303,15 +339,22 @@ func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationState
 		s.variables.Add(declaration.Name, declType)
 		return
 	}
-
 	// else we just prefer the one returned by analyzeExpression
 	declaration.Type = ctype
 	s.variables.Add(declaration.Name, ctype)
 }
 
-func (s *Semantic) unwrapAnonymous(t ctypes.Type) ctypes.Type {
+func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 	if anonymous, ok := t.(*ctypes.Anonymous); ok {
-		return s.definedTypes[anonymous.Name]
+		module := ""
+		if anonymous.Modules != nil && len(anonymous.Modules) > 0 {
+			module = anonymous.Modules[0]
+		}
+		semantic := s.retrieveModule(module)
+		name := semantic.TranslateName(anonymous.Name)
+		// replace anonymous type name to the module one.
+		anonymous.Name = name
+		return semantic.definedTypes[name]
 	}
 
 	return t
@@ -343,7 +386,7 @@ func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
 	}
 
 	if toSwap == ctypes.TODO() {
-		trueType := s.unwrapAnonymous(t)
+		trueType := s.UnwrapAnonymous(t)
 		if _, ok := trueType.(*ctypes.Anonymous); (ok && trueType == t) || trueType == nil {
 			s.error("unknown type "+t.String(), token.Token{})
 		}
@@ -354,8 +397,8 @@ func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
 }
 
 func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
-	first = s.unwrapAnonymous(first)
-	second = s.unwrapAnonymous(second)
+	first = s.UnwrapAnonymous(first)
+	second = s.UnwrapAnonymous(second)
 
 	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {
 		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
@@ -451,15 +494,45 @@ func (s *Semantic) analyzeIndexAccess(indexAccess *ast.IndexAccess) ctypes.Type 
 	return ctypes.TODO()
 }
 
-func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes.Type {
-	possibleStructType, ok := s.definedTypes[structLiteral.Name]
+func (s *Semantic) retrieveModule(moduleName string) *Semantic {
+	if moduleName == "" {
+		return s
+	}
+
+	module, ok := s.modules[moduleName]
 
 	if !ok {
-		s.error("undefined struct "+structLiteral.Name+": "+structLiteral.String(), structLiteral.Token)
+		s.Errors = append(s.Errors, errors.New("undefined module "+moduleName))
+		return s
+	}
+
+	return module
+}
+
+func (s *Semantic) retrieveTypeFromStruct(structLiteral *ast.StructLiteral) (ctypes.Type, error) {
+	module := s.retrieveModule(structLiteral.Module)
+	// TODO: change here to translate into different code
+	structLiteral.Name = module.TranslateName(structLiteral.Name)
+	structType, ok := module.definedTypes[structLiteral.Name]
+
+	if !ok {
+		return nil, errors.New("undefined struct " + structLiteral.Name + ": " + structLiteral.String())
+	}
+
+	return structType, nil
+}
+
+func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes.Type {
+
+	possibleStructType, err := s.retrieveTypeFromStruct(structLiteral)
+
+	if err != nil {
+		s.Errors = append(s.Errors, err)
+
 		return ctypes.TODO()
 	}
 
-	structType, ok := s.unwrapAnonymous(possibleStructType).(*ctypes.Struct)
+	structType, ok := s.UnwrapAnonymous(possibleStructType).(*ctypes.Struct)
 
 	if !ok {
 		s.error("undefined struct "+structLiteral.Name+": "+structLiteral.String(), structLiteral.Token)
@@ -523,7 +596,7 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 			}
 		}
 
-		call.Type = s.unwrapAnonymous(funcType.Return)
+		call.Type = s.UnwrapAnonymous(funcType.Return)
 		return call.Type
 	}
 
@@ -531,6 +604,11 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 }
 
 func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Type {
+	if module, ok := s.modules[identifier.Name]; ok {
+		identifier.Type = module
+		return module
+	}
+
 	if identifierType := s.variables.Get(identifier.Name); identifierType != nil {
 		identifier.Type = identifierType
 		return identifierType
@@ -567,7 +645,7 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, &ctypes.Pointer{Inner: t}, t)
 			return t
 		} else {
-			prefixOperation.Type = s.unwrapAnonymous(ptr.Inner)
+			prefixOperation.Type = s.UnwrapAnonymous(ptr.Inner)
 			return prefixOperation.Type
 		}
 	}
@@ -595,19 +673,44 @@ func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) 
 	return ctypes.TODO()
 }
 
+func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOperation) ctypes.Type {
+	identifier, ok := binaryOp.Right.(*ast.Identifier)
+	if !ok {
+		s.error("expected identifier for module access, got "+binaryOp.Right.String(), binaryOp.Token)
+		return ctypes.TODO()
+	}
+
+	name := module.TranslateName(identifier.Name)
+	accessedElement := module.variables.Get(name)
+	// Reassign identifier to the new name
+	identifier.Name = name
+	if accessedElement == nil {
+		s.error(identifier.Name+" does not exist in the specified module", binaryOp.Token)
+		return ctypes.TODO()
+	}
+
+	binaryOp.Type = module
+
+	return accessedElement
+}
+
 func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	left := s.analyzeExpression(binaryOperation.Left)
 	var strukt *ctypes.Struct
 	var isStruct bool
 
+	if module, isModule := left.(*Semantic); isModule {
+		return s.analyzeModuleAccess(module, binaryOperation)
+	}
+
 	if ptr, isPointer := left.(*ctypes.Pointer); isPointer {
-		strukt, isStruct = s.unwrapAnonymous(ptr.Inner).(*ctypes.Struct)
+		strukt, isStruct = s.UnwrapAnonymous(ptr.Inner).(*ctypes.Struct)
 		if !isStruct {
 			s.error("expected struct on access, got "+ptr.Inner.String(), binaryOperation.Token)
 			return ctypes.TODO()
 		}
 	} else {
-		strukt, isStruct = s.unwrapAnonymous(left).(*ctypes.Struct)
+		strukt, isStruct = s.UnwrapAnonymous(left).(*ctypes.Struct)
 		if !isStruct {
 			s.error("expected struct on access, got "+left.String(), binaryOperation.Token)
 			return ctypes.TODO()
@@ -619,7 +722,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 		s.error("expected identifier for struct access, got "+binaryOperation.Right.String(), binaryOperation.Token)
 		return ctypes.TODO()
 	}
-
+	identifier.Name = ast.RetrieveID(identifier.Name)
 	idx, t := strukt.GetField(identifier.Name)
 	if idx < 0 || t == nil {
 		s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
@@ -636,6 +739,30 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 		op == ops.BinaryAND || op == ops.AND || op == ops.Add || op == ops.Subtract || op == ops.LessThanEqual ||
 		op == ops.LessThan || op == ops.Equals || op == ops.GreaterThan || op == ops.GreaterThanEqual ||
 		op == ops.NotEquals || op == ops.Divide
+}
+
+func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
+	text, err := os.ReadFile(importStatement.Path.Value)
+	if err != nil {
+		s.error(fmt.Sprintf("error importing file with path %s: %s", importStatement.Path, err.Error()), importStatement.Token)
+		return
+	}
+	l := lexer.New(string(text))
+	p := parser.New(l)
+	tree := p.Parse()
+	if len(p.Errors) > 0 {
+		s.error("error parsing file imported on path "+importStatement.Path.String(), importStatement.Token)
+		s.Errors = append(s.Errors, p.Errors...)
+		return
+	}
+	internalSemantic := New()
+	internalSemantic.Analyze(tree)
+	if len(p.Errors) > 0 {
+		s.error("error analyzing file imported on path "+importStatement.Path.String(), importStatement.Token)
+		s.Errors = append(s.Errors, internalSemantic.Errors...)
+		return
+	}
+	s.modules[importStatement.Name] = internalSemantic
 }
 
 func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctypes.Type {

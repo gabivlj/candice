@@ -1,0 +1,18 @@
+type T
+
+
+struct Something {
+    integer T
+}
+
+
+func outsideFunction(s *Something) {
+    s.integer = s.integer + @cast(T, 1);
+}
+
+func something() Something {
+    @println("hello world!");
+    s := @Something {integer:@cast(T, 0)}
+    outsideFunction(&s)
+    return s
+}

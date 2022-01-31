@@ -1,13 +1,14 @@
 package undomap
 
 import (
+	"testing"
+
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/pkg/a"
-	"testing"
 )
 
 func TestUndoMap_AddPop(t *testing.T) {
-	undoMap := New()
+	undoMap := New[string, ctypes.Type]()
 	undoMap.Add("integerValue", &ctypes.Integer{BitSize: 32})
 	undoMap.Add("integerValue", &ctypes.Integer{BitSize: 33})
 	undoMap.Add("integerValue", &ctypes.Integer{BitSize: 34})

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/gabivlj/candice/pkg/random"
+
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
@@ -19,6 +21,7 @@ type Parser struct {
 	currentToken token.Token
 	peekToken    token.Token
 	lexer        *lexer.Lexer
+	ID           string
 
 	prefixFunc map[token.TypeToken]prefixFunc
 	infixFunc  map[token.TypeToken]infixFunc
@@ -57,6 +60,7 @@ func New(l *lexer.Lexer) *Parser {
 		prefixFunc: map[token.TypeToken]prefixFunc{},
 		infixFunc:  map[token.TypeToken]infixFunc{},
 		Errors:     []error{},
+		ID:         random.RandomString(10),
 	}
 	p.initBuiltinFunctions()
 	p.nextToken()
@@ -98,7 +102,7 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) Parse() *ast.Program {
-	program := &ast.Program{Statements: []ast.Statement{}}
+	program := &ast.Program{Statements: []ast.Statement{}, ID: p.ID}
 	for p.currentToken.Type != token.EOF {
 		program.Statements = append(program.Statements, p.parseStatement())
 	}
@@ -189,7 +193,7 @@ func (p *Parser) parseImport() ast.Statement {
 	}
 
 	return &ast.ImportStatement{
-		Name:  identifier.Literal,
+		Name:  ast.CreateIdentifier(identifier.Literal, p.ID),
 		Types: types,
 		Path:  path,
 		Token: imp,
@@ -229,7 +233,7 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 			Type:  ctypes.TODO(),
 			Token: identifier,
 		},
-		Name: identifier.Literal,
+		Name: ast.CreateIdentifier(identifier.Literal, p.ID),
 	}
 }
 
@@ -249,7 +253,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		p.expect(token.IDENT)
 		ident := p.nextToken()
 		t := p.parseType()
-		names = append(names, ident.Literal)
+		names = append(names, ast.CreateIdentifier(ident.Literal, p.ID))
 		types = append(types, t)
 	}
 
@@ -263,7 +267,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	return &ast.FunctionDeclarationStatement{
 		Token: fun,
 		FunctionType: &ctypes.Function{
-			Name:       name.Literal,
+			Name:       ast.CreateIdentifier(name.Literal, p.ID),
 			Parameters: types,
 			Names:      names,
 			Return:     returnType,
@@ -272,7 +276,8 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	}
 }
 
-func (p *Parser) parseStructLiteral() ast.Expression {
+func (p *Parser) parseStructLiteral(module string) ast.Expression {
+
 	literal := p.nextToken()
 	p.expect(token.LBRACE)
 	p.nextToken()
@@ -302,10 +307,11 @@ func (p *Parser) parseStructLiteral() ast.Expression {
 	p.nextToken()
 	return &ast.StructLiteral{
 		Node: &node.Node{
-			Type:  &ctypes.Anonymous{Name: literal.Literal},
+			Type:  &ctypes.Anonymous{Name: ast.CreateIdentifier(literal.Literal, p.ID)},
 			Token: literal,
 		},
-		Name:   literal.Literal,
+		Module: module,
+		Name:   ast.CreateIdentifier(literal.Literal, p.ID),
 		Values: structValues,
 	}
 }
@@ -335,7 +341,8 @@ func (p *Parser) parseStruct() ast.Statement {
 		Type: &ctypes.Struct{
 			Fields: types,
 			Names:  names,
-			Name:   identifier.Literal,
+			Name:   ast.CreateIdentifier(identifier.Literal, p.ID),
+			ID:     identifier.Literal + random.RandomString(10),
 		},
 	}
 
@@ -370,7 +377,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 
 	return &ast.DeclarationStatement{
 		Token:      id,
-		Name:       id.Literal,
+		Name:       ast.CreateIdentifier(id.Literal, p.ID),
 		Type:       t,
 		Expression: p.parseExpression(0),
 	}
@@ -383,13 +390,14 @@ func (p *Parser) parseType() ctypes.Type {
 	}
 
 	if p.currentToken.Type == token.IDENT {
+
 		t := p.nextToken()
-		modules := []string{t.Literal}
+		modules := []string{ast.CreateIdentifier(t.Literal, p.ID)}
 		for p.currentToken.Type == token.DOT {
 			p.nextToken()
 			p.expect(token.IDENT)
 			identifier := p.nextToken()
-			modules = append(modules, identifier.Literal)
+			modules = append(modules, ast.CreateIdentifier(identifier.Literal, p.ID))
 		}
 		if len(modules) > 1 {
 			return &ctypes.Anonymous{
@@ -398,7 +406,13 @@ func (p *Parser) parseType() ctypes.Type {
 			}
 		}
 
-		return ctypes.LiteralToType(modules[0])
+		if t := ctypes.LiteralToType(ast.RetrieveID(modules[0])); t != nil {
+			return t
+		}
+
+		return &ctypes.Anonymous{
+			Name: modules[0],
+		}
 	}
 
 	if p.currentToken.Type == token.FUNCTION {
@@ -428,7 +442,7 @@ func (p *Parser) parseType() ctypes.Type {
 			returnType = p.parseType()
 		}
 		return &ctypes.Function{
-			Name:       name,
+			Name:       ast.CreateIdentifier(name, p.ID),
 			Parameters: parameters,
 			Names:      []string{},
 			Return:     returnType,
@@ -606,8 +620,14 @@ func (p *Parser) parseAt() ast.Expression {
 	p.expect(token.AT)
 	at := p.nextToken()
 	p.expect(token.IDENT)
+	module := ""
+	if p.peekToken.Type == token.DOT {
+		module = ast.CreateIdentifier(p.nextToken().Literal, p.ID)
+		p.nextToken()
+	}
+
 	if p.peekToken.Type == token.LBRACE {
-		return p.parseStructLiteral()
+		return p.parseStructLiteral(module)
 	}
 
 	identifier := p.nextToken()
