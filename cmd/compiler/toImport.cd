@@ -1,14 +1,17 @@
+type T
+
 struct Something {
-    integer i32
+    integer T
 }
 
+
 func outsideFunction(s *Something) {
-    s.integer = s.integer + 1;
+    s.integer = s.integer + @cast(T, 1);
 }
 
 func something() Something {
     @println("hello world!");
-    s := @Something {integer:0}
+    s := @Something {integer:@cast(T, 0)}
     outsideFunction(&s)
     return s
 }

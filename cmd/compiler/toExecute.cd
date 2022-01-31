@@ -1,4 +1,4 @@
-import someModule, "./toImport.cd";
+import someModule, i64, "./toImport.cd";
 
 func something() i32 {
     return 1
