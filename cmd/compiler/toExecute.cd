@@ -1,0 +1,6 @@
+import someModule, "./toImport.cd";
+
+func main() {
+    ww : someModule.Something = someModule.something();
+    @println(ww.integer);
+}

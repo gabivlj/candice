@@ -1,0 +1,8 @@
+struct Something {
+    integer i32
+}
+
+func something() Something {
+    @println("hello world!");
+    return @Something {integer:0}
+}
