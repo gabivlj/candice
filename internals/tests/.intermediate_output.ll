@@ -2,10 +2,10 @@
 
 @"%u " = global [4 x i8] c"%u \00"
 @"%d " = global [4 x i8] c"%d \00"
-@string.literal.QvPMOFHJDI = global [21 x i8] c"this shouldn't print\00"
+@string.literal.xfOAhegWzJ = global [21 x i8] c"this shouldn't print\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.OZrkxlDzuD = global [30 x i8] c"this should not print as well\00"
-@string.literal.NxsjuSEFJm = global [25 x i8] c"this shouldnt print!!!!!\00"
+@string.literal.EXAPsdvGKh = global [30 x i8] c"this should not print as well\00"
+@string.literal.Vbprdhyjcd = global [25 x i8] c"this shouldnt print!!!!!\00"
 
 declare ccc i32 @printf(i8* %0, ...)
 
@@ -30,21 +30,21 @@ main:
 	%3 = load i32, i32* %0
 	%4 = load i32, i32* %0
 	%5 = icmp eq i32 %3, %4
-	br i1 %5, label %if.then.gCTywOMvkd, label %if.else.bRGmefYaoL
+	br i1 %5, label %if.then.eneVaCGUCo, label %if.else.HaAWRgpHZB
 
-if.then.gCTywOMvkd:
+if.then.eneVaCGUCo:
 	%6 = load i32, i32* %0
 	%7 = getelementptr [4 x i8], [4 x i8]* @"%u ", i32 0, i32 0
 	%8 = call i32 (i8*, ...) @printf(i8* %7, i32 %6)
 	%9 = load i32, i32* %0
 	%10 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%11 = call i32 (i8*, ...) @printf(i8* %10, i32 %9)
-	br label %lastLeave.ZaGQWjCAnJ
+	br label %lastLeave.COOaMwzpty
 
-if.else.bRGmefYaoL:
-	br label %lastLeave.ZaGQWjCAnJ
+if.else.HaAWRgpHZB:
+	br label %lastLeave.COOaMwzpty
 
-lastLeave.ZaGQWjCAnJ:
+lastLeave.COOaMwzpty:
 	%12 = alloca i32
 	store i32 3, i32* %12
 	%13 = alloca i32*
@@ -55,18 +55,18 @@ lastLeave.ZaGQWjCAnJ:
 	store i32 %15, i32* %16
 	%17 = load i32, i32* %16
 	%18 = icmp ne i32 %17, 3
-	br i1 %18, label %if.then.bqRncUwwYu, label %if.else.CPMTmzghKK
+	br i1 %18, label %if.then.ZzyDSnQSWE, label %if.else.hYyLvpsXvR
 
-if.then.bqRncUwwYu:
-	%19 = getelementptr [21 x i8], [21 x i8]* @string.literal.QvPMOFHJDI, i32 0, i32 0
+if.then.ZzyDSnQSWE:
+	%19 = getelementptr [21 x i8], [21 x i8]* @string.literal.xfOAhegWzJ, i32 0, i32 0
 	%20 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%21 = call i32 (i8*, ...) @printf(i8* %20, i8* %19)
-	br label %lastLeave.QRRYjKQyaI
+	br label %lastLeave.MOlUhTBzdR
 
-if.else.CPMTmzghKK:
-	br label %lastLeave.QRRYjKQyaI
+if.else.hYyLvpsXvR:
+	br label %lastLeave.MOlUhTBzdR
 
-lastLeave.QRRYjKQyaI:
+lastLeave.MOlUhTBzdR:
 	%22 = alloca %aStruct
 	%23 = getelementptr %aStruct, %aStruct* %22, i32 0, i32 0
 	store i32 3, i32* %23
@@ -85,18 +85,18 @@ lastLeave.QRRYjKQyaI:
 	%33 = getelementptr %aStruct, %aStruct* %24, i32 0, i32 0
 	%34 = load i32, i32* %33
 	%35 = icmp ne i32 %32, %34
-	br i1 %35, label %if.then.GgkvtqlrGm, label %if.else.mABgzyYxDj
+	br i1 %35, label %if.then.fswbavqLgJ, label %if.else.rwxTKUMWQC
 
-if.then.GgkvtqlrGm:
-	%36 = getelementptr [30 x i8], [30 x i8]* @string.literal.OZrkxlDzuD, i32 0, i32 0
+if.then.fswbavqLgJ:
+	%36 = getelementptr [30 x i8], [30 x i8]* @string.literal.EXAPsdvGKh, i32 0, i32 0
 	%37 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%38 = call i32 (i8*, ...) @printf(i8* %37, i8* %36)
-	br label %lastLeave.RliixYPiCG
+	br label %lastLeave.vCLRRIhRrv
 
-if.else.mABgzyYxDj:
-	br label %lastLeave.RliixYPiCG
+if.else.rwxTKUMWQC:
+	br label %lastLeave.vCLRRIhRrv
 
-lastLeave.RliixYPiCG:
+lastLeave.vCLRRIhRrv:
 	%39 = load i32*, i32** %29
 	%40 = bitcast i32* %39 to %aStruct*
 	%41 = load %aStruct, %aStruct* %40
@@ -107,17 +107,17 @@ lastLeave.RliixYPiCG:
 	%45 = getelementptr %aStruct, %aStruct* %24, i32 0, i32 0
 	%46 = load i32, i32* %45
 	%47 = icmp ne i32 %44, %46
-	br i1 %47, label %if.then.pgtHgVxoMN, label %if.else.wIDEYAvQsf
+	br i1 %47, label %if.then.QCVtcyyQng, label %if.else.wgSLTOULnE
 
-if.then.pgtHgVxoMN:
-	%48 = getelementptr [25 x i8], [25 x i8]* @string.literal.NxsjuSEFJm, i32 0, i32 0
+if.then.QCVtcyyQng:
+	%48 = getelementptr [25 x i8], [25 x i8]* @string.literal.Vbprdhyjcd, i32 0, i32 0
 	%49 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%50 = call i32 (i8*, ...) @printf(i8* %49, i8* %48)
-	br label %lastLeave.bNTAlRgHcb
+	br label %lastLeave.shvVxhbZOQ
 
-if.else.wIDEYAvQsf:
-	br label %lastLeave.bNTAlRgHcb
+if.else.wgSLTOULnE:
+	br label %lastLeave.shvVxhbZOQ
 
-lastLeave.bNTAlRgHcb:
+lastLeave.shvVxhbZOQ:
 	ret void
 }

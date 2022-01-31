@@ -107,7 +107,13 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		}
 	case *ctypes.Anonymous:
 		{
-			return c.types[el.Name].llvmType
+			t := c.types[el.Name]
+
+			if t == nil && el.Modules != nil && len(el.Modules) > 0 {
+				return c.modules[el.Modules[0]].ToLLVMType(el)
+			}
+
+			return t.llvmType
 		}
 
 	case *ctypes.Function:
@@ -122,5 +128,6 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		}
 	}
 
+	panic(t)
 	return nil
 }

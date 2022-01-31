@@ -7,6 +7,7 @@ import (
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
+	"github.com/gabivlj/candice/internals/semantic"
 	"github.com/gabivlj/candice/pkg/random"
 	"github.com/llir/llvm/ir"
 	"github.com/llir/llvm/ir/constant"
@@ -32,10 +33,10 @@ type Compiler struct {
 	// Defined values
 	definitions map[string]value.Value
 
-	builtins              map[string]func(*ast.BuiltinCall) value.Value
+	builtins              map[string]func(*Compiler, *ast.BuiltinCall) value.Value
 	definitionsToBePopped []string
 	stacks                []map[string]value.Value
-	functions             map[string]*Value
+	globalVariables       map[string]*Value
 	currentFunction       *ir.Func
 
 	// Flag to indicate caller that this value shouldn't be loaded into memory
@@ -44,21 +45,34 @@ type Compiler struct {
 
 	currentBreakLeaveBlock     *ir.Block
 	currentContinueEscapeBlock *ir.Block
+	context                    *semantic.Semantic
+	modules                    map[string]*Compiler
 }
 
-func New() *Compiler {
-	m := ir.NewModule()
+func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
+	var m *ir.Module
+	var builtins map[string]func(*Compiler, *ast.BuiltinCall) value.Value
+	if len(parent) > 0 {
+		m = parent[0].m
+		builtins = parent[0].builtins
+	} else {
+		m = ir.NewModule()
+		builtins = map[string]func(*Compiler, *ast.BuiltinCall) value.Value{}
+	}
 	c := &Compiler{
 		m:                     m,
 		blocks:                []*ir.Block{},
 		definitions:           map[string]value.Value{},
-		builtins:              map[string]func(*ast.BuiltinCall) value.Value{},
+		builtins:              builtins,
 		types:                 map[string]*Type{},
 		definitionsToBePopped: []string{"<>"},
 		stacks:                []map[string]value.Value{{}},
-		functions:             map[string]*Value{},
+		globalVariables:       map[string]*Value{},
 		currentFunction:       nil,
+		context:               context,
+		modules:               map[string]*Compiler{},
 	}
+
 	c.initializeBuiltinLib()
 	return c
 }
@@ -107,6 +121,10 @@ func (c *Compiler) popBlock() *ir.Block {
 }
 
 func (c *Compiler) initializeBuiltinLib() {
+	if _, ok := c.builtins["println"]; ok {
+		return
+	}
+
 	printf := c.m.NewFunc(
 		"printf",
 		types.I32,
@@ -115,7 +133,7 @@ func (c *Compiler) initializeBuiltinLib() {
 	c.definitions["printf"] = printf
 	printf.Sig.Variadic = true
 	printf.CallingConv = enum.CallingConvC
-	c.builtins["println"] = func(call *ast.BuiltinCall) value.Value {
+	c.builtins["println"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		expressions := make([]value.Value, len(call.Parameters)+1)
 		for i := 0; i < len(call.Parameters); i++ {
 			expressions[i+1] = c.loadIfPointer(c.compileExpression(call.Parameters[i]))
@@ -175,7 +193,7 @@ func (c *Compiler) initializeBuiltinLib() {
 			zero,
 		)
 		expressions[0] = i8sType
-		c.block().NewCall(c.definitions["printf"], expressions...)
+		c.block().NewCall(printf, expressions...)
 		return constant.NewUndef(types.Void)
 	}
 
@@ -187,20 +205,20 @@ func (c *Compiler) initializeBuiltinLib() {
 	c.definitions["malloc"] = malloc
 	printf.CallingConv = enum.CallingConvC
 	// alloc accepts one type parameter, and how many you want to allocate
-	c.builtins["alloc"] = func(call *ast.BuiltinCall) value.Value {
+	c.builtins["alloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		typeParameter := call.TypeParameters[0]
 		toReturnType := types.NewPointer(c.ToLLVMType(typeParameter))
 		length := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
 		length = c.handleIntegerCast(types.I64, length)
 		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
-		returnedValue := c.block().NewCall(c.definitions["malloc"], totalSize)
+		returnedValue := c.block().NewCall(malloc, totalSize)
 		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
 		alloca := c.block().NewAlloca(castedValue.Type())
 		c.block().NewStore(castedValue, alloca)
 		return alloca
 	}
 
-	c.builtins["cast"] = func(call *ast.BuiltinCall) value.Value {
+	c.builtins["cast"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		return c.handleCast(call)
 	}
 
@@ -256,6 +274,15 @@ func (c *Compiler) Compile(tree ast.Node) {
 	}()
 
 	switch t := tree.(type) {
+	case *ast.ImportStatement:
+		{
+			moduleName := t.Name
+			module := c.context.GetModule(moduleName)
+			localCompiler := New(module, c)
+			localCompiler.Compile(module.Root)
+			c.modules[moduleName] = localCompiler
+			return
+		}
 
 	case *ast.BreakStatement:
 		{
@@ -303,13 +330,13 @@ func (c *Compiler) Compile(tree ast.Node) {
 				c.block().NewRet(constant.NewInt(types.I32, 0))
 			}
 
-			_ = c.popBlock()
+			//_ = c.popBlock()
 			return
 		}
 
 	case *ast.FunctionDeclarationStatement:
 		{
-			c.compileFunctionDeclaration(t)
+			c.compileFunctionDeclaration(t.FunctionType.Name, t)
 			return
 		}
 
@@ -349,7 +376,7 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 	}
 	f := c.m.NewFunc(funcType.Name, returnType, params...)
 	f.CallingConv = enum.CallingConvC
-	c.functions[funcType.Name] = &Value{Value: f, Type: funcType}
+	c.globalVariables[funcType.Name] = &Value{Value: f, Type: funcType}
 }
 
 func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
@@ -362,7 +389,7 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 	c.block().NewRet(c.loadIfPointer(toReturn))
 }
 
-func (c *Compiler) compileFunctionDeclaration(funk *ast.FunctionDeclarationStatement) {
+func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDeclarationStatement) {
 	// Declare params LLVM IR
 	params := make([]*ir.Param, 0, len(funk.FunctionType.Parameters))
 	for i, param := range funk.FunctionType.Parameters {
@@ -389,7 +416,7 @@ func (c *Compiler) compileFunctionDeclaration(funk *ast.FunctionDeclarationState
 	}
 
 	// Create function
-	c.functions[funk.FunctionType.Name] = &Value{
+	c.globalVariables[name] = &Value{
 		Value: llvmFunction,
 		Type:  funk.FunctionType,
 	}
@@ -676,7 +703,7 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 // NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
-	if fn, ok := c.functions[id.Name]; ok {
+	if fn, ok := c.globalVariables[id.Name]; ok {
 		c.doNotLoadIntoMemory = true
 		return fn.Value
 	}
@@ -691,8 +718,9 @@ func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
 /// Function calls
 func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value {
 	if fun, ok := c.builtins[ast.Name]; ok {
-		return fun(ast)
+		return fun(c, ast)
 	}
+
 	panic("undefined builtin function @" + ast.Name)
 }
 
@@ -704,18 +732,8 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 		loadedValue := c.loadIfPointer(compiledValue)
 		arguments = append(arguments, loadedValue)
 	}
+
 	thing := c.block().NewCall(funk, arguments...)
-
-	//if !types.IsPointer(thing.Type()) && !types.IsArray(thing.Type()) {
-	//	return thing
-	//}
-	//
-	//if !types.IsVoid(thing.Type()) {
-	//	alloca := c.block().NewAlloca(thing.Type())
-	//	c.block().NewStore(thing, alloca)
-	//	return alloca
-	//}
-
 	c.doNotLoadIntoMemory = true
 	return thing
 }
@@ -785,7 +803,7 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 }
 
 /// Simple binary compilations
-/// Making redundant and easy to understand functions is better
+/// Making redundant and easy to understand globalVariables is better
 /// than storing callbacks on a hashmap. Let's keep it simple.
 func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Value {
 	switch expr.Operation {
@@ -843,8 +861,22 @@ func getName(expr ast.Expression) (string, bool) {
 	panic("?? " + expr.String())
 }
 
+func (c *Compiler) compileModuleAccess(expr *ast.BinaryOperation) value.Value {
+	moduleName := expr.Left.String()
+	module := c.modules[moduleName]
+	identifier := module.compileIdentifier(expr.Right.(*ast.Identifier))
+	c.doNotLoadIntoMemory = module.doNotLoadIntoMemory
+	module.doNotLoadIntoMemory = false
+	return identifier
+}
+
 func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
+	if _, isModule := expr.Left.GetType().(*semantic.Semantic); isModule {
+		return c.compileModuleAccess(expr)
+	}
+
 	leftStruct := c.compileExpression(expr.Left)
+	currentCandiceType := expr.Left.GetType()
 	var candiceType *ctypes.Struct
 	if s, ok := leftStruct.Type().(*types.PointerType); ok {
 		if types.IsPointer(s.ElemType) {
@@ -854,14 +886,21 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 				panic("not a struct " + leftStruct.Type().String() + " " + expr.String())
 			}
 		}
-		t := c.types[s.ElemType.Name()]
-		candiceType, ok = t.candiceType.(*ctypes.Struct)
-		if !ok {
-			panic("not candice type ctypes struct: " + t.candiceType.String())
+		if ctypes.IsPointer(currentCandiceType) {
+			currentCandiceType = currentCandiceType.(*ctypes.Pointer).Inner
 		}
-	} else {
-		panic("not a struct " + leftStruct.Type().String() + " " + expr.String())
+		if anonymous, ok := currentCandiceType.(*ctypes.Anonymous); ok {
+			if anonymous.Modules != nil && len(anonymous.Modules) != 0 {
+				module := anonymous.Modules[0]
+				candiceType = c.modules[module].types[s.ElemType.Name()].candiceType.(*ctypes.Struct)
+			} else {
+				candiceType = c.types[s.ElemType.Name()].candiceType.(*ctypes.Struct)
+			}
+		} else {
+			candiceType = currentCandiceType.(*ctypes.Struct)
+		}
 	}
+
 	for {
 		rightName, last := getName(expr.Right)
 		i, field := candiceType.GetField(rightName)

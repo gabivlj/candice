@@ -2,7 +2,13 @@ struct Something {
     integer i32
 }
 
+func outsideFunction(s *Something) {
+    s.integer = s.integer + 1;
+}
+
 func something() Something {
     @println("hello world!");
-    return @Something {integer:0}
+    s := @Something {integer:0}
+    outsideFunction(&s)
+    return s
 }

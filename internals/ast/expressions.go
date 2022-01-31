@@ -187,6 +187,7 @@ type StructLiteral struct {
 	*node.Node
 	Name   string
 	Values []StructValue
+	Module string
 }
 
 func (s *StructLiteral) GetType() ctypes.Type {

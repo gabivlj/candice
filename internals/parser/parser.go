@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"github.com/gabivlj/candice/pkg/random"
 	"strconv"
 
 	"github.com/gabivlj/candice/internals/ast"
@@ -272,7 +273,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	}
 }
 
-func (p *Parser) parseStructLiteral() ast.Expression {
+func (p *Parser) parseStructLiteral(module string) ast.Expression {
 	literal := p.nextToken()
 	p.expect(token.LBRACE)
 	p.nextToken()
@@ -336,6 +337,7 @@ func (p *Parser) parseStruct() ast.Statement {
 			Fields: types,
 			Names:  names,
 			Name:   identifier.Literal,
+			ID:     identifier.Literal + random.RandomString(10),
 		},
 	}
 
@@ -606,8 +608,13 @@ func (p *Parser) parseAt() ast.Expression {
 	p.expect(token.AT)
 	at := p.nextToken()
 	p.expect(token.IDENT)
+	module := ""
+	if p.peekToken.Type == token.DOT {
+		module = p.nextToken().Literal
+	}
+
 	if p.peekToken.Type == token.LBRACE {
-		return p.parseStructLiteral()
+		return p.parseStructLiteral(module)
 	}
 
 	identifier := p.nextToken()
