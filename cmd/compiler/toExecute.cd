@@ -1,4 +1,5 @@
 import someModule, i64, "./toImport.cd";
+import someModulei32, i32, "./toImport.cd";
 
 func something() i32 {
     return 1
@@ -6,8 +7,9 @@ func something() i32 {
 
 func main() {
     ww : someModule.Something = someModule.something();
+    wwwww : someModulei32.Something = someModulei32.something();
     somethingInit : someModule.Something = @someModule.Something {};
     www : i32 = something()
-    @println(ww.integer);
-    @println(www);    
+    @println(wwwww.integer + @cast(i32, ww.integer) + www);
+    
 }

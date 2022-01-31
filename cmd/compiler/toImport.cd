@@ -1,5 +1,6 @@
 type T
 
+
 struct Something {
     integer T
 }
