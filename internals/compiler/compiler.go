@@ -726,7 +726,8 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
-	funk := c.loadIfPointer(c.compileExpression(ast.Left))
+	left := c.compileExpression(ast.Left)
+	funk := c.loadIfPointer(left)
 	arguments := make([]value.Value, 0, len(ast.Parameters))
 	for _, argument := range ast.Parameters {
 		compiledValue := c.compileExpression(argument)

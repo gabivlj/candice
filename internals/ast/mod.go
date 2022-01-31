@@ -22,6 +22,7 @@ type Statement interface {
 }
 
 type Program struct {
+	ID         string
 	Statements []Statement
 }
 

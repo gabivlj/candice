@@ -103,6 +103,10 @@ func (s *Semantic) Analyze(program *ast.Program) {
 	}
 }
 
+func (s *Semantic) TranslateName(name string) string {
+	return ast.CreateIdentifier(ast.RetrieveID(name), s.Root.ID)
+}
+
 func (s *Semantic) analyzeStatement(statement ast.Statement) {
 
 	if statement == nil {
@@ -345,16 +349,11 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		if anonymous.Modules != nil && len(anonymous.Modules) > 0 {
 			module = anonymous.Modules[0]
 		}
-		// be careful here in the future
-		// when we don't want to repeat types
-		// we will in some way use ids per module,
-		// which means in some place we will need to translate the type
-		// name
-		// idea is making a function that is retrieveDefinedType(name)
-		// from a semantic module, where it will try to translate as well
-		// the type
 		semantic := s.retrieveModule(module)
-		return semantic.definedTypes[anonymous.Name]
+		name := semantic.TranslateName(anonymous.Name)
+		// replace anonymous type name to the module one.
+		anonymous.Name = name
+		return semantic.definedTypes[name]
 	}
 
 	return t
@@ -511,7 +510,8 @@ func (s *Semantic) retrieveModule(moduleName string) *Semantic {
 
 func (s *Semantic) retrieveTypeFromStruct(structLiteral *ast.StructLiteral) (ctypes.Type, error) {
 	module := s.retrieveModule(structLiteral.Module)
-	structType, ok := module.definedTypes[structLiteral.Name]
+	// TODO: change here to translate into different code
+	structType, ok := module.definedTypes[module.TranslateName(structLiteral.Name)]
 	if !ok {
 		return nil, errors.New("undefined struct " + structLiteral.Name + ": " + structLiteral.String())
 	}
@@ -676,9 +676,12 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 		s.error("expected identifier for module access, got "+binaryOp.Right.String(), binaryOp.Token)
 		return ctypes.TODO()
 	}
-	accessedElement := module.variables.Get(identifier.Name)
+
+	name := module.TranslateName(identifier.Name)
+	accessedElement := module.variables.Get(name)
+	// Reassign identifier to the new name
+	identifier.Name = name
 	if accessedElement == nil {
-		log.Println(module.variables, identifier)
 		s.error(identifier.Name+" does not exist in the specified module", binaryOp.Token)
 		return ctypes.TODO()
 	}

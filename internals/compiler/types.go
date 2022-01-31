@@ -109,7 +109,8 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		{
 			t := c.types[el.Name]
 			if t == nil && el.Modules != nil && len(el.Modules) > 0 {
-				return c.modules[el.Modules[0]].ToLLVMType(el)
+				l := c.modules[el.Modules[0]].ToLLVMType(el)
+				return l
 			}
 
 			return t.llvmType
