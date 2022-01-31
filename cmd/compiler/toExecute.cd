@@ -1,15 +1,13 @@
 import someModule, i64, "./toImport.cd";
 import someModulei32, i32, "./toImport.cd";
 
-func something() i32 {
-    return 1
+func something() someModule.Something {
+    return @someModule.Something { integer: @cast(i64, 3) };
 }
 
 func main() {
-    ww : someModule.Something = someModule.something();
-    wwwww : someModulei32.Something = someModulei32.something();
-    somethingInit : someModule.Something = @someModule.Something {};
-    www : i32 = something()
-    @println(wwwww.integer + @cast(i32, ww.integer) + www);
-    
+    somethingVariable : someModule.Something = someModule.something();
+    somethingVariableI32 : someModulei32.Something = someModulei32.something();    
+    localSomethingFunction : someModule.Something = something()
+    @println(somethingVariableI32.integer + @cast(i32, somethingVariable.integer) + @cast(i32, localSomethingFunction.integer));    
 }
