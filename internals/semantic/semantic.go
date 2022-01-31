@@ -84,6 +84,7 @@ func (s *Semantic) error(msg string, tok token.Token) {
 }
 
 func (s *Semantic) typeMismatchError(node string, tok token.Token, expected, got ctypes.Type) {
+	log.Println(s.definedTypes)
 	message := fmt.Sprintf("_%s_ :: mismatched types, expected=%s, got=%s", node, expected.String(), got.String())
 	s.error(message, tok)
 }
@@ -286,11 +287,11 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 }
 
 func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) {
-	theType := s.analyzeExpression(returnStatement.Expression)
+	theType := s.UnwrapAnonymous(s.analyzeExpression(returnStatement.Expression))
 	if !s.areTypesEqual(theType, s.currentExpectedReturnType) {
 		s.typeMismatchError(returnStatement.String(), returnStatement.Token, s.currentExpectedReturnType, theType)
 	}
-	returnStatement.Type = theType
+	returnStatement.Type = s.UnwrapAnonymous(theType)
 	s.returns = true
 }
 
@@ -349,6 +350,9 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		// we will in some way use ids per module,
 		// which means in some place we will need to translate the type
 		// name
+		// idea is making a function that is retrieveDefinedType(name)
+		// from a semantic module, where it will try to translate as well
+		// the type
 		semantic := s.retrieveModule(module)
 		return semantic.definedTypes[anonymous.Name]
 	}
@@ -714,7 +718,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 		return ctypes.TODO()
 	}
 
-	idx, t := strukt.GetField(identifier.Name)
+	idx, t := strukt.GetField(ast.RetrieveID(identifier.Name))
 	if idx < 0 || t == nil {
 		s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
 		return ctypes.TODO()

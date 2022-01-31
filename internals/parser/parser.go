@@ -230,7 +230,7 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 			Type:  ctypes.TODO(),
 			Token: identifier,
 		},
-		Name: identifier.Literal,
+		Name: ast.CreateIdentifier(identifier.Literal, ""),
 	}
 }
 
@@ -250,7 +250,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		p.expect(token.IDENT)
 		ident := p.nextToken()
 		t := p.parseType()
-		names = append(names, ident.Literal)
+		names = append(names, ast.CreateIdentifier(ident.Literal, ""))
 		types = append(types, t)
 	}
 
@@ -264,7 +264,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	return &ast.FunctionDeclarationStatement{
 		Token: fun,
 		FunctionType: &ctypes.Function{
-			Name:       name.Literal,
+			Name:       ast.CreateIdentifier(name.Literal, ""),
 			Parameters: types,
 			Names:      names,
 			Return:     returnType,
@@ -303,10 +303,10 @@ func (p *Parser) parseStructLiteral(module string) ast.Expression {
 	p.nextToken()
 	return &ast.StructLiteral{
 		Node: &node.Node{
-			Type:  &ctypes.Anonymous{Name: literal.Literal},
+			Type:  &ctypes.Anonymous{Name: ast.CreateIdentifier(literal.Literal, "")},
 			Token: literal,
 		},
-		Name:   literal.Literal,
+		Name:   ast.CreateIdentifier(literal.Literal, ""),
 		Values: structValues,
 	}
 }
@@ -336,7 +336,7 @@ func (p *Parser) parseStruct() ast.Statement {
 		Type: &ctypes.Struct{
 			Fields: types,
 			Names:  names,
-			Name:   identifier.Literal,
+			Name:   ast.CreateIdentifier(identifier.Literal, ""),
 			ID:     identifier.Literal + random.RandomString(10),
 		},
 	}
@@ -372,7 +372,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 
 	return &ast.DeclarationStatement{
 		Token:      id,
-		Name:       id.Literal,
+		Name:       ast.CreateIdentifier(id.Literal, ""),
 		Type:       t,
 		Expression: p.parseExpression(0),
 	}
@@ -385,6 +385,7 @@ func (p *Parser) parseType() ctypes.Type {
 	}
 
 	if p.currentToken.Type == token.IDENT {
+
 		t := p.nextToken()
 		modules := []string{t.Literal}
 		for p.currentToken.Type == token.DOT {
@@ -396,11 +397,17 @@ func (p *Parser) parseType() ctypes.Type {
 		if len(modules) > 1 {
 			return &ctypes.Anonymous{
 				Modules: modules[:len(modules)-1],
-				Name:    modules[len(modules)-1],
+				Name:    ast.CreateIdentifier(modules[len(modules)-1], ""),
 			}
 		}
 
-		return ctypes.LiteralToType(modules[0])
+		if t := ctypes.LiteralToType(modules[0]); t != nil {
+			return t
+		}
+
+		return &ctypes.Anonymous{
+			Name: ast.CreateIdentifier(modules[0], ""),
+		}
 	}
 
 	if p.currentToken.Type == token.FUNCTION {
@@ -430,7 +437,7 @@ func (p *Parser) parseType() ctypes.Type {
 			returnType = p.parseType()
 		}
 		return &ctypes.Function{
-			Name:       name,
+			Name:       ast.CreateIdentifier(name, ""),
 			Parameters: parameters,
 			Names:      []string{},
 			Return:     returnType,

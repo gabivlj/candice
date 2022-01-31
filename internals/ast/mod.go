@@ -43,3 +43,14 @@ func (p *Program) String() string {
 	}
 	return builder.String()
 }
+
+func CreateIdentifier(name string, id string) string {
+	if name == "main" {
+		return name
+	}
+	return name + "-" + id
+}
+
+func RetrieveID(name string) string {
+	return strings.Split(name, "-")[0]
+}

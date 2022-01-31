@@ -43,7 +43,7 @@ func LiteralToType(literal string) Type {
 	if t, ok := typeLiteral[literal]; ok {
 		return t
 	}
-	return &Anonymous{Name: literal}
+	return nil
 }
 
 var todoType = &Anonymous{Name: "errors"}
@@ -191,8 +191,10 @@ func (f *Function) Alignment() int64 {
 
 func (f *Function) FullString() string {
 	builder := strings.Builder{}
-	builder.WriteString("func ")
-	builder.WriteString(f.Name)
+	builder.WriteString("func")
+	if f.Name != "" {
+		builder.WriteString(strings.Split(f.Name, "-")[0])
+	}
 	builder.WriteString("(")
 	for i := 0; i < len(f.Names); i++ {
 		if i >= 1 {
@@ -212,7 +214,7 @@ func (f *Function) String() string {
 	builder.WriteString("func")
 	if f.Name != "" {
 		builder.WriteByte(' ')
-		builder.WriteString(f.Name)
+		builder.WriteString(strings.Split(f.Name, "-")[0])
 	}
 
 	builder.WriteString("(")
@@ -263,7 +265,7 @@ func (s *Struct) GetField(fieldName string) (int, Type) {
 
 func (s *Struct) FullString() string {
 	str := strings.Builder{}
-	str.WriteString("struct " + s.Name + " {\n")
+	str.WriteString("struct " + strings.Split(s.Name, "-")[0] + " {\n")
 	for i, field := range s.Fields {
 		if i >= 1 {
 			str.WriteByte('\n')
