@@ -1,0 +1,9 @@
+import s, "./string.cd";
+
+func CreateString() s.String {
+    return s.New("Hello")
+}
+
+func UseString(z *s.String) s.String {
+    return *z
+}

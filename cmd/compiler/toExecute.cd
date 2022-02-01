@@ -1,5 +1,7 @@
 import someModule, i64, "./toImport.cd";
 import someModulei32, i32, "./toImport.cd";
+import ss, "./string.cd"
+import usestring, "./usestring.cd"
 
 struct Thing {
     i i32
@@ -22,6 +24,9 @@ func wow(i i32) i32 {
 }
 
 func main() {
+    str := ss.New("hellow")
+    newstring := usestring.UseString(&str)
+
     array : aoi32.Array = aoi32.New()
     @println(array.elements[0])
     aoi32.Push(&array, 3)

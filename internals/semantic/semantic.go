@@ -29,7 +29,10 @@ type Semantic struct {
 	insideBreakableBlock      bool
 	modules                   map[string]*Semantic
 	Root                      *ast.Program
+	Compiled                  bool
 }
+
+var paths map[string]*Semantic = map[string]*Semantic{}
 
 func (s *Semantic) GetFunction(name string) *ast.FunctionDeclarationStatement {
 	return s.functionBodies[name]
@@ -756,7 +759,12 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 }
 
 func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
-	text, err := os.ReadFile(importStatement.Path.Value)
+	path := importStatement.Path.Value
+	if existingSemantic, ok := paths[path]; ok {
+		s.modules[importStatement.Name] = existingSemantic
+		return
+	}
+	text, err := os.ReadFile(path)
 	if err != nil {
 		s.error(fmt.Sprintf("error importing file with path %s: %s", importStatement.Path, err.Error()), importStatement.Token)
 		return
@@ -780,6 +788,9 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 		s.error("error analyzing file imported on path "+importStatement.Path.String(), importStatement.Token)
 		s.Errors = append(s.Errors, internalSemantic.Errors...)
 		return
+	}
+	if len(p.TypeParameters) == 0 {
+		paths[path] = internalSemantic
 	}
 	s.modules[importStatement.Name] = internalSemantic
 }

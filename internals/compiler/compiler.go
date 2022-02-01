@@ -48,20 +48,24 @@ type Compiler struct {
 	currentContinueEscapeBlock *ir.Block
 	context                    *semantic.Semantic
 	modules                    map[string]*Compiler
+	compiledModules            map[string]*Compiler
 }
 
 func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	var m *ir.Module
 	var builtins map[string]func(*Compiler, *ast.BuiltinCall) value.Value
 	var globalBuiltinDefinitions map[string]value.Value
+	var compiledModules map[string]*Compiler
 	if len(parent) > 0 {
 		m = parent[0].m
 		builtins = parent[0].builtins
 		globalBuiltinDefinitions = parent[0].globalBuiltinDefinitions
+		compiledModules = parent[0].compiledModules
 	} else {
 		m = ir.NewModule()
 		builtins = map[string]func(*Compiler, *ast.BuiltinCall) value.Value{}
 		globalBuiltinDefinitions = map[string]value.Value{}
+		compiledModules = map[string]*Compiler{}
 	}
 
 	c := &Compiler{
@@ -76,6 +80,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		currentFunction:          nil,
 		context:                  context,
 		modules:                  map[string]*Compiler{},
+		compiledModules:          compiledModules,
 	}
 
 	if len(parent) > 0 {
@@ -286,8 +291,14 @@ func (c *Compiler) Compile(tree ast.Node) {
 		{
 			moduleName := t.Name
 			module := c.context.GetModule(moduleName)
+			if existingCompiler, ok := c.compiledModules[module.Root.ID]; ok {
+				c.compiledModules[module.Root.ID] = existingCompiler
+				c.modules[moduleName] = existingCompiler
+				return
+			}
 			localCompiler := New(module, c)
 			localCompiler.Compile(module.Root)
+			c.compiledModules[module.Root.ID] = localCompiler
 			c.modules[moduleName] = localCompiler
 			return
 		}

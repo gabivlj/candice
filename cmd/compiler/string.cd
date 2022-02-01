@@ -1,0 +1,11 @@
+struct String {
+    inner *i8
+    len i32
+}
+
+func New(s *i8) String {
+    return @String{
+        inner: s,
+        len: 0
+    }
+}

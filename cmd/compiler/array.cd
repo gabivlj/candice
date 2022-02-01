@@ -28,5 +28,4 @@ func Push(a *Array, element T) {
 
     a.elements[a.size] = element
     a.size = a.size + 1
-
 }
