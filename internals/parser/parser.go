@@ -279,6 +279,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		t := p.parseType()
 		names = append(names, ast.CreateIdentifier(ident.Literal, p.ID))
 		types = append(types, t)
+
 	}
 
 	p.expect(token.RPAREN)
@@ -286,6 +287,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	var returnType ctypes.Type
 	if p.currentToken.Type != token.LBRACE {
 		returnType = p.parseType()
+
 	}
 	block := p.parseBlock()
 	return &ast.FunctionDeclarationStatement{
@@ -414,9 +416,10 @@ func (p *Parser) parseType() ctypes.Type {
 	}
 
 	if p.currentToken.Type == token.IDENT {
-
 		t := p.nextToken()
+
 		modules := []string{ast.CreateIdentifier(t.Literal, p.ID)}
+
 		for p.currentToken.Type == token.DOT {
 			p.nextToken()
 			p.expect(token.IDENT)
@@ -430,6 +433,7 @@ func (p *Parser) parseType() ctypes.Type {
 			}
 		}
 		originalName := ast.RetrieveID(modules[0])
+
 		if t := ctypes.LiteralToType(originalName); t != nil {
 			return t
 		}
@@ -437,7 +441,6 @@ func (p *Parser) parseType() ctypes.Type {
 		if genericType, ok := p.definedGenericTypes[originalName]; ok {
 			return genericType
 		}
-
 		return &ctypes.Anonymous{
 			Name: modules[0],
 		}
@@ -862,6 +865,7 @@ func (p *Parser) parseExtern() ast.Statement {
 	extern := p.nextToken()
 	p.expect(token.FUNCTION)
 	t := p.parseType()
+
 	if _, ok := t.(*ctypes.Function); !ok {
 		p.addErrorMessage("expected external function, got " + t.String())
 		return &ast.ExternStatement{}
@@ -869,6 +873,8 @@ func (p *Parser) parseExtern() ast.Statement {
 
 	if fun, ok := t.(*ctypes.Function); !ok || fun.Name == "" {
 		p.addErrorMessage("badly formed external function")
+	} else {
+		fun.ExternalName = ast.RetrieveID(fun.Name)
 	}
 
 	return &ast.ExternStatement{

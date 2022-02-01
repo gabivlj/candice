@@ -2,8 +2,9 @@ package ctypes
 
 import (
 	"fmt"
-	"github.com/gabivlj/candice/internals/helper"
 	"strings"
+
+	"github.com/gabivlj/candice/internals/helper"
 )
 
 /// Candice types
@@ -174,10 +175,11 @@ func (a *Array) Alignment() int64 {
 func (_ *Array) CandiceType() {}
 
 type Function struct {
-	Name       string
-	Parameters []Type
-	Names      []string
-	Return     Type
+	Name         string
+	ExternalName string
+	Parameters   []Type
+	Names        []string
+	Return       Type
 }
 
 func (_ *Function) CandiceType() {}

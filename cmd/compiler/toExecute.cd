@@ -6,6 +6,7 @@ struct Thing {
 }
 
 import creator, Thing, "./generic.cd"
+import aoi32, i32, "./array.cd"
 
 
 func something() someModule.Something {
@@ -21,6 +22,11 @@ func wow(i i32) i32 {
 }
 
 func main() {
+    array : aoi32.Array = aoi32.New()
+    @println(array.elements[0])
+    aoi32.Push(&array, 3)
+    @println(array.elements[0])
+
     calledWow := callable.call(wow)
     @println(calledWow) // prints 1
     instance := creator.create();

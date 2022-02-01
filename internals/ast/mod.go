@@ -1,9 +1,10 @@
 package ast
 
 import (
+	"strings"
+
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/token"
-	"strings"
 )
 
 type Node interface {

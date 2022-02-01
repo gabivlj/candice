@@ -388,7 +388,7 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 		parameterType := c.ToLLVMType(parameter)
 		params = append(params, ir.NewParam("", parameterType))
 	}
-	f := c.m.NewFunc(funcType.Name, returnType, params...)
+	f := c.m.NewFunc(funcType.ExternalName, returnType, params...)
 	f.CallingConv = enum.CallingConvC
 	c.globalVariables[funcType.Name] = &Value{Value: f, Type: funcType}
 }

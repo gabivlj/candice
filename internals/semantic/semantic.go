@@ -233,7 +233,9 @@ func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatemen
 	s.enterFrame()
 
 	for i, param := range fun.FunctionType.Parameters {
-		s.variables.Add(fun.FunctionType.Names[i], param)
+		// try to replace the anonymous type with its true type
+		fun.FunctionType.Parameters[i] = s.replaceAnonymous(param)
+		s.variables.Add(fun.FunctionType.Names[i], fun.FunctionType.Parameters[i])
 	}
 
 	temporaryExpectedReturnType := s.currentExpectedReturnType
@@ -334,6 +336,7 @@ func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
 
 func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationStatement) {
 	ctype := s.analyzeExpression(declaration.Expression)
+
 	declType := declaration.Type
 
 	// Check if declaration is forcing the type
@@ -356,13 +359,12 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		if anonymous.Modules != nil && len(anonymous.Modules) > 0 {
 			module = anonymous.Modules[0]
 		}
+
 		semantic := s.retrieveModule(module)
 		name := semantic.TranslateName(anonymous.Name)
-
 		// replace anonymous type name to the module one.
 		anonymous.Name = name
 		t := semantic.definedTypes[name]
-
 		return t
 	}
 
@@ -600,12 +602,14 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 
 		for i, param := range call.Parameters {
 			paramType := s.analyzeExpression(param)
+
 			if !s.areTypesEqual(funcType.Parameters[i], paramType) {
+
 				s.typeMismatchError(param.String(), call.Token, funcType.Parameters[i], paramType)
 			}
 		}
 
-		call.Type = s.UnwrapAnonymous(funcType.Return)
+		call.Type = funcType.Return
 		return call.Type
 	}
 
@@ -691,6 +695,7 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 
 	name := module.TranslateName(identifier.Name)
 	accessedElement := module.variables.Get(name)
+
 	// Reassign identifier to the new name
 	identifier.Name = name
 	if accessedElement == nil {
@@ -698,7 +703,7 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 		return ctypes.TODO()
 	}
 
-	binaryOp.Type = module
+	binaryOp.Type = accessedElement
 
 	return accessedElement
 }
