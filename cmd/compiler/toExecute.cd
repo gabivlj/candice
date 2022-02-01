@@ -7,12 +7,22 @@ struct Thing {
 
 import creator, Thing, "./generic.cd"
 
+
 func something() someModule.Something {
     return @someModule.Something { integer: @cast(i64, 3) };
 }
 
-func main() {
 
+import callable, func(i32)i32, i32, "./callable.cd"
+
+
+func wow(i i32) i32 {
+    return i
+}
+
+func main() {
+    calledWow := callable.call(wow)
+    @println(calledWow) // prints 1
     instance := creator.create();
     @println(instance.i)
     somethingVariable : someModule.Something = someModule.something();

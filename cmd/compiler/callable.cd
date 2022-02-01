@@ -1,0 +1,6 @@
+type Funk
+type Return
+
+func call(f Funk) Return {
+    return f(1)
+}
