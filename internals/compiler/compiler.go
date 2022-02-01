@@ -78,6 +78,11 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		modules:                  map[string]*Compiler{},
 	}
 
+	if len(parent) > 0 {
+		c.modules["_parent"] = parent[0]
+		c.types = parent[0].types
+	}
+
 	c.initializeBuiltinLib()
 	return c
 }
@@ -307,7 +312,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 	case *ast.GenericTypeDefinition:
 		{
-			c.compileType(t.Name, t.ReplacedType)
+			///			c.compileType(t.Name, t.ReplacedType)
 			return
 		}
 

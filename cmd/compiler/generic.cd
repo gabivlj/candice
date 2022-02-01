@@ -1,0 +1,5 @@
+type T
+
+func create() *T {
+    return @alloc(T, 1)
+}
