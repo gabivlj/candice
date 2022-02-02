@@ -1,5 +1,6 @@
 import sdl, "./sdl2.cd"
 
+// run with ``./build run . --release`` !!
 func main() {
     sdl.sdl()
 }
