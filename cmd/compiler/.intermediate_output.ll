@@ -1,28 +1,28 @@
-%Something-dKSMNaoynp = type { i64 }
-%Something-aAxoqycuYF = type { i32 }
-%String-nNVuGbPJIJ = type { i8*, i32 }
-%Thing-YDYIkPdlTs = type { i32 }
-%Array-gyhqVuTbky = type { i32*, i32, i32 }
+%Something-rdSwDByzlU = type { i64 }
+%Something-BZzsvNVfUV = type { i32 }
+%String-WTDITkWdPQ = type { i8*, i32 }
+%Thing-eBEMnIDULZ = type { i32 }
+%Array-lzOZQZvefr = type { i32*, i32, i32 }
 
-@string.literal.OwYAQjrBNr = global [13 x i8] c"hello world!\00"
+@string.literal.avzBkIjQxZ = global [13 x i8] c"hello world!\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.EhkiILfWGM = global [13 x i8] c"hello world!\00"
-@string.literal.MSkoWhcrNQ = global [6 x i8] c"Hello\00"
-@string.literal.JerkcKUMwT = global [7 x i8] c"hellow\00"
+@string.literal.tZYrFjDehO = global [13 x i8] c"hello world!\00"
+@string.literal.pCgxfvhJVO = global [6 x i8] c"Hello\00"
+@string.literal.HlDNpeMYvt = global [7 x i8] c"hellow\00"
 @"%d " = global [4 x i8] c"%d \00"
 
 declare ccc i32 @printf(i8* %0, ...)
 
 declare i8* @malloc(i64 %0)
 
-define ccc void @outsideFunction-dKSMNaoynp(%Something-dKSMNaoynp* %s-dKSMNaoynp) {
-outsideFunction-dKSMNaoynp:
-	%0 = alloca %Something-dKSMNaoynp*
-	store %Something-dKSMNaoynp* %s-dKSMNaoynp, %Something-dKSMNaoynp** %0
-	%1 = load %Something-dKSMNaoynp*, %Something-dKSMNaoynp** %0
-	%2 = getelementptr %Something-dKSMNaoynp, %Something-dKSMNaoynp* %1, i32 0, i32 0
-	%3 = load %Something-dKSMNaoynp*, %Something-dKSMNaoynp** %0
-	%4 = getelementptr %Something-dKSMNaoynp, %Something-dKSMNaoynp* %3, i32 0, i32 0
+define ccc void @outsideFunction-rdSwDByzlU(%Something-rdSwDByzlU* %s-rdSwDByzlU) {
+outsideFunction-rdSwDByzlU:
+	%0 = alloca %Something-rdSwDByzlU*
+	store %Something-rdSwDByzlU* %s-rdSwDByzlU, %Something-rdSwDByzlU** %0
+	%1 = load %Something-rdSwDByzlU*, %Something-rdSwDByzlU** %0
+	%2 = getelementptr %Something-rdSwDByzlU, %Something-rdSwDByzlU* %1, i32 0, i32 0
+	%3 = load %Something-rdSwDByzlU*, %Something-rdSwDByzlU** %0
+	%4 = getelementptr %Something-rdSwDByzlU, %Something-rdSwDByzlU* %3, i32 0, i32 0
 	%5 = load i64, i64* %4
 	%6 = sext i32 1 to i64
 	%7 = add i64 %5, %6
@@ -30,264 +30,300 @@ outsideFunction-dKSMNaoynp:
 	ret void
 }
 
-define ccc %Something-dKSMNaoynp @something-dKSMNaoynp() {
-something-dKSMNaoynp:
-	%0 = getelementptr [13 x i8], [13 x i8]* @string.literal.OwYAQjrBNr, i32 0, i32 0
+define ccc %Something-rdSwDByzlU @something-rdSwDByzlU() {
+something-rdSwDByzlU:
+	%0 = getelementptr [13 x i8], [13 x i8]* @string.literal.avzBkIjQxZ, i32 0, i32 0
 	%1 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%2 = call i32 (i8*, ...) @printf(i8* %1, i8* %0)
-	%3 = alloca %Something-dKSMNaoynp
+	%3 = alloca %Something-rdSwDByzlU
 	%4 = sext i32 0 to i64
-	%5 = getelementptr %Something-dKSMNaoynp, %Something-dKSMNaoynp* %3, i32 0, i32 0
+	%5 = getelementptr %Something-rdSwDByzlU, %Something-rdSwDByzlU* %3, i32 0, i32 0
 	store i64 %4, i64* %5
-	%6 = alloca %Something-dKSMNaoynp
-	%7 = load %Something-dKSMNaoynp, %Something-dKSMNaoynp* %3
-	store %Something-dKSMNaoynp %7, %Something-dKSMNaoynp* %6
-	%8 = alloca %Something-dKSMNaoynp*
-	store %Something-dKSMNaoynp* %6, %Something-dKSMNaoynp** %8
-	%9 = load %Something-dKSMNaoynp*, %Something-dKSMNaoynp** %8
-	call void @outsideFunction-dKSMNaoynp(%Something-dKSMNaoynp* %9)
-	%10 = load %Something-dKSMNaoynp, %Something-dKSMNaoynp* %6
-	ret %Something-dKSMNaoynp %10
+	%6 = alloca %Something-rdSwDByzlU
+	%7 = load %Something-rdSwDByzlU, %Something-rdSwDByzlU* %3
+	store %Something-rdSwDByzlU %7, %Something-rdSwDByzlU* %6
+	%8 = alloca %Something-rdSwDByzlU*
+	store %Something-rdSwDByzlU* %6, %Something-rdSwDByzlU** %8
+	%9 = load %Something-rdSwDByzlU*, %Something-rdSwDByzlU** %8
+	call void @outsideFunction-rdSwDByzlU(%Something-rdSwDByzlU* %9)
+	%10 = load %Something-rdSwDByzlU, %Something-rdSwDByzlU* %6
+	ret %Something-rdSwDByzlU %10
 }
 
-define ccc void @outsideFunction-aAxoqycuYF(%Something-aAxoqycuYF* %s-aAxoqycuYF) {
-outsideFunction-aAxoqycuYF:
-	%0 = alloca %Something-aAxoqycuYF*
-	store %Something-aAxoqycuYF* %s-aAxoqycuYF, %Something-aAxoqycuYF** %0
-	%1 = load %Something-aAxoqycuYF*, %Something-aAxoqycuYF** %0
-	%2 = getelementptr %Something-aAxoqycuYF, %Something-aAxoqycuYF* %1, i32 0, i32 0
-	%3 = load %Something-aAxoqycuYF*, %Something-aAxoqycuYF** %0
-	%4 = getelementptr %Something-aAxoqycuYF, %Something-aAxoqycuYF* %3, i32 0, i32 0
+define ccc void @outsideFunction-BZzsvNVfUV(%Something-BZzsvNVfUV* %s-BZzsvNVfUV) {
+outsideFunction-BZzsvNVfUV:
+	%0 = alloca %Something-BZzsvNVfUV*
+	store %Something-BZzsvNVfUV* %s-BZzsvNVfUV, %Something-BZzsvNVfUV** %0
+	%1 = load %Something-BZzsvNVfUV*, %Something-BZzsvNVfUV** %0
+	%2 = getelementptr %Something-BZzsvNVfUV, %Something-BZzsvNVfUV* %1, i32 0, i32 0
+	%3 = load %Something-BZzsvNVfUV*, %Something-BZzsvNVfUV** %0
+	%4 = getelementptr %Something-BZzsvNVfUV, %Something-BZzsvNVfUV* %3, i32 0, i32 0
 	%5 = load i32, i32* %4
 	%6 = add i32 %5, 1
 	store i32 %6, i32* %2
 	ret void
 }
 
-define ccc %Something-aAxoqycuYF @something-aAxoqycuYF() {
-something-aAxoqycuYF:
-	%0 = getelementptr [13 x i8], [13 x i8]* @string.literal.EhkiILfWGM, i32 0, i32 0
+define ccc %Something-BZzsvNVfUV @something-BZzsvNVfUV() {
+something-BZzsvNVfUV:
+	%0 = getelementptr [13 x i8], [13 x i8]* @string.literal.tZYrFjDehO, i32 0, i32 0
 	%1 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%2 = call i32 (i8*, ...) @printf(i8* %1, i8* %0)
-	%3 = alloca %Something-aAxoqycuYF
-	%4 = getelementptr %Something-aAxoqycuYF, %Something-aAxoqycuYF* %3, i32 0, i32 0
+	%3 = alloca %Something-BZzsvNVfUV
+	%4 = getelementptr %Something-BZzsvNVfUV, %Something-BZzsvNVfUV* %3, i32 0, i32 0
 	store i32 0, i32* %4
-	%5 = alloca %Something-aAxoqycuYF
-	%6 = load %Something-aAxoqycuYF, %Something-aAxoqycuYF* %3
-	store %Something-aAxoqycuYF %6, %Something-aAxoqycuYF* %5
-	%7 = alloca %Something-aAxoqycuYF*
-	store %Something-aAxoqycuYF* %5, %Something-aAxoqycuYF** %7
-	%8 = load %Something-aAxoqycuYF*, %Something-aAxoqycuYF** %7
-	call void @outsideFunction-aAxoqycuYF(%Something-aAxoqycuYF* %8)
-	%9 = load %Something-aAxoqycuYF, %Something-aAxoqycuYF* %5
-	ret %Something-aAxoqycuYF %9
+	%5 = alloca %Something-BZzsvNVfUV
+	%6 = load %Something-BZzsvNVfUV, %Something-BZzsvNVfUV* %3
+	store %Something-BZzsvNVfUV %6, %Something-BZzsvNVfUV* %5
+	%7 = alloca %Something-BZzsvNVfUV*
+	store %Something-BZzsvNVfUV* %5, %Something-BZzsvNVfUV** %7
+	%8 = load %Something-BZzsvNVfUV*, %Something-BZzsvNVfUV** %7
+	call void @outsideFunction-BZzsvNVfUV(%Something-BZzsvNVfUV* %8)
+	%9 = load %Something-BZzsvNVfUV, %Something-BZzsvNVfUV* %5
+	ret %Something-BZzsvNVfUV %9
 }
 
-define ccc %String-nNVuGbPJIJ @New-nNVuGbPJIJ(i8* %s-nNVuGbPJIJ) {
-New-nNVuGbPJIJ:
+define ccc %String-WTDITkWdPQ @New-WTDITkWdPQ(i8* %s-WTDITkWdPQ) {
+New-WTDITkWdPQ:
 	%0 = alloca i8*
-	store i8* %s-nNVuGbPJIJ, i8** %0
-	%1 = alloca %String-nNVuGbPJIJ
-	%2 = getelementptr %String-nNVuGbPJIJ, %String-nNVuGbPJIJ* %1, i32 0, i32 0
-	%3 = load i8*, i8** %0
-	store i8* %3, i8** %2
-	%4 = getelementptr %String-nNVuGbPJIJ, %String-nNVuGbPJIJ* %1, i32 0, i32 1
-	store i32 0, i32* %4
-	%5 = load %String-nNVuGbPJIJ, %String-nNVuGbPJIJ* %1
-	ret %String-nNVuGbPJIJ %5
+	store i8* %s-WTDITkWdPQ, i8** %0
+	%1 = alloca i32
+	store i32 0, i32* %1
+	%2 = trunc i32 0 to i8
+	%3 = alloca i8
+	store i8 %2, i8* %3
+	br label %for.declaration.oHfLRRMwDu
+
+leave.PwXSmMoMNS:
+	%4 = alloca %String-WTDITkWdPQ
+	%5 = getelementptr %String-WTDITkWdPQ, %String-WTDITkWdPQ* %4, i32 0, i32 0
+	%6 = load i8*, i8** %0
+	store i8* %6, i8** %5
+	%7 = getelementptr %String-WTDITkWdPQ, %String-WTDITkWdPQ* %4, i32 0, i32 1
+	%8 = load i32, i32* %1
+	store i32 %8, i32* %7
+	%9 = load %String-WTDITkWdPQ, %String-WTDITkWdPQ* %4
+	ret %String-WTDITkWdPQ %9
+
+for.declaration.oHfLRRMwDu:
+	%10 = load i32, i32* %1
+	%11 = load i8*, i8** %0
+	%12 = getelementptr i8, i8* %11, i32 %10
+	%13 = load i8, i8* %12
+	%14 = load i8, i8* %3
+	%15 = icmp ne i8 %13, %14
+	br i1 %15, label %for.block.bmRJyNPQaj, label %leave.PwXSmMoMNS
+
+for.condition.JOtYrMbyUh:
+	%16 = load i32, i32* %1
+	%17 = load i8*, i8** %0
+	%18 = getelementptr i8, i8* %17, i32 %16
+	%19 = load i8, i8* %18
+	%20 = load i8, i8* %3
+	%21 = icmp ne i8 %19, %20
+	br i1 %21, label %for.block.bmRJyNPQaj, label %leave.PwXSmMoMNS
+
+for.block.bmRJyNPQaj:
+	%22 = load i32, i32* %1
+	%23 = add i32 %22, 1
+	store i32 %23, i32* %1
+	br label %for.update.kgCMNzzBvR
+
+for.update.kgCMNzzBvR:
+	br label %for.condition.JOtYrMbyUh
 }
 
-define ccc %String-nNVuGbPJIJ @CreateString-yXirOcarPd() {
-CreateString-yXirOcarPd:
-	%0 = getelementptr [6 x i8], [6 x i8]* @string.literal.MSkoWhcrNQ, i32 0, i32 0
-	%1 = call %String-nNVuGbPJIJ @New-nNVuGbPJIJ(i8* %0)
-	ret %String-nNVuGbPJIJ %1
+define ccc %String-WTDITkWdPQ @CreateString-LTrxvBadFL() {
+CreateString-LTrxvBadFL:
+	%0 = getelementptr [6 x i8], [6 x i8]* @string.literal.pCgxfvhJVO, i32 0, i32 0
+	%1 = call %String-WTDITkWdPQ @New-WTDITkWdPQ(i8* %0)
+	ret %String-WTDITkWdPQ %1
 }
 
-define ccc %String-nNVuGbPJIJ @UseString-yXirOcarPd(%String-nNVuGbPJIJ* %z-yXirOcarPd) {
-UseString-yXirOcarPd:
-	%0 = alloca %String-nNVuGbPJIJ*
-	store %String-nNVuGbPJIJ* %z-yXirOcarPd, %String-nNVuGbPJIJ** %0
-	%1 = load %String-nNVuGbPJIJ*, %String-nNVuGbPJIJ** %0
-	%2 = load %String-nNVuGbPJIJ, %String-nNVuGbPJIJ* %1
-	ret %String-nNVuGbPJIJ %2
+define ccc %String-WTDITkWdPQ @UseString-LTrxvBadFL(%String-WTDITkWdPQ* %z-LTrxvBadFL) {
+UseString-LTrxvBadFL:
+	%0 = alloca %String-WTDITkWdPQ*
+	store %String-WTDITkWdPQ* %z-LTrxvBadFL, %String-WTDITkWdPQ** %0
+	%1 = load %String-WTDITkWdPQ*, %String-WTDITkWdPQ** %0
+	%2 = load %String-WTDITkWdPQ, %String-WTDITkWdPQ* %1
+	ret %String-WTDITkWdPQ %2
 }
 
-define ccc %Thing-YDYIkPdlTs* @create-DEDyATuyxQ() {
-create-DEDyATuyxQ:
+define ccc %Thing-eBEMnIDULZ* @create-hZUVCrYJYG() {
+create-hZUVCrYJYG:
 	%0 = sext i32 1 to i64
 	%1 = mul i64 %0, 4
 	%2 = call i8* @malloc(i64 %1)
-	%3 = bitcast i8* %2 to %Thing-YDYIkPdlTs*
-	%4 = alloca %Thing-YDYIkPdlTs*
-	store %Thing-YDYIkPdlTs* %3, %Thing-YDYIkPdlTs** %4
-	%5 = load %Thing-YDYIkPdlTs*, %Thing-YDYIkPdlTs** %4
-	ret %Thing-YDYIkPdlTs* %5
+	%3 = bitcast i8* %2 to %Thing-eBEMnIDULZ*
+	%4 = alloca %Thing-eBEMnIDULZ*
+	store %Thing-eBEMnIDULZ* %3, %Thing-eBEMnIDULZ** %4
+	%5 = load %Thing-eBEMnIDULZ*, %Thing-eBEMnIDULZ** %4
+	ret %Thing-eBEMnIDULZ* %5
 }
 
 declare ccc void @free(i8* %0)
 
-define ccc %Array-gyhqVuTbky @New-gyhqVuTbky() {
-New-gyhqVuTbky:
-	%0 = alloca %Array-gyhqVuTbky
+define ccc %Array-lzOZQZvefr @New-lzOZQZvefr() {
+New-lzOZQZvefr:
+	%0 = alloca %Array-lzOZQZvefr
 	%1 = sext i32 10 to i64
 	%2 = mul i64 %1, 4
 	%3 = call i8* @malloc(i64 %2)
 	%4 = bitcast i8* %3 to i32*
 	%5 = alloca i32*
 	store i32* %4, i32** %5
-	%6 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %0, i32 0, i32 0
+	%6 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %0, i32 0, i32 0
 	%7 = load i32*, i32** %5
 	store i32* %7, i32** %6
-	%8 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %0, i32 0, i32 1
+	%8 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %0, i32 0, i32 1
 	store i32 0, i32* %8
-	%9 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %0, i32 0, i32 2
+	%9 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %0, i32 0, i32 2
 	store i32 10, i32* %9
-	%10 = load %Array-gyhqVuTbky, %Array-gyhqVuTbky* %0
-	ret %Array-gyhqVuTbky %10
+	%10 = load %Array-lzOZQZvefr, %Array-lzOZQZvefr* %0
+	ret %Array-lzOZQZvefr %10
 }
 
-define ccc void @Free-gyhqVuTbky(%Array-gyhqVuTbky* %a-gyhqVuTbky) {
-Free-gyhqVuTbky:
-	%0 = alloca %Array-gyhqVuTbky*
-	store %Array-gyhqVuTbky* %a-gyhqVuTbky, %Array-gyhqVuTbky** %0
-	%1 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%2 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %1, i32 0, i32 0
+define ccc void @Free-lzOZQZvefr(%Array-lzOZQZvefr* %a-lzOZQZvefr) {
+Free-lzOZQZvefr:
+	%0 = alloca %Array-lzOZQZvefr*
+	store %Array-lzOZQZvefr* %a-lzOZQZvefr, %Array-lzOZQZvefr** %0
+	%1 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%2 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %1, i32 0, i32 0
 	%3 = load i32*, i32** %2
 	%4 = bitcast i32* %3 to i8*
 	call void @free(i8* %4)
 	ret void
 }
 
-define ccc void @Push-gyhqVuTbky(%Array-gyhqVuTbky* %a-gyhqVuTbky, i32 %element-gyhqVuTbky) {
-Push-gyhqVuTbky:
-	%0 = alloca %Array-gyhqVuTbky*
-	store %Array-gyhqVuTbky* %a-gyhqVuTbky, %Array-gyhqVuTbky** %0
+define ccc void @Push-lzOZQZvefr(%Array-lzOZQZvefr* %a-lzOZQZvefr, i32 %element-lzOZQZvefr) {
+Push-lzOZQZvefr:
+	%0 = alloca %Array-lzOZQZvefr*
+	store %Array-lzOZQZvefr* %a-lzOZQZvefr, %Array-lzOZQZvefr** %0
 	%1 = alloca i32
-	store i32 %element-gyhqVuTbky, i32* %1
-	%2 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%3 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %2, i32 0, i32 1
+	store i32 %element-lzOZQZvefr, i32* %1
+	%2 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%3 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %2, i32 0, i32 1
 	%4 = load i32, i32* %3
-	%5 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%6 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %5, i32 0, i32 2
+	%5 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%6 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %5, i32 0, i32 2
 	%7 = load i32, i32* %6
 	%8 = icmp sge i32 %4, %7
-	br i1 %8, label %if.then.MruYDtAnKg, label %if.else.ycqDvrVFJq
+	br i1 %8, label %if.then.rxjByVLrtw, label %if.else.wTNrazGMvF
 
-if.then.MruYDtAnKg:
-	br label %lastLeave.xhVxxqhfQW
+if.then.rxjByVLrtw:
+	br label %lastLeave.DQfNnHZyKR
 
-if.else.ycqDvrVFJq:
-	br label %lastLeave.xhVxxqhfQW
+if.else.wTNrazGMvF:
+	br label %lastLeave.DQfNnHZyKR
 
-lastLeave.xhVxxqhfQW:
-	%9 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%10 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %9, i32 0, i32 0
-	%11 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%12 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %11, i32 0, i32 1
+lastLeave.DQfNnHZyKR:
+	%9 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%10 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %9, i32 0, i32 0
+	%11 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%12 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %11, i32 0, i32 1
 	%13 = load i32, i32* %12
 	%14 = load i32*, i32** %10
 	%15 = getelementptr i32, i32* %14, i32 %13
 	%16 = load i32, i32* %1
 	store i32 %16, i32* %15
-	%17 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%18 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %17, i32 0, i32 1
-	%19 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %0
-	%20 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %19, i32 0, i32 1
+	%17 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%18 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %17, i32 0, i32 1
+	%19 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %0
+	%20 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %19, i32 0, i32 1
 	%21 = load i32, i32* %20
 	%22 = add i32 %21, 1
 	store i32 %22, i32* %18
 	ret void
 }
 
-define ccc %Something-dKSMNaoynp @something-YDYIkPdlTs() {
-something-YDYIkPdlTs:
-	%0 = alloca %Something-dKSMNaoynp
+define ccc %Something-rdSwDByzlU @something-eBEMnIDULZ() {
+something-eBEMnIDULZ:
+	%0 = alloca %Something-rdSwDByzlU
 	%1 = sext i32 3 to i64
-	%2 = getelementptr %Something-dKSMNaoynp, %Something-dKSMNaoynp* %0, i32 0, i32 0
+	%2 = getelementptr %Something-rdSwDByzlU, %Something-rdSwDByzlU* %0, i32 0, i32 0
 	store i64 %1, i64* %2
-	%3 = load %Something-dKSMNaoynp, %Something-dKSMNaoynp* %0
-	ret %Something-dKSMNaoynp %3
+	%3 = load %Something-rdSwDByzlU, %Something-rdSwDByzlU* %0
+	ret %Something-rdSwDByzlU %3
 }
 
-define ccc i32 @call-JedcQKKIra(i32 (i32)* %f-JedcQKKIra) {
-call-JedcQKKIra:
+define ccc i32 @call-nuhiSiYgRJ(i32 (i32)* %f-nuhiSiYgRJ) {
+call-nuhiSiYgRJ:
 	%0 = alloca i32 (i32)*
-	store i32 (i32)* %f-JedcQKKIra, i32 (i32)** %0
+	store i32 (i32)* %f-nuhiSiYgRJ, i32 (i32)** %0
 	%1 = load i32 (i32)*, i32 (i32)** %0
 	%2 = call i32 %1(i32 1)
 	ret i32 %2
 }
 
-define ccc i32 @wow-YDYIkPdlTs(i32 %i-YDYIkPdlTs) {
-wow-YDYIkPdlTs:
+define ccc i32 @wow-eBEMnIDULZ(i32 %i-eBEMnIDULZ) {
+wow-eBEMnIDULZ:
 	%0 = alloca i32
-	store i32 %i-YDYIkPdlTs, i32* %0
+	store i32 %i-eBEMnIDULZ, i32* %0
 	%1 = load i32, i32* %0
 	ret i32 %1
 }
 
 define ccc void @main() {
 main:
-	%0 = getelementptr [7 x i8], [7 x i8]* @string.literal.JerkcKUMwT, i32 0, i32 0
-	%1 = call %String-nNVuGbPJIJ @New-nNVuGbPJIJ(i8* %0)
-	%2 = alloca %String-nNVuGbPJIJ
-	store %String-nNVuGbPJIJ %1, %String-nNVuGbPJIJ* %2
-	%3 = alloca %String-nNVuGbPJIJ*
-	store %String-nNVuGbPJIJ* %2, %String-nNVuGbPJIJ** %3
-	%4 = load %String-nNVuGbPJIJ*, %String-nNVuGbPJIJ** %3
-	%5 = call %String-nNVuGbPJIJ @UseString-yXirOcarPd(%String-nNVuGbPJIJ* %4)
-	%6 = alloca %String-nNVuGbPJIJ
-	store %String-nNVuGbPJIJ %5, %String-nNVuGbPJIJ* %6
-	%7 = call %Array-gyhqVuTbky @New-gyhqVuTbky()
-	%8 = alloca %Array-gyhqVuTbky
-	store %Array-gyhqVuTbky %7, %Array-gyhqVuTbky* %8
-	%9 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %8, i32 0, i32 0
+	%0 = getelementptr [7 x i8], [7 x i8]* @string.literal.HlDNpeMYvt, i32 0, i32 0
+	%1 = call %String-WTDITkWdPQ @New-WTDITkWdPQ(i8* %0)
+	%2 = alloca %String-WTDITkWdPQ
+	store %String-WTDITkWdPQ %1, %String-WTDITkWdPQ* %2
+	%3 = alloca %String-WTDITkWdPQ*
+	store %String-WTDITkWdPQ* %2, %String-WTDITkWdPQ** %3
+	%4 = load %String-WTDITkWdPQ*, %String-WTDITkWdPQ** %3
+	%5 = call %String-WTDITkWdPQ @UseString-LTrxvBadFL(%String-WTDITkWdPQ* %4)
+	%6 = alloca %String-WTDITkWdPQ
+	store %String-WTDITkWdPQ %5, %String-WTDITkWdPQ* %6
+	%7 = call %Array-lzOZQZvefr @New-lzOZQZvefr()
+	%8 = alloca %Array-lzOZQZvefr
+	store %Array-lzOZQZvefr %7, %Array-lzOZQZvefr* %8
+	%9 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %8, i32 0, i32 0
 	%10 = load i32*, i32** %9
 	%11 = getelementptr i32, i32* %10, i32 0
 	%12 = load i32, i32* %11
 	%13 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%14 = call i32 (i8*, ...) @printf(i8* %13, i32 %12)
-	%15 = alloca %Array-gyhqVuTbky*
-	store %Array-gyhqVuTbky* %8, %Array-gyhqVuTbky** %15
-	%16 = load %Array-gyhqVuTbky*, %Array-gyhqVuTbky** %15
-	call void @Push-gyhqVuTbky(%Array-gyhqVuTbky* %16, i32 3)
-	%17 = getelementptr %Array-gyhqVuTbky, %Array-gyhqVuTbky* %8, i32 0, i32 0
+	%15 = alloca %Array-lzOZQZvefr*
+	store %Array-lzOZQZvefr* %8, %Array-lzOZQZvefr** %15
+	%16 = load %Array-lzOZQZvefr*, %Array-lzOZQZvefr** %15
+	call void @Push-lzOZQZvefr(%Array-lzOZQZvefr* %16, i32 3)
+	%17 = getelementptr %Array-lzOZQZvefr, %Array-lzOZQZvefr* %8, i32 0, i32 0
 	%18 = load i32*, i32** %17
 	%19 = getelementptr i32, i32* %18, i32 0
 	%20 = load i32, i32* %19
 	%21 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%22 = call i32 (i8*, ...) @printf(i8* %21, i32 %20)
-	%23 = call i32 @call-JedcQKKIra(i32 (i32)* @wow-YDYIkPdlTs)
+	%23 = call i32 @call-nuhiSiYgRJ(i32 (i32)* @wow-eBEMnIDULZ)
 	%24 = alloca i32
 	store i32 %23, i32* %24
 	%25 = load i32, i32* %24
 	%26 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%27 = call i32 (i8*, ...) @printf(i8* %26, i32 %25)
-	%28 = call %Thing-YDYIkPdlTs* @create-DEDyATuyxQ()
-	%29 = alloca %Thing-YDYIkPdlTs*
-	store %Thing-YDYIkPdlTs* %28, %Thing-YDYIkPdlTs** %29
-	%30 = load %Thing-YDYIkPdlTs*, %Thing-YDYIkPdlTs** %29
-	%31 = getelementptr %Thing-YDYIkPdlTs, %Thing-YDYIkPdlTs* %30, i32 0, i32 0
+	%28 = call %Thing-eBEMnIDULZ* @create-hZUVCrYJYG()
+	%29 = alloca %Thing-eBEMnIDULZ*
+	store %Thing-eBEMnIDULZ* %28, %Thing-eBEMnIDULZ** %29
+	%30 = load %Thing-eBEMnIDULZ*, %Thing-eBEMnIDULZ** %29
+	%31 = getelementptr %Thing-eBEMnIDULZ, %Thing-eBEMnIDULZ* %30, i32 0, i32 0
 	%32 = load i32, i32* %31
 	%33 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%34 = call i32 (i8*, ...) @printf(i8* %33, i32 %32)
-	%35 = call %Something-dKSMNaoynp @something-dKSMNaoynp()
-	%36 = alloca %Something-dKSMNaoynp
-	store %Something-dKSMNaoynp %35, %Something-dKSMNaoynp* %36
-	%37 = call %Something-aAxoqycuYF @something-aAxoqycuYF()
-	%38 = alloca %Something-aAxoqycuYF
-	store %Something-aAxoqycuYF %37, %Something-aAxoqycuYF* %38
-	%39 = call %Something-dKSMNaoynp @something-YDYIkPdlTs()
-	%40 = alloca %Something-dKSMNaoynp
-	store %Something-dKSMNaoynp %39, %Something-dKSMNaoynp* %40
-	%41 = getelementptr %Something-aAxoqycuYF, %Something-aAxoqycuYF* %38, i32 0, i32 0
+	%35 = call %Something-rdSwDByzlU @something-rdSwDByzlU()
+	%36 = alloca %Something-rdSwDByzlU
+	store %Something-rdSwDByzlU %35, %Something-rdSwDByzlU* %36
+	%37 = call %Something-BZzsvNVfUV @something-BZzsvNVfUV()
+	%38 = alloca %Something-BZzsvNVfUV
+	store %Something-BZzsvNVfUV %37, %Something-BZzsvNVfUV* %38
+	%39 = call %Something-rdSwDByzlU @something-eBEMnIDULZ()
+	%40 = alloca %Something-rdSwDByzlU
+	store %Something-rdSwDByzlU %39, %Something-rdSwDByzlU* %40
+	%41 = getelementptr %Something-BZzsvNVfUV, %Something-BZzsvNVfUV* %38, i32 0, i32 0
 	%42 = load i32, i32* %41
-	%43 = getelementptr %Something-dKSMNaoynp, %Something-dKSMNaoynp* %36, i32 0, i32 0
+	%43 = getelementptr %Something-rdSwDByzlU, %Something-rdSwDByzlU* %36, i32 0, i32 0
 	%44 = load i64, i64* %43
 	%45 = trunc i64 %44 to i32
 	%46 = add i32 %42, %45
-	%47 = getelementptr %Something-dKSMNaoynp, %Something-dKSMNaoynp* %40, i32 0, i32 0
+	%47 = getelementptr %Something-rdSwDByzlU, %Something-rdSwDByzlU* %40, i32 0, i32 0
 	%48 = load i64, i64* %47
 	%49 = trunc i64 %48 to i32
 	%50 = add i32 %46, %49

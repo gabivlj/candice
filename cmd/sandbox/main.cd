@@ -1,0 +1,60 @@
+
+extern func SDL_Init(u32) i32
+extern func atexit(func() void) void
+extern func SDL_Quit() void
+extern func SDL_Delay(u32) void
+extern func SDL_CreateWindow(*i8, i32, i32, i32, i32, u32) *i8
+extern func SDL_GetWindowSurface(*i8) *i8
+extern func SDL_UpdateWindowSurface(*i8) void
+
+
+struct SDL_Event {
+    kind u32
+    padding [1492]i8
+}
+
+extern func SDL_PollEvent(*SDL_Event) i32
+
+
+// SDL_Window * SDL_CreateWindow(const char *title,
+//     int x, int y, int w,
+//     int h, Uint32 flags);
+
+
+
+func main() i32 {
+    centered := 805240832
+    value := SDL_Init(@cast(u32, 32))
+    if value < 0 {
+        @println("Error initializing")
+        return 1
+    } 
+
+    window := SDL_CreateWindow(
+        "SDL",
+        centered, centered, 1000, 1000, @cast(u32, 128)
+    )
+
+    if @cast(i64, window) == @cast(i64, 0) {
+        @println("couldn't create window")
+        return 1
+    }
+
+    surface := SDL_GetWindowSurface(window)
+    SDL_UpdateWindowSurface(window)
+    sdlQuit := @cast(u32, 768)
+    quit := 0
+    event := @SDL_Event{}
+    for !quit {
+        for SDL_PollEvent(&event) {                        
+            if event.kind == sdlQuit {
+                quit = 1;            
+                @println("Exited with event: ")
+                @println(event.kind)
+            }
+        }
+    }
+
+    SDL_Quit()
+    return 0
+}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/gabivlj/candice/internals/ast"
@@ -244,15 +245,39 @@ func (c *Compiler) GenerateExecutable() error {
 	return err
 }
 
-func (c *Compiler) GenerateExecutableExperimental(output string, objectPaths []string) error {
-	pathOutput, err := GenerateObjectLLVM(c.m, "output.o")
+// GenerateExecutableCXX creates an executable from llvm bitcode, CXX needs to be able to compile llvm
+func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []string) error {
+	defer func() {
+		os.Remove(".intermediate_output.ll")
+	}()
+
+	fd, _ := os.Create(".intermediate_output.ll")
+	_, _ = c.m.WriteTo(fd)
+	endFlags := []string{".intermediate_output.ll"}
+	endFlags = append(endFlags, flags...)
+	endFlags = append(endFlags, []string{"-o", output}...)
+	cmd := exec.Command(cxx, endFlags...)
+	stdout := &bytes.Buffer{}
+	cmd.Stdout = stdout
+	cmd.Stderr = stdout
+	err := cmd.Run()
+
+	if err != nil {
+		return errors.New("error compiling with clang:\n" + stdout.String())
+	}
+
+	return nil
+}
+
+func (c *Compiler) GenerateExecutableExperimental(output string, cxx string, flags []string, optimized bool) error {
+	pathOutput, err := GenerateObjectLLVM(c.m, "output.o", optimized)
 	if err != nil {
 		return err
 	}
-	command := append(objectPaths, pathOutput)
+	command := append(flags, pathOutput)
 	command = append(command, "-o", output)
-	command = append(command, "-O3")
-	cmd := exec.Command("clang++", command...)
+	//	command = append(command, "-O3")
+	cmd := exec.Command(cxx, command...)
 	outputBuffer := bytes.Buffer{}
 	cmd.Stdout = &outputBuffer
 	cmd.Stderr = &outputBuffer

@@ -3,16 +3,17 @@ package program
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gabivlj/candice/internals/compiler"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/semantic"
 	"github.com/gabivlj/candice/pkg/logger"
 	"github.com/gabivlj/candice/pkg/terminal"
-	"os"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func Init() {
@@ -57,7 +58,7 @@ func Init() {
 
 	c := compiler.New(s)
 	c.Compile(tree)
-	err = c.GenerateExecutableExperimental(programName, objects)
+	err = c.GenerateExecutableExperimental(programName, "clang", objects, true)
 	if err != nil {
 		logger.Error("Internally At Compile Time", err.Error())
 		return

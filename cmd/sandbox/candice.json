@@ -1,0 +1,14 @@
+{
+    "name": "project",
+    "entrypoint": "main.cd",
+    "cxx": "clang",
+    "kind": "llvm",
+    "flags": [
+        "./c_objects/anobject.o",
+        "-D_THREAD_SAFE",
+        "-I/opt/homebrew/include/SDL2",
+        "-L/opt/homebrew/lib",
+        "-lSDL2"
+    ],
+    "output": "program"
+}

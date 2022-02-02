@@ -5,12 +5,14 @@ package compiler
 import (
 	"io"
 	"os"
+
 	l "tinygo.org/x/go-llvm"
 )
 
-func GenerateObjectLLVM(writer io.WriterTo, path string) (string, error) {
-
-	_ = os.Remove(".intermediate_output.ll")
+func GenerateObjectLLVM(writer io.WriterTo, path string, optimized bool) (string, error) {
+	defer func() {
+		_ = os.Remove(".intermediate_output.ll")
+	}()
 	intermediateOutputFd, err := os.Create(".intermediate_output.ll")
 	if err != nil {
 		return "", err
@@ -44,28 +46,30 @@ func GenerateObjectLLVM(writer io.WriterTo, path string) (string, error) {
 	targetMachine := target.CreateTargetMachine(tripleTarget, "generic", "", l.CodeGenLevelAggressive, model, l.CodeModelSmall)
 	module.SetTarget(tripleTarget)
 	module.SetDataLayout(targetMachine.CreateTargetData().String())
-	passManager := l.NewPassManager()
-	passManager.AddAddressSanitizerFunctionPass()
-	passManager.AddArgumentPromotionPass()
-	passManager.AddConstantMergePass()
-	passManager.AddDeadArgEliminationPass()
-	passManager.AddAggressiveDCEPass()
-	passManager.AddLoopUnrollPass()
-	passManager.AddLoopDeletionPass()
-	passManager.AddLoopUnswitchPass()
-	passManager.AddPromoteMemoryToRegisterPass()
-	passManager.AddDemoteMemoryToRegisterPass()
-	passManager.AddInstructionCombiningPass()
-	passManager.AddScalarReplAggregatesPass()
-	passManager.AddFunctionInliningPass()
-	passManager.AddGlobalDCEPass()
-	passManager.AddCoroElidePass()
-	passManager.AddConstantMergePass()
-	passManager.AddTailCallEliminationPass()
-	passManager.AddStripDeadPrototypesPass()
-	passManager.AddCFGSimplificationPass()
-	passManager.Run(module)
-	targetMachine.AddAnalysisPasses(passManager)
+	if optimized {
+		passManager := l.NewPassManager()
+		passManager.AddAddressSanitizerFunctionPass()
+		passManager.AddArgumentPromotionPass()
+		passManager.AddConstantMergePass()
+		passManager.AddDeadArgEliminationPass()
+		passManager.AddAggressiveDCEPass()
+		passManager.AddLoopUnrollPass()
+		passManager.AddLoopDeletionPass()
+		passManager.AddLoopUnswitchPass()
+		passManager.AddPromoteMemoryToRegisterPass()
+		passManager.AddDemoteMemoryToRegisterPass()
+		passManager.AddInstructionCombiningPass()
+		passManager.AddScalarReplAggregatesPass()
+		passManager.AddFunctionInliningPass()
+		passManager.AddGlobalDCEPass()
+		passManager.AddCoroElidePass()
+		passManager.AddConstantMergePass()
+		passManager.AddTailCallEliminationPass()
+		passManager.AddStripDeadPrototypesPass()
+		passManager.AddCFGSimplificationPass()
+		passManager.Run(module)
+		targetMachine.AddAnalysisPasses(passManager)
+	}
 	memBuffer, err := targetMachine.EmitToMemoryBuffer(module, l.ObjectFile)
 	if err != nil {
 		return "", err

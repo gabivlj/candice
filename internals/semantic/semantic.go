@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"strconv"
 
 	"github.com/gabivlj/candice/internals/ast"
@@ -739,6 +740,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 		s.error("expected identifier for struct access, got "+binaryOperation.Right.String(), binaryOperation.Token)
 		return ctypes.TODO()
 	}
+
 	identifier.Name = ast.RetrieveID(identifier.Name)
 	idx, t := strukt.GetField(identifier.Name)
 	if idx < 0 || t == nil {
@@ -747,7 +749,6 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 	}
 
 	binaryOperation.Type = t
-
 	return t
 }
 
@@ -759,39 +760,51 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 }
 
 func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
-	path := importStatement.Path.Value
+	currentPath, err := os.Getwd()
+	if err != nil {
+		s.Errors = append(s.Errors, err)
+		currentPath = "/"
+	}
+
+	path := path.Join(currentPath, importStatement.Path.Value)
+
 	if existingSemantic, ok := paths[path]; ok {
 		s.modules[importStatement.Name] = existingSemantic
 		return
 	}
+
 	text, err := os.ReadFile(path)
 	if err != nil {
 		s.error(fmt.Sprintf("error importing file with path %s: %s", importStatement.Path, err.Error()), importStatement.Token)
 		return
 	}
+
 	l := lexer.New(string(text))
 	p := parser.New(l)
 	p.TypeParameters = make([]ctypes.Type, 0, len(importStatement.Types))
 	for _, t := range importStatement.Types {
 		p.TypeParameters = append(p.TypeParameters, s.UnwrapAnonymous(t))
 	}
+
 	tree := p.Parse()
 	if len(p.Errors) > 0 {
 		s.error("error parsing file imported on path "+importStatement.Path.String(), importStatement.Token)
 		s.Errors = append(s.Errors, p.Errors...)
 		return
 	}
-	internalSemantic := New()
 
+	internalSemantic := New()
 	internalSemantic.Analyze(tree)
 	if len(internalSemantic.Errors) > 0 {
 		s.error("error analyzing file imported on path "+importStatement.Path.String(), importStatement.Token)
 		s.Errors = append(s.Errors, internalSemantic.Errors...)
 		return
 	}
+
 	if len(p.TypeParameters) == 0 {
 		paths[path] = internalSemantic
 	}
+
 	s.modules[importStatement.Name] = internalSemantic
 }
 

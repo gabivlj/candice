@@ -4,8 +4,14 @@ struct String {
 }
 
 func New(s *i8) String {
+    len:= 0
+    zero := @cast(i8, 0) 
+    for s[len] != zero {
+        len = len + 1
+    }
+
     return @String{
         inner: s,
-        len: 0
+        len: len
     }
 }
