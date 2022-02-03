@@ -182,6 +182,10 @@ type Function struct {
 	Return       Type
 }
 
+func (f *Function) IsMainFunction() bool {
+	return helper.RetrieveID(f.Name) == "main"
+}
+
 func (_ *Function) CandiceType() {}
 
 func (f *Function) SizeOf() int64 {

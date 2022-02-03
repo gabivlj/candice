@@ -50,6 +50,10 @@ func (s *Semantic) Alignment() int64 { return 0 }
 
 func (s *Semantic) String() string { return "MODULE" }
 
+func ResetPaths() {
+	paths = map[string]*Semantic{}
+}
+
 func New() *Semantic {
 	s := &Semantic{
 		variables:                 undomap.New[string, ctypes.Type](),
@@ -359,6 +363,10 @@ func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationState
 }
 
 func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
+	if t == ctypes.TODO() {
+		return t
+	}
+
 	if anonymous, ok := t.(*ctypes.Anonymous); ok {
 		module := ""
 		if anonymous.Modules != nil && len(anonymous.Modules) > 0 {
@@ -742,6 +750,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 		return ctypes.TODO()
 	}
 
+	// Just in case that the identifier.Name is poisoned by ID generation, extract original name
 	identifier.Name = ast.RetrieveID(identifier.Name)
 	idx, t := strukt.GetField(identifier.Name)
 	if idx < 0 || t == nil {

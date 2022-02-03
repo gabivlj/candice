@@ -56,11 +56,15 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	var m *ir.Module
 	var builtins map[string]func(*Compiler, *ast.BuiltinCall) value.Value
 	var globalBuiltinDefinitions map[string]value.Value
+	var globalVariables map[string]*Value
 	var compiledModules map[string]*Compiler
 
 	if len(parent) > 0 {
 		// we need previous module to add llvm IR here.
 		m = parent[0].m
+
+		// define it for extern funcs so we don't redefine them
+		globalVariables = parent[0].globalVariables
 
 		// builtin functions so we don't redefine later
 		builtins = parent[0].builtins
@@ -72,6 +76,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		compiledModules = parent[0].compiledModules
 	} else {
 		m = ir.NewModule()
+		globalVariables = map[string]*Value{}
 		builtins = map[string]func(*Compiler, *ast.BuiltinCall) value.Value{}
 		globalBuiltinDefinitions = map[string]value.Value{}
 		compiledModules = map[string]*Compiler{}
@@ -85,7 +90,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		types:                    map[string]*Type{},
 		definitionsToBePopped:    []string{"<>"},
 		stacks:                   []map[string]value.Value{{}},
-		globalVariables:          map[string]*Value{},
+		globalVariables:          globalVariables,
 		currentFunction:          nil,
 		context:                  context,
 		modules:                  map[string]*Compiler{},
@@ -426,6 +431,12 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 	funcType := externFunc.Type.(*ctypes.Function)
+
+	if f, ok := c.globalVariables[funcType.ExternalName]; ok {
+		c.globalVariables[funcType.Name] = f
+		return
+	}
+
 	returnType := c.ToLLVMType(funcType.Return)
 	params := []*ir.Param{}
 	for _, parameter := range funcType.Parameters {
@@ -434,7 +445,9 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 	}
 	f := c.m.NewFunc(funcType.ExternalName, returnType, params...)
 	f.CallingConv = enum.CallingConvC
-	c.globalVariables[funcType.Name] = &Value{Value: f, Type: funcType}
+	funk := &Value{Value: f, Type: funcType}
+	c.globalVariables[funcType.Name] = funk
+	c.globalVariables[funcType.ExternalName] = funk
 }
 
 func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
@@ -454,6 +467,10 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 		t := c.ToLLVMType(param)
 		name := funk.FunctionType.Names[i]
 		params = append(params, ir.NewParam(name, t))
+	}
+
+	if funk.FunctionType.IsMainFunction() && funk.FunctionType.Return == ctypes.VoidType || funk.FunctionType.Return == nil {
+		funk.FunctionType.Return = ctypes.I32
 	}
 
 	// Declare llvmFunction
@@ -490,7 +507,11 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 
 	// If return hasn't been declared, declare a void return
 	if c.block().Term == nil {
-		c.block().NewRet(nil)
+		if funk.FunctionType.IsMainFunction() {
+			c.block().NewRet(zero)
+		} else {
+			c.block().NewRet(nil)
+		}
 	}
 
 	// Pop block, stack and restore current function

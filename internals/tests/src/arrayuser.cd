@@ -3,13 +3,23 @@ import arr2, i32, "./src/libs/usearray.cd"
 import arr3, i64, "./src/libs/array.cd"
 import arr4, i64, "./src/libs/usearray.cd"
 
-func main() {
+func main() i32 {
     a := arr.New()
     aa := arr2.new()
     arr.Push(&aa, 3)
+    arr.Push(&a, 3)
 
     aaa := arr3.New()
     aaaa := arr4.new()
     arr3.Push(&aaaa, @cast(i64, 3))
-    //arr.Push(&aaaa, @cast(i64, 3))
+    arr3.Push(&aaa,  @cast(i64, 3))
+
+    if aaa.size == 0 @println(aaa.size)
+    else if aaaa.size == 0 @println(aaaa.size)
+    else if a.size == 0 @println(a.size)
+    else if aa.size == 0 @println(aa.size)
+    else {
+        @println("WORKS")
+    }
+    return 0
 }
