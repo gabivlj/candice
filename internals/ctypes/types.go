@@ -287,7 +287,7 @@ func (s *Struct) FullString() string {
 }
 
 func (s *Struct) String() string {
-	return s.Name
+	return strings.Split(s.Name, "-")[0]
 }
 
 func (_ *Struct) CandiceType() {}

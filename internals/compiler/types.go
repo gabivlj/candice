@@ -76,6 +76,8 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 			}
 
 			// TODO: Optimize this to use a single lookup
+			// we need to do this because we don't know the module name from a struct
+			// and sometimes we will find imported types from other modules that have been parsed.
 			for _, module := range c.modules {
 				if t, ok := module.types[el.Name]; ok {
 					return t.llvmType

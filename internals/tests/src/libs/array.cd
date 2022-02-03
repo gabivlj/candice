@@ -1,0 +1,31 @@
+
+type T
+
+struct Array {
+    elements *T
+    size i32
+    cap i32
+}
+
+extern func free(*i8) void
+
+func New() Array {
+    return @Array{
+        elements: @alloc(T, 10),
+        size: 0,
+        cap: 10
+    }
+}
+
+func Free(a *Array) {
+    free(@cast(*i8, a.elements))
+}
+
+func Push(a *Array, element T) {
+    if a.size >= a.cap {
+        // this cannot be handled yet sadly... 
+    }
+
+    a.elements[a.size] = element
+    a.size = a.size + 1
+}

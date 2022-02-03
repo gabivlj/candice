@@ -1,0 +1,15 @@
+import arr, i32, "./src/libs/array.cd"
+import arr2, i32, "./src/libs/usearray.cd"
+import arr3, i64, "./src/libs/array.cd"
+import arr4, i64, "./src/libs/usearray.cd"
+
+func main() {
+    a := arr.New()
+    aa := arr2.new()
+    arr.Push(&aa, 3)
+
+    aaa := arr3.New()
+    aaaa := arr4.new()
+    arr3.Push(&aaaa, @cast(i64, 3))
+    //arr.Push(&aaaa, @cast(i64, 3))
+}

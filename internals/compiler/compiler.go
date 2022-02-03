@@ -57,10 +57,18 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	var builtins map[string]func(*Compiler, *ast.BuiltinCall) value.Value
 	var globalBuiltinDefinitions map[string]value.Value
 	var compiledModules map[string]*Compiler
+
 	if len(parent) > 0 {
+		// we need previous module to add llvm IR here.
 		m = parent[0].m
+
+		// builtin functions so we don't redefine later
 		builtins = parent[0].builtins
+
 		globalBuiltinDefinitions = parent[0].globalBuiltinDefinitions
+
+		// When importing we might import an already compiled module, but with another name,
+		// let's remember those!
 		compiledModules = parent[0].compiledModules
 	} else {
 		m = ir.NewModule()
@@ -85,6 +93,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	}
 
 	if len(parent) > 0 {
+		// necessary because we need references to types defined before importing.
 		c.modules["_parent"] = parent[0]
 		c.types = parent[0].types
 	}
@@ -253,9 +262,8 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 
 	fd, _ := os.Create(".intermediate_output.ll")
 	_, _ = c.m.WriteTo(fd)
-	endFlags := []string{".intermediate_output.ll"}
+	endFlags := []string{".intermediate_output.ll", "-o", output}
 	endFlags = append(endFlags, flags...)
-	endFlags = append(endFlags, []string{"-o", output}...)
 	cmd := exec.Command(cxx, endFlags...)
 	stdout := &bytes.Buffer{}
 	cmd.Stdout = stdout

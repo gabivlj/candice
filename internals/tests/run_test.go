@@ -1,13 +1,14 @@
 package tests
 
 import (
+	"os"
+	"testing"
+
 	"github.com/gabivlj/candice/internals/compiler"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/semantic"
 	"github.com/gabivlj/candice/pkg/logger"
-	"os"
-	"testing"
 )
 
 func TestSrcs(t *testing.T) {
@@ -34,6 +35,10 @@ func TestSrcs(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, elem := range elems {
+		if elem.IsDir() {
+			continue
+		}
+
 		txt, err := os.ReadFile("./src/" + elem.Name())
 		if err != nil {
 			t.Fatal(err)

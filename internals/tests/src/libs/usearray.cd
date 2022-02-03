@@ -1,0 +1,7 @@
+type C
+
+import a, C, "./src/libs/array.cd"
+
+func new() a.Array {
+    return a.New()
+}

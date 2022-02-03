@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
@@ -759,7 +760,22 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 		op == ops.NotEquals || op == ops.Divide
 }
 
+// analyzeImport works in a really tricky way
+// - First off we start by gathering all types that the file is gonna need as parameters
+// - Then we should parse and analyze the file that is being imported if it hasn't been yet
+// - Now this is a tricky part, we check if the file with those type parameters have been analyzed before
+//  and if it does we try to get the semantic component and put it available as that module name.
+// - Because they are the exact same modules when using them in 2 different parts of the project,
+//   we won't find type discrepancies, which is good because really, it's the same type.
+// - This works because let's remember that string names in definitions are <name_put_by_the_user> '-' <random_id_set_by_the_parser>.
+//  	the random id is located in the *Semantic.Root attribute, so we can use it to create or parse names.
 func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
+	types := make([]ctypes.Type, 0, len(importStatement.Types))
+	for _, t := range importStatement.Types {
+		types = append(types, s.UnwrapAnonymous(t))
+	}
+
+	// TODO this is not correct, should be relative path of current file
 	currentPath, err := os.Getwd()
 	if err != nil {
 		s.Errors = append(s.Errors, err)
@@ -767,8 +783,15 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	}
 
 	path := path.Join(currentPath, importStatement.Path.Value)
+	hash := strings.Builder{}
 
-	if existingSemantic, ok := paths[path]; ok {
+	for _, t := range types {
+		hash.WriteByte(',')
+		hash.WriteString(t.String())
+	}
+	endHash := path + hash.String()
+
+	if existingSemantic, ok := paths[endHash]; ok {
 		s.modules[importStatement.Name] = existingSemantic
 		return
 	}
@@ -781,11 +804,7 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 
 	l := lexer.New(string(text))
 	p := parser.New(l)
-	p.TypeParameters = make([]ctypes.Type, 0, len(importStatement.Types))
-	for _, t := range importStatement.Types {
-		p.TypeParameters = append(p.TypeParameters, s.UnwrapAnonymous(t))
-	}
-
+	p.TypeParameters = types
 	tree := p.Parse()
 	if len(p.Errors) > 0 {
 		s.error("error parsing file imported on path "+importStatement.Path.String(), importStatement.Token)
@@ -801,9 +820,7 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 		return
 	}
 
-	if len(p.TypeParameters) == 0 {
-		paths[path] = internalSemantic
-	}
+	paths[endHash] = internalSemantic
 
 	s.modules[importStatement.Name] = internalSemantic
 }
