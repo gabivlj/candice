@@ -1,0 +1,18 @@
+func thing() *i32 {
+    t := @alloc(i32, 1);
+    *t = 1;
+    return t
+}
+
+func thing2() i32 {
+    return 1
+}
+
+func main() {
+    th : **i32 = &thing()
+    thh : **i32 = th
+    thhh : *i32 = &thing2()
+
+    if **th != 1 @println("bad")
+    if *thhh != 1 @println("bad2")
+}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -755,13 +756,19 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 	}
 
 	if prefix.Operation == ops.BinaryAND {
-		if !types.IsPointer(prefixValue.Type()) {
+		// This means that we are referencing a variable that either:
+		// * Has just been returned by a function, (func whatever() i32; whatever(); << we are on i32 instead of *i32)
+		// * Or is just a literal, like: variable := &3 << i32 instead of *i32
+		if !types.IsPointer(prefixValue.Type()) || c.doNotLoadIntoMemory {
 			prefixValueTmp := c.block().NewAlloca(prefixValue.Type())
 			c.block().NewStore(prefixValue, prefixValueTmp)
 			prefixValue = prefixValueTmp
 		}
+
+		c.doNotLoadIntoMemory = false
 		allocatedValue := c.block().NewAlloca(prefixValue.Type())
 		c.block().NewStore(prefixValue, allocatedValue)
+		log.Println(allocatedValue, prefixValue)
 		return allocatedValue
 	}
 
