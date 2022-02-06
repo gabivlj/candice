@@ -669,6 +669,17 @@ func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) *ir.Block {
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
 	valueCompiled := c.compileExpression(decl.Expression)
+	if c.currentFunction == nil {
+		if constant, isConstant := valueCompiled.(constant.Constant); isConstant {
+			c.globalVariables[decl.Name] = &Value{Value: valueCompiled, Type: decl.Type}
+			c.m.NewGlobalDef(decl.Name, constant)
+		} else {
+			fmt.Println("Candice does not support constant expressions and operations yet.")
+			os.Exit(1)
+		}
+
+		return
+	}
 	val := c.block().NewAlloca(t)
 	c.block().NewStore(c.loadIfPointer(valueCompiled), val)
 	c.declare(decl.Name, val)
@@ -755,6 +766,9 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 func (c *Compiler) compileStringLiteral(stringLiteral *ast.StringLiteral) value.Value {
 	charArray := constant.NewCharArrayFromString(stringLiteral.Value + string(byte(0)))
 	globalDef := c.m.NewGlobalDef("string.literal."+random.RandomString(10), charArray)
+	if c.currentFunction == nil {
+		return charArray
+	}
 	c.doNotLoadIntoMemory = true
 	return c.block().NewGetElementPtr(types.NewArray(uint64(len(stringLiteral.Value)+1), types.I8), globalDef, zero, zero)
 }
@@ -818,11 +832,23 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 // NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
+	identifier := c.compileIdentifierReference(id)
+	if identifier != nil {
+		return identifier
+	}
+
 	if fn, ok := c.globalVariables[id.Name]; ok {
+		if !ctypes.IsFunction(fn.Type) {
+			value := c.block().NewAlloca(fn.Value.Type())
+			c.block().NewStore(fn.Value, value)
+			c.declare(id.Name, value)
+			return value
+		}
 		c.doNotLoadIntoMemory = true
 		return fn.Value
 	}
-	return c.compileIdentifierReference(id)
+
+	panic("Variable doesn't exist.")
 }
 
 func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
@@ -862,14 +888,22 @@ func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 
 func (c *Compiler) compileIndexAccess(access *ast.IndexAccess) value.Value {
 	leftArray := c.compileExpression(access.Left)
+	doNotLoadLeftArray := c.doNotLoadIntoMemory
 	index := c.loadIfPointer(c.compileExpression(access.Access))
+
 	if types.IsPointer(leftArray.Type()) && types.IsArray(leftArray.Type().(*types.PointerType).ElemType) {
-		// TODO : Optimize instruction
 		return c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, zero, index)
 	}
+
+	c.doNotLoadIntoMemory = doNotLoadLeftArray
+
 	leftArray = c.loadIfPointer(leftArray)
 	pointer := c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, index)
 	return pointer
+}
+
+func unwrapArrayGepType(arr *types.ArrayType) types.Type {
+	return types.NewPointer(arr.ElemType)
 }
 
 func (c *Compiler) loadIfPointer(val value.Value) value.Value {
@@ -1115,6 +1149,8 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 	typeParameter := call.TypeParameters[0]
 	toReturnType := c.ToLLVMType(typeParameter)
 	variable := c.compileExpression(call.Parameters[0])
+
+	// TODO: Array to integer
 	if types.IsPointer(variable.Type()) && types.IsArray(variable.Type().(*types.PointerType).ElemType) {
 		// We don't want people to take this pointer and load it into memory
 		// Test this because I'm not sure if this works!

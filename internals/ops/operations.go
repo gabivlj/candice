@@ -35,34 +35,9 @@ const (
 	// ast.BinaryOperation but is useful to retrieve the
 	// precedence of a parenthesis or function call.
 	Paren
+
+	As
 )
-
-var precedences = map[Operation]int{
-	AND:              1,
-	OR:               1,
-	GreaterThan:      2,
-	LessThan:         2,
-	LessThanEqual:    2,
-	GreaterThanEqual: 2,
-	Equals:           2,
-	NotEquals:        2,
-	Add:              3,
-	Subtract:         3,
-	Multiply:         4,
-	Divide:           4,
-	BinaryXOR:        5,
-	BinaryAND:        5,
-	BinaryOR:         5,
-	Dot:              6,
-	Paren:            6,
-}
-
-// Precedence retrieves the precedence of a binary operation, if the precedence
-// of the specified operation doesn't apply (maybe your Operation is Bang '!')
-// it will return 0
-func (o Operation) Precedence() int {
-	return precedences[o]
-}
 
 func (o Operation) String() string {
 	switch o {
@@ -106,6 +81,8 @@ func (o Operation) String() string {
 		return "("
 	case Dot:
 		return "."
+	case As:
+		return "as"
 	}
 
 	panic("unknown operand: " + strconv.FormatInt(int64(o), 10))

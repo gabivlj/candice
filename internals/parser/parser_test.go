@@ -2,11 +2,12 @@ package parser
 
 import (
 	"fmt"
+	"log"
+	"testing"
+
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/pkg/a"
-	"log"
-	"testing"
 )
 
 func TestParser_ParseType(t *testing.T) {
@@ -71,6 +72,13 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		expression string
 		expected   string
 	}{
+		{
+			expression: `if aConstant2 as i64 != aConstant as i64 @println("bad...")`,
+			expected: `if (@cast(i64, aConstant2)!=@cast(i64, aConstant)) {
+@println("bad...");
+}
+`,
+		},
 		{
 			expression: "exp :int = 3==3+(3+3)/4*6+-&element.element.element.element",
 			expected:   "exp :int = (3==((3+(((3+3)/4)*6))+-&(((element.element).element).element)));\n",

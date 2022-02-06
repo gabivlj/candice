@@ -356,3 +356,8 @@ func IsUnsignedInteger(t Type) bool {
 	_, ok := t.(*UInteger)
 	return ok
 }
+
+func IsFunction(t Type) bool {
+	_, ok := t.(*Function)
+	return ok
+}

@@ -381,6 +381,7 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		anonymous.Name = name
 		t, ok := semantic.definedTypes[name]
 		if !ok {
+			s.error("couldn't unwrap type", token.Token{})
 			return ctypes.TODO()
 		}
 

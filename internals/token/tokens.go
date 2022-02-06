@@ -77,6 +77,7 @@ const (
 	BREAK    = TypeToken("BREAK")
 	CONTINUE = TypeToken("CONTINUE")
 	EXTERN   = TypeToken("EXTERN")
+	AS       = TypeToken("AS")
 )
 
 var keywords = map[string]TypeToken{
@@ -93,6 +94,7 @@ var keywords = map[string]TypeToken{
 	"extern":   EXTERN,
 	"continue": CONTINUE,
 	"type":     TYPE,
+	"as":       AS,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

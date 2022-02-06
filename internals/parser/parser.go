@@ -89,6 +89,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.ASSIGN, p.parseInfix)
 	p.registerInfixHandler(token.LBRACKET, p.parseIndex)
 	p.registerInfixHandler(token.LPAREN, p.parseCall)
+	p.registerInfixHandler(token.AS, p.parseAs)
 
 	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
@@ -190,6 +191,17 @@ func (p *Parser) parseStaticArray() ast.Expression {
 			Token: l,
 		},
 		Values: expressions,
+	}
+}
+
+func (p *Parser) parseAs(prev ast.Expression) ast.Expression {
+	currentToken := p.nextToken()
+	t := p.parseType()
+	return &ast.BuiltinCall{
+		Node:           &node.Node{Token: currentToken, Type: ctypes.TODO()},
+		Name:           "cast",
+		TypeParameters: []ctypes.Type{t},
+		Parameters:     []ast.Expression{prev},
 	}
 }
 
