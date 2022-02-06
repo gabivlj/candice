@@ -1,0 +1,23 @@
+func main() {
+    truth := 1 as i1
+    wow := truth && truth
+    if truth && truth && truth && truth{
+
+        if !truth && truth && truth && truth && truth && truth {
+
+        } else if truth && truth {
+            
+        } else if !truth {
+            @println("this is bad")
+        } else {
+            @println("this is also really bad")
+        }
+
+    } else {
+        @println("wow this is bad!")
+    }
+    if !wow {
+        @println("also wow bad")
+    }
+    
+}

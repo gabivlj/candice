@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -567,7 +568,7 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 
 	for _, elseIf := range ifStatement.ElseIfs {
 		currentBlock := c.currentFunction.NewBlock("elseif.then." + random.RandomString(10))
-		c.compileBlock(elseIf.Block, currentBlock)
+		currentBlock = c.compileBlock(elseIf.Block, currentBlock)
 		blocks = append(blocks, currentBlock)
 		conditions = append(conditions, elseIf.Condition)
 	}
@@ -579,16 +580,23 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 		if i+1 < len(blocks) {
 			jumpToNextCondition = c.currentFunction.NewBlock("leave." + random.RandomString(10))
 		}
+
+		c.pushBlock(lastJumpToCondition)
 		// If last block that needs to make a condition
 		// is true jump to this block, else jump to the next one, which would be the next jump condition or
 		// the else
-		lastJumpToCondition.NewCondBr(c.toBool(c.loadIfPointer(c.compileExpression(conditions[i]))), currentBlock, jumpToNextCondition)
+		condition := c.compileExpression(conditions[i])
+		conditionLoaded := c.loadIfPointer(condition)
+		// Recharge block because compiling expressions can change current blocks
+		lastJumpToCondition = c.popBlock()
+		lastJumpToCondition.NewCondBr(c.toBool(conditionLoaded), currentBlock, jumpToNextCondition)
 		lastJumpToCondition = jumpToNextCondition
 	}
 
 	leaveBlock := c.currentFunction.NewBlock("lastLeave." + random.RandomString(10))
 	lastJumpToCondition.NewBr(leaveBlock)
 
+	// override initial block
 	c.blocks[len(c.blocks)-1] = leaveBlock
 
 	for _, currentBlock := range blocks {
@@ -1000,9 +1008,40 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 		{
 			return c.compileStructAccess(expr)
 		}
+
+	case ops.AND:
+		{
+			return c.compileAnd(expr)
+		}
+
 	default:
 		return c.handleComparisonOperations(expr)
 	}
+}
+
+func (c *Compiler) compileAnd(and *ast.BinaryOperation) value.Value {
+	returnValue := constant.NewBool(false)
+	allocatedValue := c.block().NewAlloca(types.I1)
+	c.block().NewStore(returnValue, allocatedValue)
+	andBlock := c.currentFunction.NewBlock("and." + random.RandomString(10))
+	truthBlock := c.currentFunction.NewBlock("truth_and." + random.RandomString(10))
+	leaveBlock := c.currentFunction.NewBlock("leaveand." + random.RandomString(10))
+	c.block().NewBr(andBlock)
+	r := random.RandomString(2)
+	log.Println("started with", r, c.block())
+	c.pushBlock(andBlock)
+	leftExpression := c.loadIfPointer(c.compileExpression(and.Left))
+	boolean := c.toBool(leftExpression)
+	c.block().NewCondBr(boolean, truthBlock, leaveBlock)
+	andBlock = c.popBlock()
+	c.pushBlock(truthBlock)
+	value := c.toBool(c.loadIfPointer(c.compileExpression(and.Right)))
+	c.block().NewStore(value, allocatedValue)
+	c.block().NewBr(leaveBlock)
+	truthBlock = c.popBlock()
+	log.Println("ending with", r, c.block(), c.block().Term, leaveBlock)
+	c.blocks[len(c.blocks)-1] = leaveBlock
+	return allocatedValue
 }
 
 func getName(expr ast.Expression) (string, bool) {
