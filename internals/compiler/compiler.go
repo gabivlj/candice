@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -582,6 +581,7 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 		}
 
 		c.pushBlock(lastJumpToCondition)
+
 		// If last block that needs to make a condition
 		// is true jump to this block, else jump to the next one, which would be the next jump condition or
 		// the else
@@ -1014,9 +1014,37 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 			return c.compileAnd(expr)
 		}
 
+	case ops.OR:
+		{
+			return c.compileOr(expr)
+		}
+
 	default:
 		return c.handleComparisonOperations(expr)
 	}
+}
+
+func (c *Compiler) compileOr(and *ast.BinaryOperation) value.Value {
+	returnValue := constant.NewBool(false)
+	allocatedValue := c.block().NewAlloca(types.I1)
+	c.block().NewStore(returnValue, allocatedValue)
+	orBlock := c.currentFunction.NewBlock("or." + random.RandomString(10))
+	truthBlock := c.currentFunction.NewBlock("truth_or." + random.RandomString(10))
+	leaveBlock := c.currentFunction.NewBlock("leaveor." + random.RandomString(10))
+	c.block().NewBr(orBlock)
+	c.pushBlock(orBlock)
+	leftExpression := c.loadIfPointer(c.compileExpression(and.Left))
+	boolean := c.toBool(leftExpression)
+	c.block().NewStore(boolean, allocatedValue)
+	c.block().NewCondBr(boolean, leaveBlock, truthBlock)
+	orBlock = c.popBlock()
+	c.pushBlock(truthBlock)
+	value := c.toBool(c.loadIfPointer(c.compileExpression(and.Right)))
+	c.block().NewStore(value, allocatedValue)
+	c.block().NewBr(leaveBlock)
+	truthBlock = c.popBlock()
+	c.blocks[len(c.blocks)-1] = leaveBlock
+	return allocatedValue
 }
 
 func (c *Compiler) compileAnd(and *ast.BinaryOperation) value.Value {
@@ -1027,8 +1055,6 @@ func (c *Compiler) compileAnd(and *ast.BinaryOperation) value.Value {
 	truthBlock := c.currentFunction.NewBlock("truth_and." + random.RandomString(10))
 	leaveBlock := c.currentFunction.NewBlock("leaveand." + random.RandomString(10))
 	c.block().NewBr(andBlock)
-	r := random.RandomString(2)
-	log.Println("started with", r, c.block())
 	c.pushBlock(andBlock)
 	leftExpression := c.loadIfPointer(c.compileExpression(and.Left))
 	boolean := c.toBool(leftExpression)
@@ -1039,7 +1065,6 @@ func (c *Compiler) compileAnd(and *ast.BinaryOperation) value.Value {
 	c.block().NewStore(value, allocatedValue)
 	c.block().NewBr(leaveBlock)
 	truthBlock = c.popBlock()
-	log.Println("ending with", r, c.block(), c.block().Term, leaveBlock)
 	c.blocks[len(c.blocks)-1] = leaveBlock
 	return allocatedValue
 }

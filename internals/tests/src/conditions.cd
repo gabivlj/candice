@@ -1,3 +1,7 @@
+func getSomething(something i32) i1 {
+    return something == 2 && something >= 2 && something <= 2
+}
+
 func main() {
     truth := 1 as i1
     wow := truth && truth
@@ -19,5 +23,21 @@ func main() {
     if !wow {
         @println("also wow bad")
     }
-    
+    s := getSomething(2)
+    if !s {
+        @println("-_-")
+    }
+
+    if 0 as i1 || 1 as i1 {
+        
+    } else {
+        @println("pretty bad!")
+    }
+
+    if !( wow && wow ) || !( wow ) {
+        @println("bad.")
+    } else if !(wow && wow) || (wow) {
+    } else {
+        @println("bad!!.")
+    }
 }
