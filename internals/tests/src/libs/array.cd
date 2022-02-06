@@ -7,8 +7,6 @@ struct Array {
     cap i32
 }
 
-extern func free(*i8) void
-
 func New() Array {
     return @Array{
         elements: @alloc(T, 10),
@@ -18,7 +16,7 @@ func New() Array {
 }
 
 func Free(a *Array) {
-    free(@cast(*i8, a.elements))
+    @free(a.elements)
 }
 
 func Push(a *Array, element T) {

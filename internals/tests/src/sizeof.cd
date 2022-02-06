@@ -1,0 +1,20 @@
+struct Thing {
+    i i32
+    j i32
+    k i64
+}
+
+struct Things {
+    things [10]Thing
+}
+
+func main() {
+    if @sizeof(Thing) != 16 @println("bad0")
+    if @sizeof(Things) != @sizeof(Thing) * 10 @println("bad0")
+    if @sizeof(*Thing) != 8 @println("bad1")
+    if @sizeof(i32) != 4 @println("bad2")
+    if @sizeof(i64) != 8 @println("bad3")
+    if @sizeof(f64) != 8 @println("bad4")
+    if @sizeof(f32) != 4 @println("bad5")
+    if @sizeof([300]f32) != 4 * 300 @println("bad6")
+}

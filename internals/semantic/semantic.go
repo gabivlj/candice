@@ -68,6 +68,8 @@ func New() *Semantic {
 
 	s.builtinHandlers["cast"] = s.analyzeCast
 	s.builtinHandlers["alloc"] = s.analyzeAlloc
+	s.builtinHandlers["realloc"] = s.analyzeRealloc
+	s.builtinHandlers["sizeof"] = s.analyzeSizeOf
 	s.builtinHandlers["println"] = s.analyzePrintln
 	s.builtinHandlers["free"] = s.analyzeFree
 
@@ -377,7 +379,11 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		name := semantic.TranslateName(anonymous.Name)
 		// replace anonymous type name to the module one.
 		anonymous.Name = name
-		t := semantic.definedTypes[name]
+		t, ok := semantic.definedTypes[name]
+		if !ok {
+			return ctypes.TODO()
+		}
+
 		return t
 	}
 

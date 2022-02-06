@@ -1,0 +1,9 @@
+func main() {
+    pointer := @alloc(i32, 100)
+    pointer[99] = 1;
+    pointer = @realloc(pointer, 101);
+    pointer[100] = 2
+    if pointer[100] != 2 @println("bad")
+    if pointer[99] != 1 @println("bad")
+    @free(pointer)
+}

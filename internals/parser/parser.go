@@ -742,8 +742,9 @@ func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseR
 
 			p.expect(token.COMMA)
 			p.nextToken()
+
 		} else {
-			if builtinRequirements.Types > 0 {
+			if builtinRequirements.Types > 1 {
 				p.expect(token.COMMA)
 				p.nextToken()
 			}

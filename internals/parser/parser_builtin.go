@@ -26,5 +26,6 @@ func (p *Parser) initBuiltinFunctions() {
 	p.addBuiltinFunction("println", 0, UndefinedNumberOfParameters)
 	p.addBuiltinFunction("cast", 1, 1)
 	p.addBuiltinFunction("realloc", 0, 2)
+	p.addBuiltinFunction("free", 0, 1)
 	p.addBuiltinFunction("sizeof", 1, 0)
 }

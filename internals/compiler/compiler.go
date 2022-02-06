@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -152,6 +151,39 @@ func (c *Compiler) popBlock() *ir.Block {
 func (c *Compiler) initializeBuiltinLib() {
 	if _, ok := c.builtins["println"]; ok {
 		return
+	}
+
+	free := c.m.NewFunc("free", types.Void, ir.NewParam("", types.I8Ptr))
+	c.globalBuiltinDefinitions["free"] = free
+	free.Sig.Variadic = true
+	free.CallingConv = enum.CallingConvC
+	c.builtins["free"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
+		ptr := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
+		returnedValue := c.block().NewCall(free, c.block().NewBitCast(ptr, types.I8Ptr))
+		return returnedValue
+	}
+
+	realloc := c.m.NewFunc("realloc", types.I8Ptr, ir.NewParam("", types.I8Ptr), ir.NewParam("", types.I64))
+	c.globalBuiltinDefinitions["realloc"] = realloc
+	realloc.Sig.Variadic = true
+	realloc.CallingConv = enum.CallingConvC
+
+	c.builtins["realloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
+		typeParameter := call.GetType()
+		toReturnType := c.ToLLVMType(typeParameter)
+		ptr := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
+		length := c.loadIfPointer(c.compileExpression(call.Parameters[1]))
+		length = c.handleIntegerCast(types.I64, length)
+		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
+		returnedValue := c.block().NewCall(realloc, c.block().NewBitCast(ptr, types.I8Ptr), totalSize)
+		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
+		alloca := c.block().NewAlloca(castedValue.Type())
+		c.block().NewStore(castedValue, alloca)
+		return alloca
+	}
+
+	c.builtins["sizeof"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
+		return constant.NewInt(types.I32, call.TypeParameters[0].SizeOf())
 	}
 
 	printf := c.m.NewFunc(
@@ -768,7 +800,6 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 		c.doNotLoadIntoMemory = false
 		allocatedValue := c.block().NewAlloca(prefixValue.Type())
 		c.block().NewStore(prefixValue, allocatedValue)
-		log.Println(allocatedValue, prefixValue)
 		return allocatedValue
 	}
 

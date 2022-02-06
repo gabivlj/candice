@@ -41,8 +41,41 @@ func (s *Semantic) analyzeFree(freeCall *ast.BuiltinCall) ctypes.Type {
 		s.error("expected one parameter for free builtin call", freeCall.Token)
 		return ctypes.TODO()
 	}
-	if !ctypes.IsPointer(s.analyzeExpression(freeCall.Parameters[0])) {
+	if !ctypes.IsPointer(s.UnwrapAnonymous(s.analyzeExpression(freeCall.Parameters[0]))) {
 		s.error("expected pointer type for free call", freeCall.Token)
 	}
 	return ctypes.VoidType
+}
+
+func (s *Semantic) analyzeRealloc(reallocCall *ast.BuiltinCall) ctypes.Type {
+	if len(reallocCall.Parameters) != 2 {
+		s.error("expected two parameters for realloc builtin call", reallocCall.Token)
+		return ctypes.TODO()
+	}
+
+	t := s.UnwrapAnonymous(s.analyzeExpression(reallocCall.Parameters[0]))
+
+	if !ctypes.IsPointer(t) {
+		s.error("expected pointer type for realloc call", reallocCall.Token)
+	}
+
+	secondParameter := s.analyzeExpression(reallocCall.Parameters[1])
+
+	if _, isInteger := secondParameter.(*ctypes.Integer); !isInteger {
+		s.typeMismatchError(reallocCall.String(), reallocCall.Token, ctypes.I64, secondParameter)
+	}
+
+	reallocCall.Type = t
+
+	return t
+}
+
+func (s *Semantic) analyzeSizeOf(sizeOfCall *ast.BuiltinCall) ctypes.Type {
+	if len(sizeOfCall.TypeParameters) != 1 {
+		s.error("expected one type parameter for sizeOf builtin call", sizeOfCall.Token)
+		return ctypes.TODO()
+	}
+	sizeOfCall.TypeParameters[0] = s.UnwrapAnonymous(sizeOfCall.TypeParameters[0])
+	sizeOfCall.Type = sizeOfCall.TypeParameters[0]
+	return ctypes.I32
 }
