@@ -100,9 +100,12 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.AT, p.parseAt)
 	p.registerPrefixHandler(token.IDENT, p.parseIdentifierExpression)
 	p.registerPrefixHandler(token.INT, p.parseInteger)
+	p.registerPrefixHandler(token.HEX, p.parseInteger)
+	p.registerPrefixHandler(token.BINARY, p.parseInteger)
 	p.registerPrefixHandler(token.FLOAT, p.parseFloat)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
 	p.registerPrefixHandler(token.LBRACKET, p.parseStaticArray)
+
 	return p
 }
 
@@ -600,11 +603,22 @@ func (p *Parser) parseIndex(expression ast.Expression) ast.Expression {
 
 func (p *Parser) parseInteger() ast.Expression {
 	t := p.nextToken()
-	integer, err := strconv.ParseInt(t.Literal, 10, 64)
+	base := 10
+	literal := t.Literal
+
+	if t.Type == token.BINARY {
+		base = 2
+		literal = literal[2:]
+	} else if t.Type == token.HEX {
+		base = 16
+		literal = literal[2:]
+	}
+
+	integer, err := strconv.ParseInt(literal, base, 64)
 	var ty ctypes.Type = ctypes.I32
 	if err != nil {
 		if numErr, isNumErr := err.(*strconv.NumError); isNumErr && numErr.Err == strconv.ErrRange {
-			uinteger, err := strconv.ParseUint(t.Literal, 10, 64)
+			uinteger, err := strconv.ParseUint(literal, base, 64)
 			if err != nil {
 				p.addErrorMessage(err.Error())
 			} else {
@@ -614,6 +628,8 @@ func (p *Parser) parseInteger() ast.Expression {
 		} else {
 			p.addErrorMessage(err.Error())
 		}
+	} else if integer > 2147483647 {
+		ty = ctypes.I64
 	}
 
 	return &ast.Integer{

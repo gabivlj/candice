@@ -176,12 +176,49 @@ func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
 }
 
+func (l *Lexer) readHex() (string, token.TypeToken) {
+	position := l.position
+	// '0'
+	l.readChar()
+	// 'x'
+	l.readChar()
+	// Numbers and characters
+	for isDigit(l.ch) || (l.ch >= 'A' && l.ch <= 'F') || (l.ch >= 'a' && l.ch <= 'f') {
+		l.readChar()
+	}
+	return l.input[position:l.position], token.HEX
+}
+
+func (l *Lexer) readBin() (string, token.TypeToken) {
+	position := l.position
+	// '0'
+	l.readChar()
+	// 'b'
+	l.readChar()
+	// Numbers and characters
+	for l.ch == '0' || l.ch == '1' {
+		l.readChar()
+	}
+	return l.input[position:l.position], token.BINARY
+}
+
 func (l *Lexer) readNumber() (string, token.TypeToken) {
+
 	position := l.position
 	tokenType := token.INT
+
+	if l.ch == '0' && l.peekChar() == 'x' {
+		return l.readHex()
+	}
+
+	if l.ch == '0' && l.peekChar() == 'b' {
+		return l.readBin()
+	}
+
 	for isDigit(l.ch) {
 		l.readChar()
 	}
+
 	if l.ch == '.' {
 		l.readChar()
 		tokenType = token.FLOAT

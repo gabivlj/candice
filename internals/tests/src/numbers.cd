@@ -1,0 +1,7 @@
+func main() {
+    numberHex := 0xFFFFFFFFFFFFFFFF
+    numberBin := 0b1111111111111111111111111111111111111111111111111111111111111111
+    numberNormal := 18446744073709551615
+    if numberNormal != numberBin @println("bad...")
+    if numberHex != numberNormal @println("bad....v2")    
+}

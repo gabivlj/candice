@@ -18,9 +18,11 @@ const (
 
 	// Identifier + Literals
 
-	IDENT = TypeToken("IDENT") // VARIABLE NAME
-	INT   = TypeToken("INT")   // 12345
-	FLOAT = TypeToken("FLOAT") // 1.0
+	IDENT  = TypeToken("IDENT")  // VARIABLE NAME
+	INT    = TypeToken("INT")    // 12345
+	FLOAT  = TypeToken("FLOAT")  // 1.0
+	HEX    = TypeToken("HEX")    // 0x12191
+	BINARY = TypeToken("BINARY") // 0b1101010
 
 	// Operators
 
