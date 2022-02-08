@@ -9,6 +9,7 @@ import (
 
 type Node interface {
 	String() string
+	GetToken() token.Token
 }
 
 type Expression interface {
@@ -27,9 +28,21 @@ type Program struct {
 	Statements []Statement
 }
 
+func (p *Program) GetToken() token.Token {
+	if len(p.Statements) == 0 {
+		return token.Token{}
+	}
+
+	return p.Statements[0].GetToken()
+}
+
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
+}
+
+func (e *ExpressionStatement) GetToken() token.Token {
+	return e.Token
 }
 
 func (e *ExpressionStatement) String() string {

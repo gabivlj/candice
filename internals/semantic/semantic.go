@@ -21,17 +21,18 @@ import (
 )
 
 type Semantic struct {
-	variables                 *undomap.UndoMap[string, ctypes.Type]
-	functionBodies            map[string]*ast.FunctionDeclarationStatement
-	definedTypes              map[string]ctypes.Type
-	builtinHandlers           map[string]func(builtin *ast.BuiltinCall) ctypes.Type
-	returns                   bool
-	currentExpectedReturnType ctypes.Type
-	Errors                    []error
-	insideBreakableBlock      bool
-	modules                   map[string]*Semantic
-	Root                      *ast.Program
-	Compiled                  bool
+	variables                     *undomap.UndoMap[string, ctypes.Type]
+	functionBodies                map[string]*ast.FunctionDeclarationStatement
+	definedTypes                  map[string]ctypes.Type
+	builtinHandlers               map[string]func(builtin *ast.BuiltinCall) ctypes.Type
+	currentStatementBeingAnalyzed ast.Statement
+	returns                       bool
+	currentExpectedReturnType     ctypes.Type
+	Errors                        []error
+	insideBreakableBlock          bool
+	modules                       map[string]*Semantic
+	Root                          *ast.Program
+	Compiled                      bool
 }
 
 var paths map[string]*Semantic = map[string]*Semantic{}
@@ -124,6 +125,8 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		return
 	}
 
+	s.currentStatementBeingAnalyzed = statement
+
 	switch statementType := statement.(type) {
 	case *ast.ImportStatement:
 		s.analyzeImport(statementType)
@@ -168,6 +171,10 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		}
 		return
 
+	case *ast.TypeDefinition:
+		s.analyzeTypeDefinition(statementType)
+		return
+
 	case *ast.ContinueStatement:
 		if !s.insideBreakableBlock {
 			s.error("Unexpected continue statement", statementType.Token)
@@ -178,7 +185,15 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	log.Fatalln("couldn't analyze statement: " + statement.String() + " ")
 }
 
+func (s *Semantic) analyzeTypeDefinition(typeDef *ast.TypeDefinition) {
+	s.replaceAnonymous(typeDef.Type)
+	trueType := s.UnwrapAnonymous(typeDef.Type)
+	typeDef.Type = trueType
+	s.definedTypes[typeDef.Name] = trueType
+}
+
 func (s *Semantic) analyzeGenericTypeDefinition(genericType *ast.GenericTypeDefinition) {
+
 	return
 }
 
@@ -194,8 +209,7 @@ func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
 	right := s.analyzeExpression(assign.Expression)
 	left := s.analyzeExpression(assign.Left)
 	if !s.areTypesEqual(left, right) {
-		//todo: token
-		s.typeMismatchError(assign.String(), token.Token{}, left, right)
+		s.typeMismatchError(assign.String(), s.currentStatementBeingAnalyzed.GetToken(), left, right)
 	}
 }
 
@@ -288,7 +302,7 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 		condition := s.analyzeExpression(currentIf.Condition)
 		if !ctypes.IsNumeric(condition) {
 			//todo
-			s.typeMismatchError(currentIf.Condition.String(), token.Token{}, ctypes.I32, condition)
+			s.typeMismatchError(currentIf.Condition.String(), currentIf.GetToken(), ctypes.I32, condition)
 		}
 		s.analyzeBlock(currentIf.Block)
 		if !s.returns {
@@ -379,9 +393,19 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		name := semantic.TranslateName(anonymous.Name)
 		// replace anonymous type name to the module one.
 		anonymous.Name = name
+
 		t, ok := semantic.definedTypes[name]
 		if !ok {
-			s.error("couldn't unwrap type", token.Token{})
+			typesDefined := ""
+			for _, t := range semantic.definedTypes {
+				typesDefined += "- " + t.String() + "\n"
+			}
+
+			if typesDefined == "" {
+				typesDefined = "No types defined in the module."
+			}
+
+			s.error("Couldn't guess type "+ast.RetrieveID(anonymous.Name)+", maybe spelt the type wrong? These are the defined types in the module"+" "+ast.RetrieveID(module)+":\n"+typesDefined, s.currentStatementBeingAnalyzed.GetToken())
 			return ctypes.TODO()
 		}
 
@@ -416,10 +440,14 @@ func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
 		return arr
 	}
 
+	if _, stopRecursionForStruct := t.(*ctypes.Struct); stopRecursionForStruct {
+		return t
+	}
+
 	if toSwap == ctypes.TODO() {
 		trueType := s.UnwrapAnonymous(t)
 		if _, ok := trueType.(*ctypes.Anonymous); (ok && trueType == t) || trueType == nil {
-			s.error("unknown type "+t.String(), token.Token{})
+			s.error("unknown type "+t.String(), s.currentStatementBeingAnalyzed.GetToken())
 		}
 		return trueType
 	}
@@ -651,7 +679,7 @@ func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Ty
 }
 
 func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) ctypes.Type {
-	t := s.analyzeExpression(prefixOperation.Right)
+	t := s.UnwrapAnonymous(s.analyzeExpression(prefixOperation.Right))
 	prefixOperation.Type = t
 	if prefixOperation.Operation == ops.Bang || prefixOperation.Operation == ops.Add {
 		if !ctypes.IsNumeric(t) {
@@ -719,7 +747,7 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 	// Reassign identifier to the new name
 	identifier.Name = name
 	if accessedElement == nil {
-		s.error(identifier.Name+" does not exist in the specified module", binaryOp.Token)
+		s.error(ast.RetrieveID(identifier.Name)+" does not exist in the specified module", binaryOp.Token)
 		return ctypes.TODO()
 	}
 
@@ -788,6 +816,7 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	types := make([]ctypes.Type, 0, len(importStatement.Types))
 	for _, t := range importStatement.Types {
+		t = s.replaceAnonymous(t)
 		types = append(types, s.UnwrapAnonymous(t))
 	}
 

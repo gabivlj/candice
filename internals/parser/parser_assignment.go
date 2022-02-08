@@ -30,6 +30,7 @@ func (p *Parser) parsePossibleAssignment() ast.Statement {
 						return &ast.AssignmentStatement{
 							Left:       bin.Left,
 							Expression: bin.Right,
+							Token:      p.currentToken,
 						}
 					}
 				}
@@ -37,6 +38,7 @@ func (p *Parser) parsePossibleAssignment() ast.Statement {
 			return &ast.AssignmentStatement{
 				Left:       bin.Left,
 				Expression: bin.Right,
+				Token:      p.currentToken,
 			}
 		}
 

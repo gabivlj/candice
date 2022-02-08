@@ -459,7 +459,18 @@ func (c *Compiler) Compile(tree ast.Node) {
 			c.compileExternFunc(t)
 			return
 		}
+
+	case *ast.TypeDefinition:
+		{
+			c.compileTypeDefinition(t)
+			return
+		}
 	}
+}
+
+func (c *Compiler) compileTypeDefinition(t *ast.TypeDefinition) {
+	llvmType := c.ToLLVMType(t.Type)
+	c.types[t.Name] = &Type{candiceType: t.Type, llvmType: llvmType}
 }
 
 func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {

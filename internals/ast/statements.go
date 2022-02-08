@@ -19,6 +19,10 @@ type ConditionPlusBlock struct {
 
 func (c *ConditionPlusBlock) statementNode() {}
 
+func (c *ConditionPlusBlock) GetToken() token.Token {
+	return token.Token{}
+}
+
 func (c *ConditionPlusBlock) String() string {
 	s := strings.Builder{}
 	s.WriteString(c.Condition.String())
@@ -44,6 +48,10 @@ type StructStatement struct {
 	Type  *ctypes.Struct
 }
 
+func (s *StructStatement) GetToken() token.Token {
+	return s.Token
+}
+
 func (s *StructStatement) statementNode() {}
 
 func (s *StructStatement) String() string {
@@ -57,6 +65,10 @@ type DeclarationStatement struct {
 	Expression Expression
 }
 
+func (d *DeclarationStatement) GetToken() token.Token {
+	return d.Token
+}
+
 func (_ *DeclarationStatement) statementNode() {}
 
 func (d *DeclarationStatement) String() string {
@@ -64,6 +76,7 @@ func (d *DeclarationStatement) String() string {
 }
 
 type AssignmentStatement struct {
+	Token      token.Token
 	Left       Expression
 	Expression Expression
 }
@@ -74,6 +87,8 @@ func (d *AssignmentStatement) String() string {
 	return fmt.Sprintf("%s = %s;", d.Left.String(), d.Expression.String())
 }
 
+func (d *AssignmentStatement) GetToken() token.Token { return d.Token }
+
 type ForStatement struct {
 	Token                token.Token
 	Condition            Expression
@@ -83,6 +98,8 @@ type ForStatement struct {
 }
 
 func (f *ForStatement) statementNode() {}
+
+func (f *ForStatement) GetToken() token.Token { return f.Token }
 
 func (f *ForStatement) String() string {
 	s := strings.Builder{}
@@ -120,6 +137,8 @@ type IfStatement struct {
 }
 
 func (i *IfStatement) statementNode() {}
+
+func (i *IfStatement) GetToken() token.Token { return i.Token }
 
 func (i *IfStatement) String() string {
 	s := strings.Builder{}
@@ -165,6 +184,8 @@ func (f *FunctionDeclarationStatement) String() string {
 	return builder.String()
 }
 
+func (f *FunctionDeclarationStatement) GetToken() token.Token { return f.Token }
+
 type ExternStatement struct {
 	Token token.Token
 	Type  ctypes.Type
@@ -175,6 +196,8 @@ func (e *ExternStatement) String() string {
 }
 
 func (e *ExternStatement) statementNode() {}
+
+func (e *ExternStatement) GetToken() token.Token { return e.Token }
 
 type ReturnStatement struct {
 	Type       ctypes.Type
@@ -191,6 +214,8 @@ func (r *ReturnStatement) String() string {
 }
 
 func (r *ReturnStatement) statementNode() {}
+
+func (r *ReturnStatement) GetToken() token.Token { return r.Token }
 
 type ImportStatement struct {
 	Token token.Token
@@ -209,6 +234,8 @@ func (i *ImportStatement) String() string {
 	return "import " + RetrieveID(i.Name) + ", " + strings.Join(types, ", ") + ", " + i.Path.String()
 }
 
+func (i *ImportStatement) GetToken() token.Token { return i.Token }
+
 type BreakStatement struct {
 	Token token.Token
 }
@@ -217,13 +244,16 @@ func (b *BreakStatement) statementNode() {}
 
 func (b *BreakStatement) String() string { return b.Token.Literal }
 
+func (b *BreakStatement) GetToken() token.Token { return b.Token }
+
 type ContinueStatement struct {
 	Token token.Token
 }
 
 func (c *ContinueStatement) statementNode() {}
 
-func (c *ContinueStatement) String() string { return c.Token.Literal }
+func (c *ContinueStatement) String() string        { return c.Token.Literal }
+func (c *ContinueStatement) GetToken() token.Token { return c.Token }
 
 type GenericTypeDefinition struct {
 	Token        token.Token
@@ -233,4 +263,17 @@ type GenericTypeDefinition struct {
 
 func (g *GenericTypeDefinition) statementNode() {}
 
-func (g *GenericTypeDefinition) String() string { return g.Name }
+func (g *GenericTypeDefinition) String() string        { return g.Name }
+func (g *GenericTypeDefinition) GetToken() token.Token { return g.Token }
+
+type TypeDefinition struct {
+	Token token.Token
+	Name  string
+	Type  ctypes.Type
+}
+
+func (g *TypeDefinition) statementNode() {}
+
+func (g *TypeDefinition) String() string { return fmt.Sprintf("type %s = %s", g.Name, g.Type.String()) }
+
+func (g *TypeDefinition) GetToken() token.Token { return g.Token }

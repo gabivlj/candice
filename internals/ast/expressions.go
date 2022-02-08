@@ -1,11 +1,13 @@
 package ast
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
-	"strconv"
-	"strings"
+	"github.com/gabivlj/candice/internals/token"
 )
 
 type Identifier struct {
@@ -23,6 +25,10 @@ func (i *Identifier) String() string {
 	return RetrieveID(i.Name)
 }
 
+func (i *Identifier) GetToken() token.Token {
+	return i.Token
+}
+
 type BinaryOperation struct {
 	*node.Node
 	Left      Expression
@@ -35,6 +41,10 @@ func (b *BinaryOperation) GetType() ctypes.Type {
 }
 
 func (b *BinaryOperation) expressionNode() {}
+
+func (b *BinaryOperation) GetToken() token.Token {
+	return b.Token
+}
 
 func (b *BinaryOperation) String() string {
 	return "(" + b.Left.String() + b.Operation.String() + b.Right.String() + ")"
@@ -52,6 +62,10 @@ func (p *PrefixOperation) GetType() ctypes.Type {
 
 func (p *PrefixOperation) expressionNode() {}
 
+func (p *PrefixOperation) GetToken() token.Token {
+	return p.Token
+}
+
 func (p *PrefixOperation) String() string {
 	return p.Operation.String() + p.Right.String()
 }
@@ -67,6 +81,10 @@ func (i *IndexAccess) GetType() ctypes.Type {
 }
 
 func (i *IndexAccess) expressionNode() {}
+
+func (i *IndexAccess) GetToken() token.Token {
+	return i.Token
+}
 
 func (i *IndexAccess) String() string {
 	return i.Left.String() + "[" + i.Access.String() + "]"
@@ -86,6 +104,10 @@ func (bc *BuiltinCall) GetType() ctypes.Type {
 }
 
 func (bc *BuiltinCall) expressionNode() {}
+
+func (bc *BuiltinCall) GetToken() token.Token {
+	return bc.Token
+}
 
 func (bc *BuiltinCall) String() string {
 	builder := strings.Builder{}
@@ -121,6 +143,10 @@ func (c *Call) GetType() ctypes.Type {
 
 func (c *Call) expressionNode() {}
 
+func (c *Call) GetToken() token.Token {
+	return c.Token
+}
+
 func (c *Call) String() string {
 	builder := strings.Builder{}
 	builder.WriteString(RetrieveID(c.Left.String()))
@@ -146,6 +172,10 @@ func (i *Integer) GetType() ctypes.Type {
 
 func (i *Integer) expressionNode() {}
 
+func (i *Integer) GetToken() token.Token {
+	return i.Token
+}
+
 func (i *Integer) String() string {
 	return strconv.FormatInt(i.Value, 10)
 }
@@ -160,6 +190,10 @@ func (i *Float) GetType() ctypes.Type {
 }
 
 func (i *Float) expressionNode() {}
+
+func (i *Float) GetToken() token.Token {
+	return i.Token
+}
 
 func (i *Float) String() string {
 	return strconv.FormatFloat(i.Value, 'f', -1, 64)
@@ -178,6 +212,10 @@ func (s *StringLiteral) String() string { return "\"" + s.Value + "\"" }
 
 func (s *StringLiteral) expressionNode() {}
 
+func (s *StringLiteral) GetToken() token.Token {
+	return s.Token
+}
+
 type StructValue struct {
 	Name       string
 	Expression Expression
@@ -195,6 +233,10 @@ func (s *StructLiteral) GetType() ctypes.Type {
 }
 
 func (_ *StructLiteral) expressionNode() {}
+
+func (s *StructLiteral) GetToken() token.Token {
+	return s.Token
+}
 
 func (s *StructLiteral) String() string {
 	output := strings.Builder{}
@@ -221,6 +263,10 @@ func (a *ArrayLiteral) GetType() ctypes.Type {
 }
 
 func (a *ArrayLiteral) expressionNode() {}
+
+func (a *ArrayLiteral) GetToken() token.Token {
+	return a.Token
+}
 
 func (a *ArrayLiteral) String() string {
 	builder := strings.Builder{}

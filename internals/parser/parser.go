@@ -23,12 +23,13 @@ type Parser struct {
 	lexer        *lexer.Lexer
 	ID           string
 
-	prefixFunc           map[token.TypeToken]prefixFunc
-	infixFunc            map[token.TypeToken]infixFunc
-	Errors               []error
-	TypeParameters       []ctypes.Type
-	definedGenericTypes  map[string]ctypes.Type
-	currentTypeParameter int
+	prefixFunc                      map[token.TypeToken]prefixFunc
+	infixFunc                       map[token.TypeToken]infixFunc
+	explicitLiteralTypeDeclarations map[string]ctypes.Type
+	Errors                          []error
+	TypeParameters                  []ctypes.Type
+	definedGenericTypes             map[string]ctypes.Type
+	currentTypeParameter            int
 }
 
 func (p *Parser) registerPrefixHandler(tokenType token.TypeToken, prefixFunc prefixFunc) {
@@ -59,12 +60,13 @@ func (p *Parser) addErrorMessage(message string) {
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
-		lexer:               l,
-		prefixFunc:          map[token.TypeToken]prefixFunc{},
-		infixFunc:           map[token.TypeToken]infixFunc{},
-		Errors:              []error{},
-		ID:                  random.RandomString(10),
-		definedGenericTypes: map[string]ctypes.Type{},
+		lexer:                           l,
+		prefixFunc:                      map[token.TypeToken]prefixFunc{},
+		infixFunc:                       map[token.TypeToken]infixFunc{},
+		Errors:                          []error{},
+		ID:                              random.RandomString(10),
+		definedGenericTypes:             map[string]ctypes.Type{},
+		explicitLiteralTypeDeclarations: map[string]ctypes.Type{},
 	}
 	p.initBuiltinFunctions()
 	p.nextToken()
@@ -153,10 +155,21 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 }
 
+func (p *Parser) parseTypeDefinition(name token.Token) ast.Statement {
+	p.nextToken()
+	parsedType := p.parseType()
+	return &ast.TypeDefinition{Name: ast.CreateIdentifier(name.Literal, p.ID), Token: name, Type: parsedType}
+}
+
 func (p *Parser) parseGenericTypeDefinition() ast.Statement {
 	typeToken := p.nextToken()
 	p.expect(token.IDENT)
 	name := p.nextToken()
+
+	if p.currentToken.Type == token.ASSIGN {
+		return p.parseTypeDefinition(name)
+	}
+
 	if p.currentTypeParameter >= len(p.TypeParameters) {
 		p.Errors = append(p.Errors, fmt.Errorf("there are not enough type parameters passed to the file, we only got %d but it needs more", len(p.TypeParameters)))
 		return &ast.GenericTypeDefinition{}
@@ -432,9 +445,7 @@ func (p *Parser) parseType() ctypes.Type {
 
 	if p.currentToken.Type == token.IDENT {
 		t := p.nextToken()
-
 		modules := []string{ast.CreateIdentifier(t.Literal, p.ID)}
-
 		for p.currentToken.Type == token.DOT {
 			p.nextToken()
 			p.expect(token.IDENT)
@@ -456,6 +467,7 @@ func (p *Parser) parseType() ctypes.Type {
 		if genericType, ok := p.definedGenericTypes[originalName]; ok {
 			return genericType
 		}
+
 		return &ctypes.Anonymous{
 			Name: modules[0],
 		}
