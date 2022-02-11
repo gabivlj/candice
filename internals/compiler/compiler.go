@@ -744,6 +744,10 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 	switch e := expression.(type) {
 	case *ast.PrefixOperation:
 		return c.compilePrefixExpression(e)
+
+	case *ast.AnonymousFunction:
+		return c.compileAnonymousFunction(e)
+
 	case *ast.Integer:
 		{
 			theType := c.ToLLVMType(e.Type)
@@ -798,6 +802,16 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 	}
 
 	return nil
+}
+
+func (c *Compiler) compileAnonymousFunction(anonymousFunction *ast.AnonymousFunction) value.Value {
+	name := "func." + random.RandomString(10)
+	anonymousFunction.FunctionType.ExternalName = name
+	anonymousFunction.FunctionType.Name = name
+	function := (*ast.FunctionDeclarationStatement)(anonymousFunction)
+	c.compileFunctionDeclaration(name, function)
+	funk := c.retrieveVariable(name)
+	return funk
 }
 
 func (c *Compiler) compileStringLiteral(stringLiteral *ast.StringLiteral) value.Value {
@@ -869,27 +883,36 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 // NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
-	identifier := c.compileIdentifierReference(id)
+	return c.retrieveVariable(id.Name)
+}
+
+func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
+	return c.retrieveLocalVariable(id.Name)
+}
+
+func (c *Compiler) retrieveVariable(name string) value.Value {
+	identifier := c.retrieveLocalVariable(name)
 	if identifier != nil {
 		return identifier
 	}
 
-	if fn, ok := c.globalVariables[id.Name]; ok {
+	if fn, ok := c.globalVariables[name]; ok {
 		if !ctypes.IsFunction(fn.Type) {
 			value := c.block().NewAlloca(fn.Value.Type())
 			c.block().NewStore(fn.Value, value)
-			c.declare(id.Name, value)
+			c.declare(name, value)
 			return value
 		}
 		c.doNotLoadIntoMemory = true
 		return fn.Value
 	}
 	panic("Variable doesn't exist.")
+	return nil
 }
 
-func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
+func (c *Compiler) retrieveLocalVariable(name string) value.Value {
 	for i := len(c.stacks) - 1; i >= 0; i-- {
-		identifier := c.stacks[i][id.Name]
+		identifier := c.stacks[i][name]
 
 		if identifier != nil {
 			return identifier

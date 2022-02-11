@@ -93,6 +93,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.LPAREN, p.parseCall)
 	p.registerInfixHandler(token.AS, p.parseAs)
 
+	p.registerPrefixHandler(token.FUNCTION, p.parseAnonymousFunction)
 	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.ANDBIN, p.parsePrefixExpression)
@@ -288,6 +289,44 @@ func (p *Parser) parseIdentifierExpression() ast.Expression {
 			Token: identifier,
 		},
 		Name: ast.CreateIdentifier(identifier.Literal, p.ID),
+	}
+}
+
+func (p *Parser) parseAnonymousFunction() ast.Expression {
+	fun := p.nextToken()
+	var names []string
+	var types []ctypes.Type
+	p.expect(token.LPAREN)
+	p.nextToken()
+	for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
+		if len(names) > 0 {
+			p.expect(token.COMMA)
+			p.nextToken()
+		}
+		p.expect(token.IDENT)
+		ident := p.nextToken()
+		t := p.parseType()
+		names = append(names, ast.CreateIdentifier(ident.Literal, p.ID))
+		types = append(types, t)
+	}
+
+	p.expect(token.RPAREN)
+	p.nextToken()
+	var returnType ctypes.Type
+	if p.currentToken.Type != token.LBRACE {
+		returnType = p.parseType()
+	}
+
+	block := p.parseBlock()
+	return &ast.AnonymousFunction{
+		Token: fun,
+		FunctionType: &ctypes.Function{
+			Name:       "ANONYMOUS_FUNCTION",
+			Parameters: types,
+			Names:      names,
+			Return:     returnType,
+		},
+		Block: block,
 	}
 }
 

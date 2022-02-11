@@ -280,3 +280,26 @@ func (a *ArrayLiteral) String() string {
 	builder.WriteString("}")
 	return builder.String()
 }
+
+type AnonymousFunction struct {
+	Token        token.Token
+	FunctionType *ctypes.Function
+	Block        *Block
+}
+
+func (f *AnonymousFunction) GetType() ctypes.Type {
+	return f.FunctionType
+}
+
+func (f *AnonymousFunction) expressionNode() {}
+
+func (f *AnonymousFunction) String() string {
+	builder := strings.Builder{}
+	builder.WriteString(f.FunctionType.FullString())
+	builder.WriteString(" {\n")
+	builder.WriteString(f.Block.String())
+	builder.WriteString("\n}")
+	return builder.String()
+}
+
+func (f *AnonymousFunction) GetToken() token.Token { return f.Token }

@@ -1,0 +1,17 @@
+func anonymous(someFunction func(i32) i32) i32 {
+    return someFunction(100)
+}
+
+func useFunction() i32 {
+    return 1;
+}
+
+func main() {
+    
+    hello := anonymous(func (something i32) i32 {
+        @println(something);
+        return useFunction();
+    });
+
+    @println(hello);
+}

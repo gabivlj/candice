@@ -21,11 +21,12 @@ import (
 )
 
 type Semantic struct {
-	variables                     *undomap.UndoMap[string, ctypes.Type]
+	variables                     *undomap.UndoMap[string, *SemanticType]
 	functionBodies                map[string]*ast.FunctionDeclarationStatement
 	definedTypes                  map[string]ctypes.Type
 	builtinHandlers               map[string]func(builtin *ast.BuiltinCall) ctypes.Type
 	currentStatementBeingAnalyzed ast.Statement
+	currentFunctionBeingAnalyzed  *ctypes.Function
 	returns                       bool
 	currentExpectedReturnType     ctypes.Type
 	Errors                        []error
@@ -57,7 +58,7 @@ func ResetPaths() {
 
 func New() *Semantic {
 	s := &Semantic{
-		variables:                 undomap.New[string, ctypes.Type](),
+		variables:                 undomap.New[string, *SemanticType](),
 		definedTypes:              map[string]ctypes.Type{},
 		builtinHandlers:           map[string]func(builtin *ast.BuiltinCall) ctypes.Type{},
 		Errors:                    []error{},
@@ -78,7 +79,7 @@ func New() *Semantic {
 }
 
 func (s *Semantic) enterFrame() {
-	s.variables.Add("<main-frame>", ctypes.TODO())
+	s.variables.Add("<main-frame>", s.newType(ctypes.TODO()))
 }
 
 func (s *Semantic) leaveFrame() {
@@ -206,7 +207,7 @@ func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
 	if !ok {
 		s.typeMismatchError(extern.String(), extern.Token, &ctypes.Function{Name: "function"}, extern.Type)
 	}
-	s.variables.Add(funk.Name, funk)
+	s.variables.Add(funk.Name, s.newType(funk))
 }
 
 func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
@@ -252,26 +253,31 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 }
 
 func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatement) {
-	if fun.FunctionType.Return == nil {
-		fun.FunctionType.Return = ctypes.VoidType
+	s.variables.Add(fun.FunctionType.Name, s.newType(fun.FunctionType))
+	s.functionBodies[fun.FunctionType.Name] = fun
+	s.analyzeFunctionType(fun.Token, fun.FunctionType, fun.Block)
+}
+
+func (s *Semantic) analyzeFunctionType(functionToken token.Token, fun *ctypes.Function, block *ast.Block) {
+	if fun.Return == nil {
+		fun.Return = ctypes.VoidType
 	}
 
-	s.variables.Add(fun.FunctionType.Name, fun.FunctionType)
-	s.functionBodies[fun.FunctionType.Name] = fun
-
+	temporaryFunctionAnalyzed := s.currentFunctionBeingAnalyzed
+	s.currentFunctionBeingAnalyzed = fun
 	s.enterFrame()
 
-	for i, param := range fun.FunctionType.Parameters {
+	for i, param := range fun.Parameters {
 		// try to replace the anonymous type with its true type
-		fun.FunctionType.Parameters[i] = s.replaceAnonymous(param)
-		s.variables.Add(fun.FunctionType.Names[i], fun.FunctionType.Parameters[i])
+		fun.Parameters[i] = s.replaceAnonymous(param)
+		s.variables.Add(fun.Names[i], s.newType(fun.Parameters[i]))
 	}
 
 	temporaryExpectedReturnType := s.currentExpectedReturnType
-	s.currentExpectedReturnType = fun.FunctionType.Return
+	s.currentExpectedReturnType = fun.Return
 
-	if fun.Block != nil {
-		for _, statement := range fun.Block.Statements {
+	if block != nil {
+		for _, statement := range block.Statements {
 			if s.returns {
 				break
 			}
@@ -279,14 +285,22 @@ func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatemen
 		}
 	}
 
-	if !s.returns && fun.FunctionType.Return != ctypes.VoidType {
-		s.error("not all paths of the function '"+fun.FunctionType.String()+"'  return a variable", fun.Token)
+	if !s.returns && fun.Return != ctypes.VoidType {
+		s.error("not all paths of the function '"+fun.String()+"'  return a variable", functionToken)
 	}
-	fun.FunctionType.Return = s.UnwrapAnonymous(fun.FunctionType.Return)
+	fun.Return = s.UnwrapAnonymous(fun.Return)
 	s.returns = false
 	s.leaveFrame()
-
+	s.currentFunctionBeingAnalyzed = temporaryFunctionAnalyzed
 	s.currentExpectedReturnType = temporaryExpectedReturnType
+}
+
+func (s *Semantic) analyzeAnonymousFunction(anonymousFunction *ast.AnonymousFunction) ctypes.Type {
+	temporaryReturns := s.returns
+	s.returns = false
+	s.analyzeFunctionType(anonymousFunction.Token, anonymousFunction.FunctionType, anonymousFunction.Block)
+	s.returns = temporaryReturns
+	return anonymousFunction.FunctionType
 }
 
 func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
@@ -373,12 +387,12 @@ func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationState
 			s.typeMismatchError(declaration.String(), declaration.Token, declType, ctype)
 			return
 		}
-		s.variables.Add(declaration.Name, declType)
+		s.variables.Add(declaration.Name, s.newType(declType))
 		return
 	}
 	// else we just prefer the one returned by analyzeExpression
 	declaration.Type = ctype
-	s.variables.Add(declaration.Name, ctype)
+	s.variables.Add(declaration.Name, s.newType(ctype))
 }
 
 func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
@@ -498,6 +512,8 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 	}
 
 	switch expressionType := expression.(type) {
+	case *ast.AnonymousFunction:
+		return s.analyzeAnonymousFunction(expressionType)
 	case *ast.Integer:
 		return s.analyzeInteger(expressionType)
 	case *ast.Float:
@@ -674,9 +690,18 @@ func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Ty
 	}
 
 	if identifierType := s.variables.Get(identifier.Name); identifierType != nil {
-		identifier.Type = identifierType
-		return identifierType
+		if identifierType.parentFunction != s.currentFunctionBeingAnalyzed && identifierType.parentFunction != nil {
+			s.error(
+				"cannot access variables that are outside the current function.\nYou tried to access "+
+					ast.RetrieveID(identifier.Name)+
+					" that was on function "+
+					identifierType.parentFunction.FullString()+".",
+				identifier.Token)
+		}
+		identifier.Type = identifierType.Type
+		return identifierType.Type
 	}
+
 	s.error("undefined variable "+identifier.Name, identifier.Token)
 	return ctypes.TODO()
 }
@@ -754,9 +779,9 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 		return ctypes.TODO()
 	}
 
-	binaryOp.Type = accessedElement
+	binaryOp.Type = accessedElement.Type
 
-	return accessedElement
+	return accessedElement.Type
 }
 
 func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) ctypes.Type {
