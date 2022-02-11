@@ -128,6 +128,10 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	s.currentStatementBeingAnalyzed = statement
 
 	switch statementType := statement.(type) {
+	case *ast.Block:
+		s.analyzeBlock(statementType)
+		return
+
 	case *ast.ImportStatement:
 		s.analyzeImport(statementType)
 		return
@@ -301,7 +305,6 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 	for _, currentIf := range ifStatement.ElseIfs {
 		condition := s.analyzeExpression(currentIf.Condition)
 		if !ctypes.IsNumeric(condition) {
-			//todo
 			s.typeMismatchError(currentIf.Condition.String(), currentIf.GetToken(), ctypes.I32, condition)
 		}
 		s.analyzeBlock(currentIf.Block)

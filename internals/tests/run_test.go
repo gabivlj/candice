@@ -29,6 +29,7 @@ func TestSrcs(t *testing.T) {
 		"if_statements4.cd": "ok nice ok nice",
 		"callback.cd":       "10",
 		"arrayuser.cd":      "WORKS",
+		"blocks.cd":         "11 10 9 8 7 6 5 4 3 2 1",
 	}
 	elems, err := os.ReadDir("./src")
 

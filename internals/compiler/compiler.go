@@ -357,7 +357,23 @@ func (c *Compiler) Compile(tree ast.Node) {
 		c.doNotLoadIntoMemory = false
 	}()
 
+	if c.currentFunction != nil && len(c.currentFunction.Blocks) > 0 && c.currentFunction.Blocks[len(c.currentFunction.Blocks)-1].Term != nil {
+		return
+	}
+
 	switch t := tree.(type) {
+	case *ast.Block:
+		{
+
+			block := c.currentFunction.NewBlock("block." + random.RandomString(10))
+			c.block().NewBr(block)
+			currentBlock := c.compileBlock(t, block)
+			if currentBlock.Term == nil {
+				c.blocks[len(c.blocks)-1] = currentBlock
+			}
+			return
+		}
+
 	case *ast.ImportStatement:
 		{
 			moduleName := t.Name
@@ -549,12 +565,13 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 		c.Compile(statement)
 	}
 
+	lastBlock := c.currentFunction.Blocks[len(c.currentFunction.Blocks)-1]
 	// If return hasn't been declared, declare a void return
-	if c.block().Term == nil {
+	if lastBlock.Term == nil {
 		if funk.FunctionType.IsMainFunction() {
-			c.block().NewRet(zero)
+			lastBlock.NewRet(zero)
 		} else {
-			c.block().NewRet(nil)
+			lastBlock.NewRet(nil)
 		}
 	}
 
@@ -630,7 +647,7 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 
 func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	// Exit point
-	leave := c.currentFunction.NewBlock("leave." + random.RandomString(10))
+	leave := ir.NewBlock("leave." + random.RandomString(10))
 	blockDeclaration := c.currentFunction.NewBlock("for.declaration." + random.RandomString(10))
 
 	c.block().NewBr(blockDeclaration)
@@ -672,7 +689,8 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 
 	// pop for loop block
 	c.popBlock()
-
+	c.currentFunction.Blocks = append(c.currentFunction.Blocks, leave)
+	leave.Parent = c.currentFunction
 	// normalize current block to the leave block
 	c.blocks[len(c.blocks)-1] = leave
 }
@@ -866,13 +884,19 @@ func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
 		c.doNotLoadIntoMemory = true
 		return fn.Value
 	}
-
 	panic("Variable doesn't exist.")
 }
 
 func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
-	identifier := c.stack()[id.Name]
-	return identifier
+	for i := len(c.stacks) - 1; i >= 0; i-- {
+		identifier := c.stacks[i][id.Name]
+
+		if identifier != nil {
+			return identifier
+		}
+	}
+
+	return nil
 }
 
 /// Function calls

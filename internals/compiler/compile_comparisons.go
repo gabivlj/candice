@@ -1,6 +1,8 @@
 package compiler
 
 import (
+	"fmt"
+
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
@@ -54,5 +56,5 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 		}
 	}
 
-	panic("cant handle this type of integer " + t.String() + " op: " + op.String())
+	panic("cant handle this type of integer " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
 }

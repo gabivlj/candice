@@ -148,6 +148,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return &ast.ContinueStatement{Token: p.nextToken()}
 	case token.TYPE:
 		return p.parseGenericTypeDefinition()
+	case token.LBRACE:
+		return p.parseBlock()
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -718,10 +720,12 @@ func (p *Parser) parseAt() ast.Expression {
 }
 
 func (p *Parser) parseBlock() *ast.Block {
+	currentToken := p.currentToken
 	if p.currentToken.Type == token.LBRACE {
 		p.nextToken()
 		block := &ast.Block{
 			Statements: []ast.Statement{},
+			Token:      currentToken,
 		}
 		for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.EOF {
 			block.Statements = append(block.Statements, p.parseStatement())
@@ -732,7 +736,7 @@ func (p *Parser) parseBlock() *ast.Block {
 	}
 
 	stmt := p.parseStatement()
-	return &ast.Block{Statements: []ast.Statement{stmt}}
+	return &ast.Block{Statements: []ast.Statement{stmt}, Token: currentToken}
 }
 
 func (p *Parser) parseIf() ast.Statement {

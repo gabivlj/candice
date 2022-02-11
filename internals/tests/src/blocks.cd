@@ -1,0 +1,81 @@
+func main() i32 {
+    hello := 1
+    {
+        if hello != 1 @println("wrong")
+        escapeVariable := 0
+        
+        {
+            if escapeVariable != 0 @println("f")
+            else @println("11")
+            {
+                if escapeVariable != 0 @println("f")
+                else @println("10")
+                {                    
+                    if escapeVariable != 0 @println("f")
+                    else @println("9")
+                    {
+                        if escapeVariable != 0 @println("f")
+                        else @println("8")
+                        {
+                            if escapeVariable != 0 @println("f")
+                            else @println("7")
+                            {
+                                if escapeVariable != 0 @println("f")
+                                else @println("6")
+                            }
+                            if escapeVariable != 0 @println("f")
+                            else @println("5")
+                        }
+                        if escapeVariable != 0 @println("f")
+                        else @println("4")
+                    }
+                    if escapeVariable != 0 @println("f")
+                    else @println("3")
+                }
+                if escapeVariable != 0 @println("f")
+                else @println("2")
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            if escapeVariable != 0 @println("f")
+                                            else @println("1")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return 0;
+                {        
+                    @println(thisincludingshouldnthappenorcompile_uwu)
+                    if escapeVariable != 0 @println("f")
+                    else @println("9")
+                    {
+                        if escapeVariable != 0 @println("f")
+                        else @println("8")
+                        {
+                            if escapeVariable != 0 @println("f")
+                            else @println("7")
+                            {
+                                if escapeVariable != 0 @println("f")
+                                else @println("6")
+                            }
+                            if escapeVariable != 0 @println("f")
+                            else @println("5")
+                        }
+                        if escapeVariable != 0 @println("f")
+                        else @println("4")
+                    }
+                    if escapeVariable != 0 @println("f")
+                    else @println("3")
+                }
+            }
+            
+        }
+    }
+}

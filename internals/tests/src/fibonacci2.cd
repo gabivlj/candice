@@ -17,7 +17,7 @@ func fib_iter(n i32) u64 {
     return b
 }
 
-func main() {
+func main() {    
     for i := 0; i < 10000000; i = i + 1 if fib_iter(93) != @cast(u64, 12200160415121876738) {
         @println("bad")
     }

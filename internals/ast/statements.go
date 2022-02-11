@@ -10,7 +10,14 @@ import (
 
 type Block struct {
 	Statements []Statement
+	Token      token.Token
 }
+
+func (b *Block) GetToken() token.Token {
+	return b.Token
+}
+
+func (b *Block) statementNode() {}
 
 type ConditionPlusBlock struct {
 	Block     *Block
