@@ -115,3 +115,57 @@ You can fix it by casting one of the variables, preferably the one with the less
 ```
 
 If you run again you will find '3' being printed.
+
+### Built-in Types
+
+Candice has a variety of built-in types. Here is the list!
+
+### Bool
+
+Can be '1' or '0'. If you make comparisons they produce this type.
+
+- i1.
+
+### Signed Integers
+
+They are natural numbers that can be negative or positive.
+
+- i8.
+- i16.
+- i32.
+- i64.
+
+### Unsigned Integers
+
+They are natural numbers that can't be negative.
+
+- u8.
+- u16.
+- u32.
+- u64.
+
+### Floats
+
+They are real numbers.
+
+- f32.
+- f64.
+
+### Pointers
+
+Put \* in front of your type. We'll explain what they mean later. But if you come from C it just works like them.
+
+### Arrays
+
+They are a static list of elements.
+
+You use them like '[<constant_integer>]<type>'
+
+For example:
+
+```go
+numbers := [5]i32{1, 2, 3, 4, 5}
+empty_numbers := [5]i32{}
+```
+
+Remember that the value inside the [] should be constant, not a variable.
