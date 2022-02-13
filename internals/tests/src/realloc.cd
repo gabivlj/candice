@@ -3,7 +3,7 @@ func main() {
     pointer[99] = 1;
     pointer = @realloc(pointer, 101);
     pointer[100] = 2
-    if pointer[100] != 2 @println("bad")
-    if pointer[99] != 1 @println("bad")
+    if pointer[100] != 2 @print("bad")
+    if pointer[99] != 1 @print("bad")
     @free(pointer)
 }

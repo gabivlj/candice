@@ -1,15 +1,17 @@
 ## Candice
+
 Dead simple programming language.
 Not expected to be prepared for a real developer environment but can
 be fun to work with.
 
 ## Philosophy
-* Simple syntax.
-* Low level capabilities.
-* C interoperability.
-* Compiled and strongly typed.
 
-````go
+- Simple syntax.
+- Low level capabilities.
+- C interoperability.
+- Compiled and strongly typed.
+
+```go
 // Compile like: ./compiler -name output main.cd
 // Write structs like this
 struct Person {
@@ -53,7 +55,7 @@ extern func free(*i8) void;
 // Write your entry code here
 func main() {
     person := DefaultPerson(@cast(i1, 1));
-    @println(person.name);
+    @print(person.name);
 
     persons := @alloc(Person, 300);
 
@@ -68,11 +70,11 @@ func main() {
     // alternative for loops
     i := 0;
     for i < 300 {
-        if i >= 299 @println("Ifs work without braces!");
+        if i >= 299 @print("Ifs work without braces!");
         i = i + 1;
     }
 
     free(@cast(*i8, persons));
 }
 
-````
+```

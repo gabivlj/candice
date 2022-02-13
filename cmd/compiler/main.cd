@@ -18,12 +18,12 @@ extern func free(*i8) void;
 
 func doStuff() {
     helloWorld := helloWorldsFunction()
-    @println(helloWorld.i)
+    @print(helloWorld.i)
     theFile := fopen("./aFile", "a+");
     rewind(theFile);
     output := @alloc(i8, 300);
     for @cast(i32, fgets(output, 10, theFile)) != 0 {
-        @println(output);
+        @print(output);
     }
     fwrite("hello!", @cast(i64, 1), @cast(i64, 6), theFile);
     free(output);
@@ -55,5 +55,5 @@ func yeah(param i32) i32 {
 
 func main() {
     result := someStuff(3, yeah)
-    @println(result)
+    @print(result)
 }

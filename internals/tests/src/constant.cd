@@ -3,9 +3,9 @@ aConstant2 := "hello world"
 
 func main() {
     
-    if aConstant != 3 @println("bad...")
-    if aConstant2[0] != "h"[0] @println("bad...")
+    if aConstant != 3 @print("bad...")
+    if aConstant2[0] != "h"[0] @print("bad...")
     yo := aConstant2 as *i8 as i64
-    if yo != aConstant2 as *i8 as i64 @println("bad...")
+    if yo != aConstant2 as *i8 as i64 @print("bad...")
     thing := (1 as i64) + (1 as i1 as i8 as i16 as i32 as i64)
 }

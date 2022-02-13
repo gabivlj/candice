@@ -28,16 +28,16 @@ func main() {
     newstring := usestring.UseString(&str)
 
     array : aoi32.Array = aoi32.New()
-    @println(array.elements[0])
+    @print(array.elements[0])
     aoi32.Push(&array, 3)
-    @println(array.elements[0])
+    @print(array.elements[0])
 
     calledWow := callable.call(wow)
-    @println(calledWow) // prints 1
+    @print(calledWow) // prints 1
     instance := creator.create();
-    @println(instance.i)
+    @print(instance.i)
     somethingVariable : someModule.Something = someModule.something();
     somethingVariableI32 : someModulei32.Something = someModulei32.something();    
     localSomethingFunction : someModule.Something = something()
-    @println(somethingVariableI32.integer + @cast(i32, somethingVariable.integer) + @cast(i32, localSomethingFunction.integer));    
+    @print(somethingVariableI32.integer + @cast(i32, somethingVariable.integer) + @cast(i32, localSomethingFunction.integer));    
 }

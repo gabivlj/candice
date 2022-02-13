@@ -73,9 +73,9 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		expected   string
 	}{
 		{
-			expression: `if aConstant2 as i64 != aConstant as i64 @println("bad...")`,
+			expression: `if aConstant2 as i64 != aConstant as i64 @print("bad...")`,
 			expected: `if (@cast(i64, aConstant2)!=@cast(i64, aConstant)) {
-@println("bad...");
+@print("bad...");
 }
 `,
 		},
@@ -96,8 +96,8 @@ func TestParser_MultipleExpressions(t *testing.T) {
 			expected:   "cool = \"Hello world\";\n",
 		},
 		{
-			expression: "@println(\"hello world\");",
-			expected:   "@println(\"hello world\");\n",
+			expression: "@print(\"hello world\");",
+			expected:   "@print(\"hello world\");\n",
 		},
 		{
 			expression: "pointer : *i32 = @alloc(i32, 33);",
@@ -125,85 +125,85 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `
-						if 1 @println("hello world");
-						else if 2 @println("hello world 2");
-						else if 3 @println("hello world 3");
-						else @println("hello world else"); @println("hello world apart");
+						if 1 @print("hello world");
+						else if 2 @print("hello world 2");
+						else if 3 @print("hello world 3");
+						else @print("hello world else"); @print("hello world apart");
 					`,
 			expected: `if 1 {
-@println("hello world");
+@print("hello world");
 } else if 2 {
-@println("hello world 2");
+@print("hello world 2");
 } else if 3 {
-@println("hello world 3");
+@print("hello world 3");
 } else {
-@println("hello world else");
+@print("hello world else");
 }
-@println("hello world apart");
+@print("hello world apart");
 `,
 		},
 		{
-			expression: `if 1 == 1 @println("cool") else @println("not cool")`,
+			expression: `if 1 == 1 @print("cool") else @print("not cool")`,
 			expected: `if (1==1) {
-@println("cool");
+@print("cool");
 } else {
-@println("not cool");
+@print("not cool");
 }
 `,
 		},
 		{
-			expression: `for i := 0; i < 1000; i = i + 1 { @println("hello world!") }`,
+			expression: `for i := 0; i < 1000; i = i + 1 { @print("hello world!") }`,
 			expected: `for i :errors = 0; (i<1000); i = (i+1); {
-@println("hello world!");
+@print("hello world!");
 }
 `,
 		},
 		{
-			expression: `for i := 0; i < 1000; i = i + 1 @println("hello world!") @println("hello world...")`,
+			expression: `for i := 0; i < 1000; i = i + 1 @print("hello world!") @print("hello world...")`,
 			expected: `for i :errors = 0; (i<1000); i = (i+1); {
-@println("hello world!");
+@print("hello world!");
 }
-@println("hello world...");
+@print("hello world...");
 `,
 		},
 		{
 			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3; // sdds
-									i.i.i.i.i[0] = i + 1 @println("hello world!");///sss
+									i.i.i.i.i[0] = i + 1 @print("hello world!");///sss
 // sss`,
 			expected: `for ((((i.i).i).i).i)[0] = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i)[0] = (i+1); {
-@println("hello world!");
+@print("hello world!");
 }
 `,
 		},
 		{
-			expression: `for @println("infinite loop")`,
+			expression: `for @print("infinite loop")`,
 			expected: `for {
-@println("infinite loop");
+@print("infinite loop");
 }
 `,
 		},
 		{
-			expression: `for { @println("infinite loop") }`,
+			expression: `for { @print("infinite loop") }`,
 			expected: `for {
-@println("infinite loop");
+@print("infinite loop");
 }
 `,
 		},
 		{
-			// NOTE! for 1 @println("infinite loop") cannot be represented like this
-			expression: `for 1 { @println("infinite loop") }`,
+			// NOTE! for 1 @print("infinite loop") cannot be represented like this
+			expression: `for 1 { @print("infinite loop") }`,
 			expected: `for 1 {
-@println("infinite loop");
+@print("infinite loop");
 }
 `,
 		},
 		{
-			// NOTE! for 1 @println("infinite loop") is represented like this
-			expression: `for 1 @println("infinite loop")`,
+			// NOTE! for 1 @print("infinite loop") is represented like this
+			expression: `for 1 @print("infinite loop")`,
 			expected: `for {
 1;
 }
-@println("infinite loop");
+@print("infinite loop");
 `,
 		},
 		{
@@ -247,11 +247,11 @@ pog2: 4,
 		},
 		{
 			expression: `func hello_world(hello i32, world [111]i32) i32 {
-						@println(hello + world[0])
+						@print(hello + world[0])
 						return 0;
 					}`,
 			expected: `func hello_world(hello i32, world [111]i32) i32 {
-@println((hello+world[0]));
+@print((hello+world[0]));
 return 0;
 }
 `,

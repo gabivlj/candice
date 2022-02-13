@@ -5,5 +5,5 @@ struct Thing {
 
 func main() {
     t := @Thing{i: 1, j: 2};
-    @println(t)
+    @print(t)
 }

@@ -10,5 +10,5 @@ func callback(i i32, j *i32) i32 {
 
 func main() {
     value := passIt(callback);
-    @println(value);
+    @print(value);
 }

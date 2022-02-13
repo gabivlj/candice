@@ -6,6 +6,6 @@ func fibonacci(current i32) i32 {
 }
 func main() {
 
-@println(fibonacci(25))
+@print(fibonacci(25))
 
 }

@@ -11,8 +11,8 @@ func main() {
     numberHex := 0xFFFFFFFFFFFFFFFF as t
     numberBin := 0b1111111111111111111111111111111111111111111111111111111111111111 as t
     numberNormal := 18446744073709551615 as t
-    if numberNormal != numberBin @println("bad...")
-    if numberHex != numberNormal @println("bad....v2")    
+    if numberNormal != numberBin @print("bad...")
+    if numberHex != numberNormal @print("bad....v2")    
     cc := @Thing{i:0 as i64}
     cc.i = 3 as i64;
     wow :c = &(&cc)

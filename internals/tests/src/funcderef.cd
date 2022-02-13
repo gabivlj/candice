@@ -21,16 +21,16 @@ func main() {
     thh : **i32 = th
     thhh : *i32 = &thing2()
 
-    if **th != 1 @println("bad")
-    if *thhh != 1 @println("bad2")
+    if **th != 1 @print("bad")
+    if *thhh != 1 @print("bad2")
 
     wow := [10]i32{1}
     
 
     value := wow as *i32 as *Wow [0].i
-    if value != 1 @println("bad3")
+    if value != 1 @print("bad3")
 
     w := @W {f: func() i32 { return 1; } }
    
-    if w.f() != 1 @println("bad4");
+    if w.f() != 1 @print("bad4");
 }

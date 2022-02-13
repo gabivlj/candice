@@ -12,32 +12,32 @@ func main() {
         } else if truth && truth {
             
         } else if !truth {
-            @println("this is bad")
+            @print("this is bad")
         } else {
-            @println("this is also really bad")
+            @print("this is also really bad")
         }
 
     } else {
-        @println("wow this is bad!")
+        @print("wow this is bad!")
     }
     if !wow {
-        @println("also wow bad")
+        @print("also wow bad")
     }
     s := getSomething(2)
     if !s {
-        @println("-_-")
+        @print("-_-")
     }
 
     if 0 as i1 || 1 as i1 {
         
     } else {
-        @println("pretty bad!")
+        @print("pretty bad!")
     }
 
     if !( wow && wow ) || !( wow ) {
-        @println("bad.")
+        @print("bad.")
     } else if !(wow && wow) || (wow) {
     } else {
-        @println("bad!!.")
+        @print("bad!!.")
     }
 }

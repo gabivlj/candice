@@ -9,12 +9,12 @@ struct Things {
 }
 
 func main() {
-    if @sizeof(Thing) != 16 @println("bad0")
-    if @sizeof(Things) != @sizeof(Thing) * 10 @println("bad0")
-    if @sizeof(*Thing) != 8 @println("bad1")
-    if @sizeof(i32) != 4 @println("bad2")
-    if @sizeof(i64) != 8 @println("bad3")
-    if @sizeof(f64) != 8 @println("bad4")
-    if @sizeof(f32) != 4 @println("bad5")
-    if @sizeof([300]f32) != 4 * 300 @println("bad6")
+    if @sizeof(Thing) != 16 @print("bad0")
+    if @sizeof(Things) != @sizeof(Thing) * 10 @print("bad0")
+    if @sizeof(*Thing) != 8 @print("bad1")
+    if @sizeof(i32) != 4 @print("bad2")
+    if @sizeof(i64) != 8 @print("bad3")
+    if @sizeof(f64) != 8 @print("bad4")
+    if @sizeof(f32) != 4 @print("bad5")
+    if @sizeof([300]f32) != 4 * 300 @print("bad6")
 }

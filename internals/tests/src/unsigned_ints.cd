@@ -16,21 +16,21 @@ integer := @cast(u32, 4294967100)
 integer = integer + @cast(u32, 100)
 
 if integer == integer {
-    @println(integer)
-    @println(@cast(i32, integer))
+    @print(integer)
+    @print(@cast(i32, integer))
 }
 returnValue := loadByPointer(&3)
 
-if returnValue != 3 @println("this shouldn't print")
+if returnValue != 3 @print("this shouldn't print")
 
 str := @aStruct{you:3}
 
 strBad :*i32 = @cast(*i32, &str)
 
-if strBad[0] != str.you @println("this should not print as well")
+if strBad[0] != str.you @print("this should not print as well")
 
 againStr :aStruct = *@cast(*aStruct, strBad)
 
 if againStr.you != str.you
-    @println("this shouldnt print!!!!!")
+    @print("this shouldnt print!!!!!")
 }

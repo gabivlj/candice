@@ -149,7 +149,7 @@ func (c *Compiler) popBlock() *ir.Block {
 }
 
 func (c *Compiler) initializeBuiltinLib() {
-	if _, ok := c.builtins["println"]; ok {
+	if _, ok := c.builtins["print"]; ok {
 		return
 	}
 
@@ -194,7 +194,7 @@ func (c *Compiler) initializeBuiltinLib() {
 	c.globalBuiltinDefinitions["printf"] = printf
 	printf.Sig.Variadic = true
 	printf.CallingConv = enum.CallingConvC
-	c.builtins["println"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
+	c.builtins["print"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		expressions := make([]value.Value, len(call.Parameters)+1)
 		for i := 0; i < len(call.Parameters); i++ {
 			expressions[i+1] = c.loadIfPointer(c.compileExpression(call.Parameters[i]))

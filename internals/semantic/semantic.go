@@ -72,7 +72,7 @@ func New() *Semantic {
 	s.builtinHandlers["alloc"] = s.analyzeAlloc
 	s.builtinHandlers["realloc"] = s.analyzeRealloc
 	s.builtinHandlers["sizeof"] = s.analyzeSizeOf
-	s.builtinHandlers["println"] = s.analyzePrintln
+	s.builtinHandlers["print"] = s.analyzePrintln
 	s.builtinHandlers["free"] = s.analyzeFree
 
 	return s

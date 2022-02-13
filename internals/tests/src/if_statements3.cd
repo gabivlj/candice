@@ -3,12 +3,12 @@ func main() {
 variable := 3
 variable2 := 4
 
-if 0 @println(variable)
-else if variable > variable2 @println(100)
-else if variable == variable2 @println(200)
-else if variable >= variable2 @println(variable)
-else if variable <= variable2 @println(300)
-else if variable @println(variable2)
-else @println(1)
+if 0 @print(variable)
+else if variable > variable2 @print(100)
+else if variable == variable2 @print(200)
+else if variable >= variable2 @print(variable)
+else if variable <= variable2 @print(300)
+else if variable @print(variable2)
+else @print(1)
 
 }

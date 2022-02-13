@@ -30,6 +30,6 @@
 }
 
 func main() {    
-    @println(platform())
-    @println(arch())
+    @print(platform())
+    @print(arch())
 }

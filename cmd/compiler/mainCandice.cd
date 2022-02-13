@@ -2,6 +2,6 @@ import strings, "./string.cd"
 
 func main() {
     s := strings.New("hello world")
-    @println(s.inner)
-    @println(s.len)
+    @print(s.inner)
+    @print(s.len)
 }

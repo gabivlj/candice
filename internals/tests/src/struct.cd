@@ -19,15 +19,15 @@ p.points[0].x = @cast(i64, -3)
 points := @alloc(Point, 3)
 pointCopy : Point = points[0]
 points[0].x = @cast(i64, -3)
-@println(points[0].x) // prints '-3'
-@println(pointCopy.x) // prints '0'
+@print(points[0].x) // prints '-3'
+@print(pointCopy.x) // prints '0'
 
 aBigPoint : *****Point = &(&(&(&(&points[0]))))
 whatPoint  :*Point = (****aBigPoint)
 newX := whatPoint.x
-@println(newX)
+@print(newX)
 
 pointAlloc := @alloc(Point, 1);
 *pointAlloc = @Point { x: @cast(i64, 43), y: @cast(i64, 55), points: @alloc(Point, 33) }
-@println(pointAlloc.x)
+@print(pointAlloc.x)
 }

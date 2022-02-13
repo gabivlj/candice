@@ -11,7 +11,7 @@ func outsideFunction(s *Something) {
 }
 
 func something() Something {
-    @println("hello world!");
+    @print("hello world!");
     s := @Something {integer:@cast(T, 0)}
     outsideFunction(&s)
     return s

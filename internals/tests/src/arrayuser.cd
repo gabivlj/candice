@@ -18,12 +18,12 @@ func main() i32 {
     arr3.Push(&aaaa, @cast(i64, 3))
     arr3.Push(&aaa,  @cast(i64, 3))
 
-    if aaa.size == 0 @println(aaa.size)
-    else if aaaa.size == 0 @println(aaaa.size)
-    else if a.size == 0 @println(a.size)
-    else if aa.size == 0 @println(aa.size)
+    if aaa.size == 0 @print(aaa.size)
+    else if aaaa.size == 0 @print(aaaa.size)
+    else if a.size == 0 @print(a.size)
+    else if aa.size == 0 @print(aa.size)
     else {
-        @println("WORKS")
+        @print("WORKS")
     }
 
 

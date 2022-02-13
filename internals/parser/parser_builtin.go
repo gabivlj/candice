@@ -23,7 +23,7 @@ func (p *Parser) getBuiltinFunctionRequirements(name string) BuiltinFunctionPars
 
 func (p *Parser) initBuiltinFunctions() {
 	p.addBuiltinFunction("alloc", 1, 1)
-	p.addBuiltinFunction("println", 0, UndefinedNumberOfParameters)
+	p.addBuiltinFunction("print", 0, UndefinedNumberOfParameters)
 	p.addBuiltinFunction("cast", 1, 1)
 	p.addBuiltinFunction("realloc", 0, 2)
 	p.addBuiltinFunction("free", 0, 1)

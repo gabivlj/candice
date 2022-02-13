@@ -1,6 +1,4 @@
 func main() {
     stuff := *"so?" 
-    if stuff != "s"[0] @println("bad");
-
-        
+    if stuff != "s"[0] @print("bad");        
 }

@@ -2,10 +2,10 @@ func main() {
 
     for i := 0; i <= 100; i = i + 1 {
 
-        @println(i);
+        @print(i);
         for j := 0; j <= 100; j = j + 1 {
             if i + j <= 10 {
-                @println(i + j);
+                @print(i + j);
             } else {
 
             }
@@ -16,18 +16,18 @@ func main() {
         if 1 {
             for {
                 if 2 if 2 if 2 if 2 break;
-                @println("shouldn't print");
+                @print("shouldn't print");
             }
             break;
         }
-        @println("shouldn't print");
+        @print("shouldn't print");
     }
 
     for i := 0; i < 100; i = i + 1 {
         if 1 {
             continue;
         }
-        @println("shouldn't print btw");
+        @print("shouldn't print btw");
     }
 
 }
