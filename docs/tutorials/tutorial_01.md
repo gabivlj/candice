@@ -624,6 +624,21 @@ func main() {
 
 ```
 
+### Blocks and scope
+
+You can create blocks of code as well.
+
+```go
+
+{
+    variable := 0
+    {
+        variable2 := variable + 5;
+    } // You can't use variable2 anymore
+} // You can't use variable anymore
+
+```
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
