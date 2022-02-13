@@ -338,7 +338,63 @@ func main() {
 	points.points[0].x = points.points[0].x + (10.0 as f64);
 
 	@print(points.points[0].x); // 10.0
-
 }
+
+```
+
+You can also allocate or have list of your own structs.
+
+```go
+
+pointsOfPoints := [100]Points{points}
+pointsOfPointsAlloc := @alloc(Points, 100);
+
+```
+
+### Functions
+
+Candice also contains functions.
+
+```go
+
+
+// Simple function that prints hello
+func hello() {
+    @print("hello");
+}
+
+// Function that adds two i32.
+func add(x i32, y i32) i32 {
+    return x + y;
+}
+
+// Calls a simple function
+func callMyFunction(myFunction func() void) {
+    myFunction();
+}
+
+func main() {
+    // You can call those functions like this:
+    hello(); // prints hello
+    @print(add(3, 3)); // prints 6
+    callMyFunction(hello); // Calls hello.
+    // You can even create functions like this!
+    callMyFunction(func() {
+        @print("prettier hello");
+    });
+
+	localFunction := func() {
+		@print("local function");
+	};
+
+	callMyFunction(localFunction)
+
+	result := func () i32 {
+		@print("tricky!");
+		return 1;
+	}();
+	@print(result);
+}
+
 
 ```
