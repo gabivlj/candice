@@ -432,3 +432,86 @@ func main() {
 }
 
 ```
+
+### Generic files
+
+On candice there is a new concept that we call generic files, where you can define generic types on top of the file and
+when you import the file you can pass the types as parameters.
+For example imagine we want to create a generic struct called 'Pair'.
+
+```go
+// generic.cd
+type T;
+type C;
+
+struct Pair {
+    first T
+    second C
+}
+
+func New(first T, second C) Pair {
+    return @Pair {
+        first: first,
+        second: second,
+    };
+}
+```
+
+```go
+// main.cd
+import pairnumbers, i32, *i8, "generic.cd";
+
+func main() {
+	pair := pairnumbers.New(1, "hello");
+	@print(pair.first, pair.second);
+}
+```
+
+As we can see, we pass an i32 and \*i8 as type parameters, and the imported file is compiled with those types.
+
+We can do even crazier stuff like creating a generic callback struct.
+
+```go
+type T;
+type C;
+type V;
+
+type Funk = func(T, V) C;
+
+struct Callback {
+    funk Funk
+    value V
+}
+
+func F(value V, f Funk) Callback {
+    return @Callback {
+        funk: f,
+        value: value,
+    };
+}
+
+func Run(param T, callback Callback) C {
+    return callback.funk(param, callback.value);
+}
+
+```
+
+We accept 3 parameters, the first one is the type of the parameter when calling the callback,
+the second one is the type of the parameter that the callback is storing, and the third one is the type that it returns.
+We can use it like this.
+
+```go
+import callback, i32, i64, i32, "callback.cd";
+
+func main() {
+	i := 1
+	c := callback.F(i, func(x i32, y i32) i64 {
+		return (x + y) as i64;
+	});
+	result := callback.Run(32, c);
+	@print(result);
+}
+
+```
+
+As we can see, we can get really creative with generic files.

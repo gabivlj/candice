@@ -277,7 +277,7 @@ func (s *Semantic) analyzeFunctionType(functionToken token.Token, fun *ctypes.Fu
 
 	for i, param := range fun.Parameters {
 		// try to replace the anonymous type with its true type
-		fun.Parameters[i] = s.replaceAnonymous(param)
+		fun.Parameters[i] = s.replaceAnonymous(s.UnwrapAnonymous(param))
 		s.variables.Add(fun.Names[i], s.newType(fun.Parameters[i]))
 	}
 
@@ -667,7 +667,6 @@ func (s *Semantic) analyzeArrayLiteral(arrayLiteral *ast.ArrayLiteral) ctypes.Ty
 
 func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 	possibleFuncType := s.analyzeExpression(call.Left)
-
 	if funcType, ok := possibleFuncType.(*ctypes.Function); !ok {
 		s.error("can't call non function "+call.Left.String()+" of type "+possibleFuncType.String(), call.Token)
 	} else {
@@ -761,7 +760,7 @@ func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) 
 	}
 
 	if op == ops.Dot {
-		t := s.analyzeStructAccess(binaryOperation)
+		t := s.UnwrapAnonymous(s.analyzeStructAccess(binaryOperation))
 		binaryOperation.Type = t
 		return t
 	}
