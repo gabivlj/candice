@@ -252,4 +252,21 @@ for value := 10; value > 0; value = value - 1
 
 ```
 
+One way to use loops is to walk through a list.
+
+```go
+
+list := [100]i32{}
+
+for i := 0; i < 100; i = i + 1 {
+    // We are accessing the i th position of the list and setting it to i * i;
+    list[i] = i * i;
+}
+
+for i := 0; i < 100;  i = i + 1 {
+    @print("position", i, "is", list[i]);
+}
+
+```
+
 Now you are ready to use for loops!
