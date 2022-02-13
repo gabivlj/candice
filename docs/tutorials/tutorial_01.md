@@ -396,5 +396,39 @@ func main() {
 	@print(result);
 }
 
+```
+
+### Importing files
+
+On candice you can import functions or structs from other files.
+
+```go
+// cool.cd
+
+struct Cool {
+    value i32
+}
+
+func Create() Cool {
+    return @Cool {
+        value: 0
+    };
+}
+
+func Print(cool *Cool) {
+    @print("Cool { value:", cool.value, "}");
+}
+
+```
+
+Then you can import it in another file, for example in your main.cd:
+
+```go
+import cool, "cool.cd";
+
+func main() {
+	coolObject := cool.Create();
+	cool.Print(&coolObject); // Cool { value: 0 }
+}
 
 ```
