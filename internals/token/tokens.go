@@ -80,6 +80,7 @@ const (
 	CONTINUE = TypeToken("CONTINUE")
 	EXTERN   = TypeToken("EXTERN")
 	AS       = TypeToken("AS")
+	MACRO_IF = TypeToken("#IF")
 )
 
 var keywords = map[string]TypeToken{

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/eval"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/token"
@@ -124,7 +125,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	defer func() {
 		p.skipSemicolon()
 	}()
+
 	switch p.currentToken.Type {
+	case token.MACRO_IF:
+		return p.parseMacroIf()
 	case token.EXTERN:
 		return p.parseExtern()
 	case token.IDENT:
@@ -837,6 +841,24 @@ func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseR
 	return types
 }
 
+// #if <constant_condition> <block>
+func (p *Parser) parseMacroIf() ast.Statement {
+	p.nextToken()
+	expressionIf := p.parseExpression(0)
+	value := eval.EvaluateConstantExpression(expressionIf)
+	if err, isError := value.(*eval.Error); isError {
+		p.addErrorMessage(fmt.Sprintf("error evaluating macro #if (%d:%d):\n%s", err.Token.Line, err.Token.Position, err.Message))
+		return &ast.MacroBlock{Block: &ast.Block{Statements: []ast.Statement{}}}
+	}
+
+	block := p.parseBlock()
+	if value.IsTruthy() {
+		return &ast.MacroBlock{Block: block}
+	}
+
+	return &ast.MacroBlock{Block: &ast.Block{Statements: []ast.Statement{}}}
+}
+
 func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionParseRequirements) []ast.Expression {
 	var expressions []ast.Expression
 	if builtinRequirements.Parameters == 0 {
@@ -849,10 +871,10 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 			if p.currentToken.Type == token.RPAREN {
 				return expressions
 			}
-			p.expect(token.COMMA)
 			if p.currentToken.Type != token.COMMA {
 				return expressions
 			}
+			p.nextToken()
 		}
 	}
 

@@ -69,6 +69,19 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 	return otherwise
 }
 
+func (l *Lexer) getMacroToken() token.Token {
+	macro := l.ch
+	l.readChar()
+	identifier := l.readIdentifier()
+	switch identifier {
+	case "if":
+
+		return l.newToken(token.MACRO_IF, macro)
+	}
+
+	return l.newToken(token.ILLEGAL, macro)
+}
+
 // NextToken Returns the next token of an input
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
@@ -79,6 +92,9 @@ func (l *Lexer) NextToken() token.Token {
 	}
 	l.skipWhiteSpace()
 	switch l.ch {
+	case '#':
+		tok = l.getMacroToken()
+		return tok
 	case '@':
 		tok = l.newToken(token.AT, l.ch)
 	case '.':

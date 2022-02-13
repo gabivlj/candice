@@ -1,0 +1,35 @@
+#if LINUX {
+    func platform() *i8 {
+        return "linux"
+    }
+}
+
+
+#if WINDOWS {
+    func platform() *i8 {
+        return "windows"
+    }
+}
+
+#if MACOS {
+    func platform() *i8 {
+        return "darwin"
+    }
+}
+
+#if X64 {
+    func arch() *i8 {
+        return "amd64"
+    }
+}
+
+#if ARM64 {
+    func arch() *i8 {
+        return "arm64"
+    }
+}
+
+func main() {    
+    @println(platform())
+    @println(arch())
+}

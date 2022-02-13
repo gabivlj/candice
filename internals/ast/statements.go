@@ -13,6 +13,10 @@ type Block struct {
 	Token      token.Token
 }
 
+type MacroBlock struct {
+	*Block
+}
+
 func (b *Block) GetToken() token.Token {
 	return b.Token
 }

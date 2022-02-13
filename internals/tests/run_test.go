@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"fmt"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/gabivlj/candice/internals/compiler"
@@ -31,6 +33,8 @@ func TestSrcs(t *testing.T) {
 		"arrayuser.cd":          "WORKS",
 		"blocks.cd":             "11 10 9 8 7 6 5 4 3 2 1",
 		"anonymous_function.cd": "100 1",
+		"print.cd":              "Thing",
+		"macro_if.cd":           fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH),
 	}
 
 	elems, err := os.ReadDir("./src")

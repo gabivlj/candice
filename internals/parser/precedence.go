@@ -20,16 +20,17 @@ var precedences = map[token.TypeToken]int{
 	token.XORBIN:   5,
 	token.ANDBIN:   5,
 	token.ORBIN:    5,
-	token.BANG:     5,
+	token.BANG:     8,
 	token.SLASH:    6,
 	token.ASTERISK: 6,
-	token.LPAREN:   8,
+	token.LPAREN:   9,
 	token.LBRACKET: 11,
 	token.DOT:      12,
-	token.AS:       13,
+	token.AS:       7,
 }
 
 func (p *Parser) precedencePrefix() int {
+
 	return precedences[token.BANG]
 }
 

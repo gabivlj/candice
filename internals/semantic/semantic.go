@@ -129,6 +129,14 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	s.currentStatementBeingAnalyzed = statement
 
 	switch statementType := statement.(type) {
+	case *ast.MacroBlock:
+		for _, stmt := range statementType.Block.Statements {
+			if s.returns {
+				return
+			}
+			s.analyzeStatement(stmt)
+		}
+		return
 	case *ast.Block:
 		s.analyzeBlock(statementType)
 		return

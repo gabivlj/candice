@@ -8,6 +8,14 @@ func thing2() i32 {
     return 1
 }
 
+struct Wow {
+    i i32    
+}
+
+struct W {
+    f func() i32
+}
+
 func main() {
     th : **i32 = &thing()
     thh : **i32 = th
@@ -15,4 +23,14 @@ func main() {
 
     if **th != 1 @println("bad")
     if *thhh != 1 @println("bad2")
+
+    wow := [10]i32{1}
+    
+
+    value := wow as *i32 as *Wow [0].i
+    if value != 1 @println("bad3")
+
+    w := @W {f: func() i32 { return 1; } }
+   
+    if w.f() != 1 @println("bad4");
 }

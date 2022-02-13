@@ -200,60 +200,12 @@ func (c *Compiler) initializeBuiltinLib() {
 			expressions[i+1] = c.loadIfPointer(c.compileExpression(call.Parameters[i]))
 		}
 		constantString := strings.Builder{}
-		// TODO: Here we would write a function that tries to do a toString()
-		// 		for each expression
 		for i := range call.Parameters {
 			t := expressions[i+1].Type()
-			if types.IsInt(t) {
-				if integer, isUnsigned := call.Parameters[i].GetType().(*ctypes.UInteger); isUnsigned {
-					if integer.BitSize > 32 {
-						constantString.WriteString("%llu ")
-					} else {
-						constantString.WriteString("%u ")
-					}
-				} else if integer, isSigned := call.Parameters[i].GetType().(*ctypes.Integer); isSigned {
-					if integer.BitSize > 32 {
-						constantString.WriteString("%lld ")
-					} else {
-						constantString.WriteString("%d ")
-					}
-				}
-			} else if pointer, isPointer := t.(*types.PointerType); isPointer {
-				if _, ok := pointer.ElemType.(*types.IntType); ok {
-					constantString.WriteString("%s ")
-				} else {
-					//
-				}
-			} else if float, isFloat := t.(*types.FloatType); isFloat {
-				if float.Kind != types.FloatKindDouble {
-					expressions[i+1] = c.handleFloatCast(types.Double, expressions[i+1])
-				}
-				constantString.WriteString("%.3f ")
-			}
+			constantString.WriteString(c.getFormatString(expressions, t, call, i))
 		}
-		constantString.WriteByte(0)
 		s := constantString.String()
-
-		stringWithCharArrayType := constant.NewCharArrayFromString(s)
-
-		// Define as global, we can keep it at all times on memory
-		var globalDef value.Value
-
-		if definition, ok := c.globalBuiltinDefinitions[s]; !ok {
-			globalDef = c.m.NewGlobalDef(s[:len(s)-1], stringWithCharArrayType)
-			c.globalBuiltinDefinitions[s] = globalDef
-		} else {
-			globalDef = definition
-		}
-
-		i8sType := c.block().NewGetElementPtr(
-			// we are casting [i8 x len] to *i8
-			types.NewArray(uint64(len(s)), types.I8),
-			globalDef,
-			zero,
-			zero,
-		)
-		expressions[0] = i8sType
+		expressions[0] = c.createString(s)
 		c.block().NewCall(printf, expressions...)
 		return constant.NewUndef(types.Void)
 	}
@@ -362,9 +314,18 @@ func (c *Compiler) Compile(tree ast.Node) {
 	}
 
 	switch t := tree.(type) {
+
+	case *ast.MacroBlock:
+		{
+			for _, statement := range t.Block.Statements {
+				c.Compile(statement)
+			}
+
+			return
+		}
+
 	case *ast.Block:
 		{
-
 			block := c.currentFunction.NewBlock("block." + random.RandomString(10))
 			c.block().NewBr(block)
 			currentBlock := c.compileBlock(t, block)

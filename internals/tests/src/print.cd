@@ -1,0 +1,9 @@
+struct Thing {
+    i i32
+    j i32
+}
+
+func main() {
+    t := @Thing{i: 1, j: 2};
+    @println(t)
+}
