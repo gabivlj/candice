@@ -539,3 +539,44 @@ func main() {
 	@print(result.x, result.y);
 }
 ```
+
+### Importing external functions from C
+
+We can import files from C like this.
+
+```go
+extern func thefunction(...params...) theReturnType;
+```
+
+For example we can use the file library from the std like this.
+
+```go
+
+type FILE = i8
+
+
+extern func fopen(*i8, *i8) *FILE;
+extern func fwrite(*i8, i64, i64, *FILE) void;
+extern func fclose(*FILE) void;
+extern func fread(*i8, i64, i64, *FILE) i64;
+extern func rewind(*FILE) i64;
+extern func fgets(*i8, i32, *FILE) *i8;
+
+
+func main() {
+    theFile := fopen("./some_file", "a+");
+    rewind(theFile);
+    output := @alloc(i8, 300);
+    for fgets(output, 10, theFile) as i32 != 0 {
+        @print(output);
+    }
+    fwrite("hello!", 1 as i64, 6 as i64, theFile);
+    @free(output);
+    fclose(theFile)
+}
+
+```
+
+## Problems?
+
+If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
