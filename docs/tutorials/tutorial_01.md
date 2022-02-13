@@ -218,3 +218,38 @@ else if number > 0 || number < 0 {
 ```
 
 With these examples you are set to use ifs on candice!
+
+### Loops
+
+Loops are really simple. You are able to execute a block of code multiple times while a condition is true.
+
+```go
+
+value := 10
+
+for value > 0 {
+    @print("value is", value);
+    value = value - 1;
+}
+
+```
+
+This will print 'value is ...' 10 times.
+
+You can also do this same code like this.
+
+```go
+for value := 10; value > 0; value = value - 1 {
+    @print("value is", value);
+}
+```
+
+You can even omit the braces.
+
+```go
+for value := 10; value > 0; value = value - 1
+    @print("value is", value);
+
+```
+
+Now you are ready to use for loops!
