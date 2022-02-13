@@ -304,4 +304,26 @@ Every chunk of memory you create, you obviously have to free it when you are not
 @free(memory);
 ```
 
-Now you can allocate memory in Candice.
+Now you know how to allocate memory on the heap with Candice!
+
+### Structs
+
+Structs on Candice are pretty simple.
+
+```go
+
+struct Point {
+    x f64
+    y f64
+}
+
+struct Points {
+    points *Point
+    number_of_points u32
+}
+
+func main() {
+    points := @Points{points: @alloc(Point, 3), number_of_points: 10 as u32 }
+}
+
+```

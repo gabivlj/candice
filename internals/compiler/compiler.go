@@ -1162,6 +1162,9 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+	if types.IsFloat(leftValue.Type()) {
+		return c.block().NewFAdd(leftValue, rightValue)
+	}
 	return c.block().NewAdd(leftValue, rightValue)
 }
 
