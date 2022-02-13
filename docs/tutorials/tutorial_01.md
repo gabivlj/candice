@@ -183,6 +183,10 @@ c := 7
 result := a * b / c - 1;
 @print(result); // prints '1'
 
+// You can also create numbers like this:
+numberHexa := 0xFFF;
+numberBin := 0b11010110;
+
 ```
 
 You can also use bitwise operations like:
@@ -573,6 +577,49 @@ func main() {
     fwrite("hello!", 1 as i64, 6 as i64, theFile);
     @free(output);
     fclose(theFile)
+}
+
+```
+
+### Compile time Ifs
+
+You can compile specific code only if a condition meets, like if you are on a specific platform or architecture.
+
+```go
+#if LINUX {
+    func platform() *i8 {
+        return "linux"
+    }
+}
+
+
+#if WINDOWS {
+    func platform() *i8 {
+        return "windows"
+    }
+}
+
+#if MACOS {
+    func platform() *i8 {
+        return "darwin"
+    }
+}
+
+#if X64 {
+    func arch() *i8 {
+        return "amd64"
+    }
+}
+
+#if ARM64 {
+    func arch() *i8 {
+        return "arm64"
+    }
+}
+
+func main() {
+    @print(platform())
+    @print(arch())
 }
 
 ```
