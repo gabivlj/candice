@@ -9,7 +9,7 @@ candice init .
 
 This will create a new candice.json and an entry point main.cd with the following content:
 
-```json
+```javascript
 {
   // Name of the project
   "name": "project",
