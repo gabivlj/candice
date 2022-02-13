@@ -263,10 +263,45 @@ for i := 0; i < 100; i = i + 1 {
     list[i] = i * i;
 }
 
-for i := 0; i < 100;  i = i + 1 {
+for i := 0; i < 100; i = i + 1 {
     @print("position", i, "is", list[i]);
 }
 
 ```
 
 Now you are ready to use for loops!
+
+### Allocating dynamic memory
+
+On candice allocating dynamic memory is straightforward.
+
+```go
+
+memory : *i32 = @alloc(i32, 100);
+// or
+// memory := @alloc(i32, 100);
+
+```
+
+This just created 100 i32 integers.
+To access the first element of this chunk of memory you can do this:
+
+```go
+memory[0] = 10;
+@print(memory[0]); // 10
+```
+
+If you want to resize the memory you created you can do this:
+
+```go
+// the size now is 200.
+memory = @realloc(memory, 200);
+```
+
+Every chunk of memory you create, you obviously have to free it when you are not using it anymore.
+
+```go
+@free(memory);
+```
+
+Now you can allocate memory in Candice.
