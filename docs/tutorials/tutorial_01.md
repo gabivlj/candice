@@ -120,13 +120,13 @@ If you run again you will find '3' being printed.
 
 Candice has a variety of built-in types. Here is the list!
 
-### Bool
+#### Bool
 
 Can be '1' or '0'. If you make comparisons they produce this type.
 
 - i1.
 
-### Signed Integers
+#### Signed Integers
 
 They are natural numbers that can be negative or positive.
 
@@ -135,7 +135,7 @@ They are natural numbers that can be negative or positive.
 - i32.
 - i64.
 
-### Unsigned Integers
+#### Unsigned Integers
 
 They are natural numbers that can't be negative.
 
@@ -144,22 +144,22 @@ They are natural numbers that can't be negative.
 - u32.
 - u64.
 
-### Floats
+#### Floats
 
 They are real numbers.
 
 - f32.
 - f64.
 
-### Pointers
+#### Pointers
 
 Put \* in front of your type. We'll explain what they mean later. But if you come from C it just works like them.
 
-### Arrays
+#### Arrays
 
 They are a static list of elements.
 
-You use them like '[<constant_integer>]<type>'
+You use them like '[constant_integer]type'
 
 For example:
 
@@ -169,3 +169,52 @@ empty_numbers := [5]i32{}
 ```
 
 Remember that the value inside the [] should be constant, not a variable.
+
+### Operations
+
+You can make a lot of operations with numbers on candice.
+'+', '-', '\*', '/'...
+
+```go
+
+a := 3
+b := 5
+c := 7
+result := a * b / c - 1;
+@print(result); // prints '1'
+
+```
+
+You can also use bitwise operations like:
+
+- '&' AND
+- '|' OR
+- '^' XOR
+
+### Ifs
+
+Ifs are a must in all languages! When the condition they evaluate is true they will execute some code.
+
+```go
+
+number := 10
+
+if number >= 5 && number <= 10
+    @print("number is between 5 and 10");
+
+```
+
+As you can see && are used to check if both conditions are true.
+You can even cover more cases at the same time.
+
+```go
+if number >= 5 && number <= 10 @print("number is between 5 and 10");
+else if number > 0 || number < 0 {
+    @print("atleast the number is more or less than 0");
+} else {
+    @print("oh no! candice is broken");
+    @print("please fix...");
+}
+```
+
+With these examples you are set to use ifs on candice!
