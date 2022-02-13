@@ -515,3 +515,27 @@ func main() {
 ```
 
 As we can see, we can get really creative with generic files.
+We can even pass to generic files our own types.
+
+```go
+
+type F32 = f32
+
+struct Point {
+	x f32
+	y f32
+}
+
+import callback, F32, Point, Point, "callback.cd";
+
+func main() {
+	c := callback.F(@Point{x: 1.0}, func(x F32, p Point) Point {
+		return @Point {
+			x: x,
+			y: p.x,
+		}
+	});
+	result := callback.Run(0.0, c);
+	@print(result.x, result.y);
+}
+```
