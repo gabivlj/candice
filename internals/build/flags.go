@@ -14,12 +14,12 @@ type Flags struct {
 func retrieveFlags() (Flags, error) {
 	flagsToReturn := Flags{}
 	flags := os.Args
-	if len(flags) <= 3 {
+	if len(flags) < 3 {
 		return flagsToReturn, errors.New("not enough arguments")
 	}
 	mode := flags[1]
 	path := flags[2]
-	for _, fl := range flags {
+	for _, fl := range flags[2:] {
 		if fl == "--release" {
 			flagsToReturn.Release = true
 		}

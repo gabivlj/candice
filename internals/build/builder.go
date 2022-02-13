@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"time"
 
@@ -29,10 +30,15 @@ func ExecuteProject() {
 	Modes:
 		run - Run the project in the desired path.
 		build - Creates an executable of the project in the desired path.
-	
+		init - Creates a candice project
 	Flags:
 		--release - Create or runs an optimized build of the project.
 		`)
+		return
+	}
+
+	if flags.Mode == "init" {
+		createSampleProject(flags.Path)
 		return
 	}
 
@@ -105,4 +111,40 @@ func ExecuteProject() {
 		passedTime := float64(time.Now().UnixMilli() - current.UnixMilli())
 		logger.Success("BUILD SUCCESSFUL. (" + strconv.FormatFloat(passedTime/1000, 'f', 3, 64) + "s)")
 	}
+}
+
+func createSampleProject(basePath string) {
+
+	relative, err := os.Getwd()
+	if err != nil {
+		logger.Warning("internal error retrieving relative path: " + err.Error())
+	}
+
+	candiceJson := path.Join(relative, basePath, "candice.json")
+	fd, err := os.Create(candiceJson)
+	if err != nil {
+		logger.Error("Setup", "error setting up candice.json", err.Error())
+		return
+	}
+
+	_, err = fd.Write([]byte(CandiceJSONDefault))
+	if err != nil {
+		logger.Error("Setup", "error setting up candice.json", err.Error())
+		return
+	}
+
+	candiceMain := path.Join(relative, basePath, "main.cd")
+	fdMain, err := os.Create(candiceMain)
+	if err != nil {
+		logger.Error("Setup", "error setting up main.cd", err.Error())
+		return
+	}
+
+	_, err = fdMain.Write([]byte(CandiceProgramDefault))
+	if err != nil {
+		logger.Error("Setup", "error setting up main.cd", err.Error())
+		return
+	}
+
+	logger.Success("Project created on path " + candiceJson + " " + "\nEnjoy coding!")
 }
