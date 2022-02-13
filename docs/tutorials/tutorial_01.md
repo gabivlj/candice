@@ -29,3 +29,89 @@ This will create a new candice.json and an entry point main.cd with the followin
   "output": "program"
 }
 ```
+
+## Writing your first candice program
+
+On your main.cd you should see the following.
+
+```go
+func main() {
+	@print("Hello world!");
+}
+```
+
+If you do:
+
+```bash
+candice run .
+```
+
+You should see a Hello world! appear.
+
+You can also do:
+
+```bash
+candice run . --release
+```
+
+It will also make appear a Hello world, but when you want to have a more optimized binary
+you should run candice with that flag.
+
+### Variables
+
+A variable declaration looks like this on candice:
+
+```go
+func main() {
+    // ... snip ...
+
+    variable : i32 = 1;
+}
+```
+
+You can also omit the type, because Candice infers it for you.
+
+```go
+func main() {
+    // ... snip ...
+
+    variable := 1;
+}
+```
+
+By default numbers are signed 32 bit integers. You can cast them to other sizes like this:
+
+```go
+func main() {
+    // ... snip ...
+
+    variable2 := 2 as i64;
+}
+```
+
+Remember that if you try to operate with different integer types you will find an error:
+
+```go
+func main() {
+    // ... snip ...
+
+    @print(variable + variable2);
+}
+```
+
+You will encounter with the following error:
+
+```bash
+ Error Analyzing   error analyzing on 6:19 (at +): _(variable+variable2)_ :: mismatched types, expected=i64, got=i32
+```
+
+You can fix it by casting one of the variables, preferably the one with the lesser size.
+
+```go
+
+//...snip
+@print(variable as i64 + variable2);
+
+```
+
+If you run again you will find '3' being printed.
