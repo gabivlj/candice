@@ -11,6 +11,7 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/semantic"
+	"github.com/gabivlj/candice/pkg/logger"
 	"github.com/gabivlj/candice/pkg/random"
 	"github.com/llir/llvm/ir"
 	"github.com/llir/llvm/ir/constant"
@@ -44,6 +45,7 @@ type Compiler struct {
 	// Flag to indicate caller that this value shouldn't be loaded into memory
 	// This flag will be set to false again once loadIfPointer is called.
 	doNotLoadIntoMemory bool
+	doNotAllocate       bool
 
 	currentBreakLeaveBlock     *ir.Block
 	currentContinueEscapeBlock *ir.Block
@@ -249,7 +251,7 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	defer func() {
 		os.Remove(".intermediate_output.ll")
 	}()
-
+	logger.Success("Finished compiling on Candice.")
 	fd, _ := os.Create(".intermediate_output.ll")
 	_, _ = c.m.WriteTo(fd)
 	endFlags := []string{".intermediate_output.ll", "-o", output}
@@ -258,8 +260,9 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	stdout := &bytes.Buffer{}
 	cmd.Stdout = stdout
 	cmd.Stderr = stdout
+	logger.Success("Compiling on " + cxx)
 	err := cmd.Run()
-
+	logger.Success("Compiled on " + cxx)
 	if err != nil {
 		return errors.New("error compiling with clang:\n" + stdout.String())
 	}
@@ -274,7 +277,7 @@ func (c *Compiler) GenerateExecutableExperimental(output string, cxx string, fla
 	}
 	command := append(flags, pathOutput)
 	command = append(command, "-o", output)
-	//	command = append(command, "-O3")
+	// command = append(command, "-O3")
 	cmd := exec.Command(cxx, command...)
 	outputBuffer := bytes.Buffer{}
 	cmd.Stdout = &outputBuffer
@@ -307,6 +310,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 	defer func() {
 		// Reset state
 		c.doNotLoadIntoMemory = false
+		c.doNotAllocate = false
 	}()
 
 	if c.currentFunction != nil && len(c.currentFunction.Blocks) > 0 && c.currentFunction.Blocks[len(c.currentFunction.Blocks)-1].Term != nil {
@@ -371,7 +375,6 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 	case *ast.GenericTypeDefinition:
 		{
-			///			c.compileType(t.Name, t.ReplacedType)
 			return
 		}
 
@@ -678,8 +681,15 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 
 		return
 	}
-	val := c.block().NewAlloca(t)
-	c.block().NewStore(c.loadIfPointer(valueCompiled), val)
+	var val value.Value
+	if !c.doNotAllocate {
+		val = c.block().NewAlloca(t)
+		c.block().NewStore(c.loadIfPointer(valueCompiled), val)
+	} else {
+		c.doNotAllocate = false
+		val = valueCompiled
+	}
+
 	c.declare(decl.Name, val)
 }
 
@@ -794,7 +804,7 @@ func (c *Compiler) compileArrayLiteral(arrayLiteral *ast.ArrayLiteral) value.Val
 		address := c.block().NewGetElementPtr(arrayType, allocaInstance, zero, integerIndex)
 		c.block().NewStore(loadedValue, address)
 	}
-
+	c.doNotAllocate = true
 	return allocaInstance
 }
 
@@ -824,6 +834,7 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 		}
 
 		c.doNotLoadIntoMemory = false
+		c.doNotAllocate = false
 		allocatedValue := c.block().NewAlloca(prefixValue.Type())
 		c.block().NewStore(prefixValue, allocatedValue)
 		return allocatedValue
@@ -936,6 +947,7 @@ func unwrapArrayGepType(arr *types.ArrayType) types.Type {
 func (c *Compiler) loadIfPointer(val value.Value) value.Value {
 	if c.doNotLoadIntoMemory {
 		c.doNotLoadIntoMemory = false
+		c.doNotAllocate = false
 		return val
 	}
 	if types.IsPointer(val.Type()) {
