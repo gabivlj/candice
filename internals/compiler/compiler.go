@@ -469,6 +469,9 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 	}
 	f := c.m.NewFunc(funcType.ExternalName, returnType, params...)
 	f.CallingConv = enum.CallingConvC
+	if funcType.InfiniteParameters {
+		f.Sig.Variadic = true
+	}
 	funk := &Value{Value: f, Type: funcType}
 	c.globalVariables[funcType.Name] = funk
 	c.globalVariables[funcType.ExternalName] = funk

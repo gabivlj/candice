@@ -527,11 +527,19 @@ func (p *Parser) parseType() ctypes.Type {
 		p.expect(token.LPAREN)
 		p.nextToken()
 		var parameters []ctypes.Type
+		infiniteParameters := false
 		for p.currentToken.Type != token.RPAREN && p.currentToken.Type != token.EOF {
 			if len(parameters) >= 1 {
 				p.expect(token.COMMA)
 				p.nextToken()
 			}
+
+			if p.currentToken.Type == token.DOUBLE_DOT {
+				infiniteParameters = true
+				p.nextToken()
+				break
+			}
+
 			parameters = append(parameters, p.parseType())
 		}
 		p.expect(token.RPAREN)
@@ -545,10 +553,11 @@ func (p *Parser) parseType() ctypes.Type {
 			returnType = p.parseType()
 		}
 		return &ctypes.Function{
-			Name:       ast.CreateIdentifier(name, p.ID),
-			Parameters: parameters,
-			Names:      []string{},
-			Return:     returnType,
+			Name:               ast.CreateIdentifier(name, p.ID),
+			Parameters:         parameters,
+			Names:              []string{},
+			Return:             returnType,
+			InfiniteParameters: infiniteParameters,
 		}
 	}
 

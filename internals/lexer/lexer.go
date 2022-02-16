@@ -98,7 +98,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '@':
 		tok = l.newToken(token.AT, l.ch)
 	case '.':
-		tok = l.newToken(token.DOT, l.ch)
+		tok = l.peekerForTwoChars('.', l.newToken(token.DOT, l.ch), token.DOUBLE_DOT)
 	case ':':
 		tok = l.newToken(token.COLON, l.ch)
 	case '[':

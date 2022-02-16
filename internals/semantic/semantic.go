@@ -670,15 +670,18 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 	if funcType, ok := possibleFuncType.(*ctypes.Function); !ok {
 		s.error("can't call non function "+call.Left.String()+" of type "+possibleFuncType.String(), call.Token)
 	} else {
-		if len(call.Parameters) != len(funcType.Parameters) {
+		if len(call.Parameters) != len(funcType.Parameters) && !funcType.InfiniteParameters {
 			s.error("mismatch number of parameters", call.Token)
 		}
 
 		for i, param := range call.Parameters {
 			paramType := s.analyzeExpression(param)
 
-			if !s.areTypesEqual(funcType.Parameters[i], paramType) {
+			if i >= len(funcType.Parameters) {
+				continue
+			}
 
+			if !s.areTypesEqual(funcType.Parameters[i], paramType) {
 				s.typeMismatchError(param.String(), call.Token, funcType.Parameters[i], paramType)
 			}
 		}

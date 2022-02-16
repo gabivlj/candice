@@ -1,0 +1,9 @@
+extern func asprintf(**i8, *i8, ..) i32
+
+func main() {
+    output := 0 as *i8
+    result := asprintf(&output, "formatting a number: %d", 3);
+    if !result @print("bad");
+    @print(output);
+    @free(output);
+}

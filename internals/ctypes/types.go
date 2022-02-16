@@ -175,11 +175,12 @@ func (a *Array) Alignment() int64 {
 func (_ *Array) CandiceType() {}
 
 type Function struct {
-	Name         string
-	ExternalName string
-	Parameters   []Type
-	Names        []string
-	Return       Type
+	Name               string
+	ExternalName       string
+	InfiniteParameters bool
+	Names              []string
+	Parameters         []Type
+	Return             Type
 }
 
 func (f *Function) IsMainFunction() bool {
