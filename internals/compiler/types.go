@@ -138,5 +138,4 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 	}
 
 	panic(t)
-	return nil
 }

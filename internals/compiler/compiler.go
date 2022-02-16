@@ -576,7 +576,6 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 	conditions := []ast.Expression{ifStatement.Condition}
 	if ifStatement.Else != nil {
 		strandedBlocks = append(strandedBlocks, c.compileBlock(ifStatement.Else, blockElse))
-
 	}
 
 	for _, elseIf := range ifStatement.ElseIfs {
@@ -693,9 +692,9 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
 	valueCompiled := c.compileExpression(decl.Expression)
 	if c.currentFunction == nil {
-		if constant, isConstant := valueCompiled.(constant.Constant); isConstant {
+		if _, isConstant := valueCompiled.(constant.Constant); isConstant {
 			c.globalVariables[decl.Name] = &Value{Value: valueCompiled, Type: decl.Type}
-			c.m.NewGlobalDef(decl.Name, constant)
+			// c.globalVariables[decl.Name+".global"] = &Value{Value: c.m.NewGlobalDef(decl.Name, constant.NewNull(types.NewPointer(valueCompiled.Type()))), Type: decl.Type}
 		} else {
 			fmt.Println("Candice does not support constant expressions and operations yet.")
 			os.Exit(1)
@@ -892,16 +891,35 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 
 	if fn, ok := c.globalVariables[name]; ok {
 		if !ctypes.IsFunction(fn.Type) {
-			value := c.block().NewAlloca(fn.Value.Type())
-			c.block().NewStore(fn.Value, value)
-			c.declare(name, value)
-			return value
+			if existing, exists := c.globalVariables[name+".global"]; exists {
+				return existing.Value
+			}
+
+			global := fn.Value.(constant.Constant)
+
+			// If it is an array we must allocate it as a global and then cast it as a pointer
+			// so we can mutate the address
+			if types.IsArray(global.Type()) {
+				array := c.m.NewGlobalDef(name+".global_alloca", global)
+				pointer := c.block().NewBitCast(array, types.NewPointer(global.Type().(*types.ArrayType).ElemType))
+				globalDefinition := c.m.NewGlobalDef(name+".global", constant.NewNull(pointer.Type().(*types.PointerType)))
+				c.globalVariables[name+".global"] = &Value{Value: globalDefinition, Type: fn.Type}
+				c.block().NewStore(pointer, globalDefinition)
+				return globalDefinition
+			}
+
+			globalDefPointer := c.m.NewGlobalDef(name+".global", global)
+			globalDefPointer.Immutable = false
+			c.globalVariables[name+".global"] = &Value{Value: globalDefPointer, Type: fn.Type}
+
+			return globalDefPointer
 		}
+
 		c.doNotLoadIntoMemory = true
 		return fn.Value
 	}
+
 	panic("Variable doesn't exist.")
-	return nil
 }
 
 func (c *Compiler) retrieveLocalVariable(name string) value.Value {
@@ -1135,7 +1153,13 @@ func getName(expr ast.Expression) (string, bool) {
 func (c *Compiler) compileModuleAccess(expr *ast.BinaryOperation) value.Value {
 	moduleName := expr.Left.(*ast.Identifier).Name
 	module := c.modules[moduleName]
+	// In case compileIdentifier tries to generate code or local variables
+	prevStack, prevBlock := module.stacks, module.blocks
+	module.stacks = c.stacks
+	module.blocks = c.blocks
 	identifier := module.compileIdentifier(expr.Right.(*ast.Identifier))
+	module.stacks = prevStack
+	module.blocks = prevBlock
 	c.doNotLoadIntoMemory = module.doNotLoadIntoMemory
 	module.doNotLoadIntoMemory = false
 	return identifier
