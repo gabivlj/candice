@@ -108,6 +108,12 @@ func (s *Semantic) GetModule(name string) *Semantic {
 
 func (s *Semantic) Analyze(program *ast.Program) {
 	s.Root = program
+
+	s.predefineTypes(program.Statements)
+	s.fillTypes(program.Statements)
+	// Predefine functions so the order doesn't matter
+	s.predefineFunctions(program.Statements)
+
 	for _, statement := range program.Statements {
 		s.analyzeStatement(statement)
 		if len(s.Errors) > 0 {
@@ -142,7 +148,8 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		return
 
 	case *ast.ImportStatement:
-		s.analyzeImport(statementType)
+		// moved to step of structs
+		// s.analyzeImport(statementType)
 		return
 	case *ast.DeclarationStatement:
 		s.analyzeDeclarationStatement(statementType)
@@ -164,7 +171,8 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		s.analyzeAssigmentStatement(statementType)
 		return
 	case *ast.ExternStatement:
-		s.analyzeExternStatement(statementType)
+		// moved to fillTypes
+		// s.analyzeExternStatement(statementType)
 		return
 
 	case *ast.ExpressionStatement:
@@ -175,7 +183,8 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		s.analyzeReturnStatement(statementType)
 		return
 	case *ast.GenericTypeDefinition:
-		s.analyzeGenericTypeDefinition(statementType)
+		// moved to fillTypes
+		//s.analyzeGenericTypeDefinition(statementType)
 		return
 
 	case *ast.BreakStatement:
@@ -185,7 +194,8 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		return
 
 	case *ast.TypeDefinition:
-		s.analyzeTypeDefinition(statementType)
+		// moved to fillTypes
+		//s.analyzeTypeDefinition(statementType)
 		return
 
 	case *ast.ContinueStatement:
@@ -261,9 +271,16 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 }
 
 func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatement) {
-	s.variables.Add(fun.FunctionType.Name, s.newType(fun.FunctionType))
 	s.functionBodies[fun.FunctionType.Name] = fun
 	s.analyzeFunctionType(fun.Token, fun.FunctionType, fun.Block)
+}
+
+func (s *Semantic) replaceAnonymousFunctionParameterTypes(fun *ctypes.Function) {
+	for i, param := range fun.Parameters {
+		// try to replace the anonymous type with its true type
+		fun.Parameters[i] = s.replaceAnonymous(s.UnwrapAnonymous(param))
+		s.variables.Add(fun.Names[i], s.newType(fun.Parameters[i]))
+	}
 }
 
 func (s *Semantic) analyzeFunctionType(functionToken token.Token, fun *ctypes.Function, block *ast.Block) {
@@ -275,11 +292,7 @@ func (s *Semantic) analyzeFunctionType(functionToken token.Token, fun *ctypes.Fu
 	s.currentFunctionBeingAnalyzed = fun
 	s.enterFrame()
 
-	for i, param := range fun.Parameters {
-		// try to replace the anonymous type with its true type
-		fun.Parameters[i] = s.replaceAnonymous(s.UnwrapAnonymous(param))
-		s.variables.Add(fun.Names[i], s.newType(fun.Parameters[i]))
-	}
+	s.replaceAnonymousFunctionParameterTypes(fun)
 
 	temporaryExpectedReturnType := s.currentExpectedReturnType
 	s.currentExpectedReturnType = fun.Return
@@ -359,14 +372,16 @@ func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) 
 }
 
 func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
-
 	s.definedTypes[statementType.Type.Name] = statementType.Type
 	for _, t := range statementType.Type.Fields {
 		unwrappedType := s.unwrap(t)
 		if anonymous, ok := unwrappedType.(*ctypes.Anonymous); ok {
 			definedType := s.UnwrapAnonymous(anonymous)
-			if definedType == statementType.Type && t == anonymous {
-				s.error("recursive type detected", statementType.Token)
+			if t == anonymous && statementType.Type == definedType {
+				s.error(
+					"can't analyze field for this struct because you are referencing a struct that has been later defined or it's a recursive type.\nHint: maybe define this field's type before this type or fix recursive type",
+					statementType.Token,
+				)
 				return
 			}
 			s.swapTypes(t, definedType)
@@ -429,7 +444,6 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 			if typesDefined == "" {
 				typesDefined = "No types defined in the module."
 			}
-
 			s.error("Couldn't guess type "+ast.RetrieveID(anonymous.Name)+", maybe spelt the type wrong? These are the defined types in the module"+" "+ast.RetrieveID(module)+":\n"+typesDefined, s.currentStatementBeingAnalyzed.GetToken())
 			return ctypes.TODO()
 		}

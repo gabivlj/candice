@@ -1,10 +1,11 @@
 package semantic
 
 import (
+	"testing"
+
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/pkg/a"
-	"testing"
 )
 
 func TestSemantic_Analyze(t *testing.T) {
@@ -148,6 +149,15 @@ func TestSemantic_Analyze(t *testing.T) {
 					print(@cast(*void, @alloc(i32, 1)))`,
 			true,
 		},
+		{
+			`struct Point { p Point }`,
+			false,
+		},
+		// This still doesn't work...
+		// {
+		// 	`struct C { p Point } struct Point { p C }`,
+		// 	false,
+		// },
 	}
 
 	for _, test := range tests {

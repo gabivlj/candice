@@ -106,6 +106,10 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	}
 
 	c.initializeBuiltinLib()
+
+	// define structs and functions
+	c.compileStructTypes(context.Root.Statements)
+	c.compileFunctionTypes(context.Root.Statements)
 	return c
 }
 
@@ -348,6 +352,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 				c.modules[moduleName] = existingCompiler
 				return
 			}
+
 			localCompiler := New(module, c)
 			localCompiler.Compile(module.Root)
 			c.compiledModules[module.Root.ID] = localCompiler
@@ -380,7 +385,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 	case *ast.StructStatement:
 		{
-			c.compileStruct(t)
+			// c.compileStruct(t)
 			return
 		}
 
@@ -442,7 +447,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 	case *ast.TypeDefinition:
 		{
-			c.compileTypeDefinition(t)
+
 			return
 		}
 	}
@@ -467,11 +472,13 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 		parameterType := c.ToLLVMType(parameter)
 		params = append(params, ir.NewParam("", parameterType))
 	}
+
 	f := c.m.NewFunc(funcType.ExternalName, returnType, params...)
 	f.CallingConv = enum.CallingConvC
 	if funcType.InfiniteParameters {
 		f.Sig.Variadic = true
 	}
+
 	funk := &Value{Value: f, Type: funcType}
 	c.globalVariables[funcType.Name] = funk
 	c.globalVariables[funcType.ExternalName] = funk
@@ -487,7 +494,12 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 	c.block().NewRet(c.loadIfPointer(toReturn))
 }
 
-func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDeclarationStatement) {
+// defines function type without compiling its body
+func (c *Compiler) compileFunctionType(name string, funk *ast.FunctionDeclarationStatement) *ir.Func {
+	if fn, ok := c.globalVariables[name]; ok {
+		return fn.Value.(*ir.Func)
+	}
+
 	// Declare params LLVM IR
 	params := make([]*ir.Param, 0, len(funk.FunctionType.Parameters))
 	for i, param := range funk.FunctionType.Parameters {
@@ -504,6 +516,19 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, c.ToLLVMType(funk.FunctionType.Return), params...)
 	llvmFunction.CallingConv = enum.CallingConvC
 
+	// Create function
+	c.globalVariables[name] = &Value{
+		Value: llvmFunction,
+		Type:  funk.FunctionType,
+	}
+
+	return llvmFunction
+}
+
+// compiles entire function
+func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDeclarationStatement) {
+	llvmFunction := c.compileFunctionType(name, funk)
+
 	// Create a main block to the function
 	c.pushBlock(llvmFunction.NewBlock(funk.FunctionType.Name))
 
@@ -511,16 +536,10 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 	c.stacks = append(c.stacks, map[string]value.Value{})
 
 	// Declare parameters IR
-	for _, param := range params {
+	for _, param := range llvmFunction.Params {
 		allocatedParameter := c.block().NewAlloca(param.Type())
 		c.block().NewStore(param, allocatedParameter)
 		c.declare(param.Name(), allocatedParameter)
-	}
-
-	// Create function
-	c.globalVariables[name] = &Value{
-		Value: llvmFunction,
-		Type:  funk.FunctionType,
 	}
 
 	// Set it as current function

@@ -1,0 +1,21 @@
+func main() {
+    f : i32 = callable(1, 2);
+    t : Thing = newThing();
+    t.i = t.i + 1;
+}
+
+func callable(i i32, j i32) i32 {
+    return i + j;
+}
+
+func newThing() Thing {
+    return @Thing{
+        i: 1,
+        j: 2,
+    }
+}
+
+struct Thing {
+    i i32
+    j i32   
+}

@@ -2,6 +2,17 @@ type C
 
 import a, C, "./src/libs/array.cd"
 
+struct useArray {
+    arr ***a.Array
+}
+
 func new() a.Array {
+    use();
     return a.New()
+}
+
+func use() useArray {
+    return @useArray{
+
+    };
 }
