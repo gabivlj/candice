@@ -1,0 +1,16 @@
+type T;
+type R;
+
+import arrT, T, "./array.cd";
+import arrR, R, "./array.cd";
+
+func map(array01 arrT.Array, transform func (*T) R) arrR.Array {
+    array02 := arrR.with_capacity(array01.length);
+
+    for i := 0; i < array02.capacity; i = i + 1 {
+        t := transform(arrT.get_ref(array01, i));
+        arrR.push(&array02, t);
+    }
+
+    return array02;
+}

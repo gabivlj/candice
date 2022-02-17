@@ -1,0 +1,54 @@
+type T
+
+
+struct Array {
+    ptr *T
+    length i32
+    capacity i32
+}
+
+func with_capacity(capacity i32) Array {
+    ptr := @alloc(T, capacity);
+    return @Array {
+        ptr: ptr,
+        length: 0,
+        capacity: capacity,
+    };
+}
+
+func push(arr *Array, element T) {
+    if arr.length >= arr.capacity {
+        arr.capacity = arr.capacity * 2 + 1;
+        arr.ptr = @realloc(arr.ptr, arr.capacity);
+    }
+
+    arr.ptr[arr.length] = element;
+    arr.length = arr.length + 1;
+}
+
+func _panic() {
+    *(0 as *i8);
+}
+
+func pop(arr *Array) T {
+    if arr.length == 0 {
+        _panic();
+    }
+
+    arr.length = arr.length - 1;
+    return arr.ptr[arr.length];
+}
+
+func for_each(arr Array, action func(*T) void) {
+    for i := 0; i < arr.length; i = i + 1 {
+        action(&arr.ptr[i]);
+    }
+}
+
+func get_ref(arr Array, i i32) *T {
+    return &arr.ptr[i];
+}
+
+func get(arr Array, i i32) T {
+    return arr.ptr[i];
+}
