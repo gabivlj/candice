@@ -178,6 +178,23 @@ func (l *Lexer) readString() string {
 	s := ""
 	l.readChar()
 	for l.ch != '"' && l.ch != 0 {
+		if l.ch == '\\' {
+			// It's a jumpline
+			if l.peekChar() == 'n' {
+				l.readChar()
+				l.readChar()
+				s += string(byte(10))
+				continue
+			}
+
+			// Read it as a literal
+			s += string(l.ch)
+			l.readChar()
+			s += string(l.ch)
+			l.readChar()
+			continue
+		}
+
 		s += string(l.ch)
 		l.readChar()
 	}
