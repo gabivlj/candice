@@ -1,5 +1,7 @@
 ## Candice
 
+![Hello Candice Code Snippet](./screenshots/carbon.png)
+
 Dead simple programming language.
 Not expected to be prepared for a real developer environment but can
 be fun to work with.
@@ -7,9 +9,9 @@ be fun to work with.
 ## Philosophy
 
 - Simple syntax.
-- Low level capabilities.
+- 'Low level' capabilities.
 - C interoperability.
-- Compiled and strongly typed.
+- Compiled with LLVM and typed.
 
 ## Installation and tutorials
 

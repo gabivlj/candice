@@ -197,6 +197,7 @@ func (l *Lexer) readString() string {
 		s += string(l.ch)
 		l.readChar()
 	}
+
 	return s
 }
 
