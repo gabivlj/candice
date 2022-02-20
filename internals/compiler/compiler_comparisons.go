@@ -11,14 +11,39 @@ import (
 )
 
 func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.Value {
-
-	if _, isFloat := expr.Type.(*ctypes.Float); isFloat {
-		panic("can't use floats yet")
+	if _, isFloat := expr.Left.GetType().(*ctypes.Float); isFloat {
+		return c.block().NewFCmp(
+			c.getFPredComparison(expr.Operation, expr.Left.GetType()),
+			c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)),
+		)
 	}
 
 	return c.block().NewICmp(c.getIPredComparison(expr.Operation, expr.Left.GetType()),
-		c.loadIfPointer(c.compileExpression(expr.Left)),
+		c.loadIfPointer(c.loadIfPointer(c.compileExpression(expr.Left))),
 		c.loadIfPointer(c.compileExpression(expr.Right)))
+}
+
+func (c *Compiler) getFPredComparison(op ops.Operation, t ctypes.Type) enum.FPred {
+	if _, ok := t.(*ctypes.Float); ok {
+		switch op {
+		case ops.GreaterThanEqual:
+			return enum.FPredOGE
+		case ops.GreaterThan:
+			return enum.FPredOGT
+		case ops.LessThan:
+			return enum.FPredOLT
+		case ops.LessThanEqual:
+			return enum.FPredOLE
+		case ops.Equals:
+			return enum.FPredOEQ
+		case ops.NotEquals:
+			return enum.FPredONE
+		}
+	}
+
+	c.exit("cant handle this type of float " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
+	panic("")
 }
 
 func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPred {
@@ -56,5 +81,6 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 		}
 	}
 
-	panic("cant handle this type of integer " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
+	c.exit("cant handle this type of integer " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
+	panic("")
 }

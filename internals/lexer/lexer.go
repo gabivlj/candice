@@ -119,7 +119,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '+':
 		tok = l.peekerForTwoChars('+', l.newToken(token.PLUS, l.ch), token.DOUBLE_PLUS)
 	case '-':
-		tok = l.newToken(token.MINUS, l.ch)
+		tok = l.peekerForTwoChars('-', l.newToken(token.MINUS, l.ch), token.DOUBLE_MINUS)
 	case '/':
 		tok = l.newToken(token.SLASH, l.ch)
 	case '*':

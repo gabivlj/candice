@@ -15,7 +15,8 @@ func (c *Compiler) toBool(value value.Value) value.Value {
 		}
 		return c.block().NewICmp(enum.IPredNE, value, zero)
 	}
-	panic("can't pass to a boolean the value: " + value.String())
+	c.exit("can't pass to a boolean the value: " + value.String())
+	panic("")
 }
 
 // handleIntegerCast tries to pass variable type to toReturnType
@@ -60,7 +61,8 @@ func (c *Compiler) handleFloatIntCast(typeParameter ctypes.Type, parameter ctype
 		return c.intToFloat(toReturn.(*types.FloatType), variable, ctypes.IsUnsignedInteger(parameter))
 	}
 
-	panic("atleast one parameter need to be a float")
+	c.exit("atleast one parameter need to be a float")
+	panic("")
 }
 
 func (c *Compiler) floatToInt(toReturn *types.IntType, variable value.Value, isUnsigned bool) value.Value {

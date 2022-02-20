@@ -110,6 +110,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
 	p.registerPrefixHandler(token.LBRACKET, p.parseStaticArray)
 	p.registerPrefixHandler(token.DOUBLE_PLUS, p.parsePrefixExpression)
+	p.registerPrefixHandler(token.DOUBLE_MINUS, p.parsePrefixExpression)
 
 	return p
 }

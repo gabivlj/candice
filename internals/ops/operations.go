@@ -25,6 +25,7 @@ const (
 	NotEquals
 	Assigns
 	AddOne
+	SubtractOne
 	TempAssign
 
 	// Dot is useful for struct access
@@ -83,6 +84,11 @@ func (o Operation) String() string {
 		return "."
 	case As:
 		return "as"
+	case AddOne:
+		return "++"
+	case SubtractOne:
+		return "--"
+
 	}
 
 	panic("unknown operand: " + strconv.FormatInt(int64(o), 10))

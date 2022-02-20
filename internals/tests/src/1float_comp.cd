@@ -1,0 +1,10 @@
+func main() {
+    x := 1.0
+    y := 2.0
+    if x == y @print("bad")
+    if x > y @print("bad1")
+    if x >= y @print("bad2") 
+    y = 1.0;
+    if x != y @print("bad3")
+
+}

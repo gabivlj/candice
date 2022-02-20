@@ -740,7 +740,7 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 		return t
 	}
 
-	if prefixOperation.Operation == ops.AddOne {
+	if prefixOperation.Operation == ops.AddOne || prefixOperation.Operation == ops.SubtractOne {
 		if !ctypes.IsNumeric(t) {
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 			return t

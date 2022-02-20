@@ -844,8 +844,18 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 		return c.block().NewMul(prefixValue, negativeOne)
 	}
 
-	if prefix.Operation == ops.AddOne {
-		newValue := c.addOne(c.loadIfPointer(prefixValue))
+	if prefix.Operation == ops.AddOne || prefix.Operation == ops.SubtractOne {
+		if !types.IsPointer(prefixValue.Type()) {
+			c.exitErrorExpression("the right side of the value was not a variable to store on", prefix)
+		}
+
+		var newValue value.Value
+		if prefix.Operation == ops.AddOne {
+			newValue = c.addOne(c.loadIfPointer(prefixValue))
+		} else if prefix.Operation == ops.SubtractOne {
+			newValue = c.subtractOne(c.loadIfPointer(prefixValue))
+		}
+
 		c.block().NewStore(newValue, prefixValue)
 		return prefixValue
 	}
@@ -876,7 +886,18 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 		return c.block().NewICmp(enum.IPredEQ, c.toBool(c.loadIfPointer(prefixValue)), zero)
 	}
 
+	c.exitErrorExpression("unknown prefix", prefix)
 	return nil
+}
+
+func (c *Compiler) exit(message string) {
+	logger.Error("Internal error", "Unknown internal error has happened, check below for more details", "\n"+message)
+	os.Exit(1)
+}
+
+func (c *Compiler) exitErrorExpression(message string, node ast.Expression) {
+	logger.Error("Compiler", message, fmt.Sprintf("\non [%d:%d]: ", node.GetToken().Line, node.GetToken().Position)+node.String())
+	os.Exit(1)
 }
 
 // NOTE: change of plans, we are now loading identifiers stack references and if the caller needs it we
@@ -925,7 +946,8 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 		return fn.Value
 	}
 
-	panic("Variable doesn't exist.")
+	c.exit("Variable doesn't exist.")
+	panic("")
 }
 
 func (c *Compiler) retrieveLocalVariable(name string) value.Value {
@@ -946,7 +968,8 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 		return fun(c, ast)
 	}
 
-	panic("undefined builtin function @" + ast.Name)
+	c.exit("undefined builtin function @" + ast.Name)
+	panic("")
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
@@ -1011,7 +1034,8 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 	struktType, ok := possibleStruct.candiceType.(*ctypes.Struct)
 
 	if !ok {
-		panic(fmt.Sprintf("expected struct but got a %s", possibleStruct.candiceType))
+		c.exit(fmt.Sprintf("expected struct but got a %s", possibleStruct.candiceType))
+		panic("")
 	}
 
 	// Allocate in stack memory
@@ -1153,7 +1177,7 @@ func getName(expr ast.Expression) (string, bool) {
 	if bin, ok := expr.(*ast.Identifier); ok {
 		return bin.Name, true
 	}
-	panic("?? " + expr.String())
+	panic("INTERNAL ERROR: " + expr.String())
 }
 
 func (c *Compiler) compileModuleAccess(expr *ast.BinaryOperation) value.Value {
@@ -1184,7 +1208,7 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 			leftStruct = c.loadIfPointer(leftStruct)
 			s, ok = leftStruct.Type().(*types.PointerType)
 			if !ok {
-				panic("not a struct " + leftStruct.Type().String() + " " + expr.String())
+				c.exit("not a struct " + leftStruct.Type().String() + " " + expr.String())
 			}
 		}
 		if ctypes.IsPointer(currentCandiceType) {
@@ -1239,6 +1263,13 @@ func (c *Compiler) addOne(v value.Value) value.Value {
 	return c.block().NewAdd(v, constant.NewInt(v.Type().(*types.IntType), 1))
 }
 
+func (c *Compiler) subtractOne(v value.Value) value.Value {
+	if types.IsFloat(v.Type()) {
+		return c.block().NewFSub(v, constant.NewFloat(v.Type().(*types.FloatType), 1.0))
+	}
+	return c.block().NewSub(v, constant.NewInt(v.Type().(*types.IntType), 1))
+}
+
 func (c *Compiler) compileMultiply(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
@@ -1269,7 +1300,9 @@ func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
 	if types.IsFloat(leftValue.Type()) {
 		return c.block().NewFDiv(leftValue, rightValue)
 	}
-	panic("can't divide these types")
+	c.exitErrorExpression("can't divide these types", expr)
+	panic("")
+
 }
 
 func (c *Compiler) compileAndBinary(expr *ast.BinaryOperation) value.Value {
@@ -1351,5 +1384,6 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		return c.block().NewBitCast(variable, toReturnType)
 	}
 
-	panic("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
+	c.exit("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
+	panic("")
 }

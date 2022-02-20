@@ -9,14 +9,20 @@ func main() {
         @print("bad2...")
     }
     if value != 2 @print("bad3...")
+    
     j := 0
     for i := 0; i < 100; ++i {
         if i != j {
             @print("bad", i)
         }
-        ++j
+        ++j;
     }
+
     if j != 100 {
         @print("BAD LOOP")
+    }
+
+    for j >= 0 {
+        --j;
     }
 }
