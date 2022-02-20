@@ -21,6 +21,16 @@ func (i *Integer) IsTruthy() bool {
 	return i.Value != 0
 }
 
+type Float struct {
+	Value int64
+}
+
+func (i *Float) constantValue() {}
+
+func (i *Float) IsTruthy() bool {
+	return i.Value != 0
+}
+
 type Error struct {
 	Message string
 	Token   token.Token

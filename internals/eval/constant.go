@@ -1,6 +1,8 @@
 package eval
 
-import "github.com/gabivlj/candice/internals/ast"
+import (
+	"github.com/gabivlj/candice/internals/ast"
+)
 
 func EvaluateConstantExpression(expression ast.Expression) Value {
 	switch typedExpression := expression.(type) {

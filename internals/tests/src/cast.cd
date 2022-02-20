@@ -24,4 +24,7 @@ func main() {
     integerToFloat64 : f64 = @cast(f64, 100) * @cast(f64, 0.01);
     @print(integerToFloat32)
     @print(integerToFloat64)
+
+    float32ToFloat64 := 0.0 as f64
+    float64ToFloat32 := 0.0 as f64 as f32
 }

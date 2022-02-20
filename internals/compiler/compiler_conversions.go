@@ -44,12 +44,13 @@ func (c *Compiler) handleNumericBitCast(toReturnType types.Type, variable value.
 
 func (c *Compiler) handleFloatCast(toReturnType *types.FloatType, variable value.Value) value.Value {
 	variableType := variable.Type().(*types.FloatType)
-	if variableType.Kind == types.FloatKindFloat && toReturnType.Kind == types.FloatKindFloat {
+	if variableType.Kind == types.FloatKindDouble && toReturnType.Kind == types.FloatKindFloat {
 		return c.block().NewFPTrunc(variable, toReturnType)
 	}
 	if variableType.Kind == toReturnType.Kind {
 		return variable
 	}
+
 	return c.block().NewFPExt(variable, toReturnType)
 }
 
