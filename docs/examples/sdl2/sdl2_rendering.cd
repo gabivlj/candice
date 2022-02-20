@@ -1,0 +1,165 @@
+struct SDL_Window {}
+struct SDL_Renderer {}
+
+type Driver = i32;
+
+struct Rectangle {
+    x i32
+    y i32
+    w i32
+    h i32
+}
+
+struct FRectangle {
+    x f32
+    y f32
+    w f32
+    h f32
+}
+
+struct SDL_Keysym {
+    scancode u32
+    sym i32
+    mod u16 
+    unused u32
+}
+
+struct KeyboardEvent {
+    kind u32
+    timestamp u32
+    window_id u32
+    state u8
+    repeat u8
+    padding u8
+    padding2 u8
+    keysym SDL_Keysym
+}
+
+extern func SDL_RenderDrawRect(*SDL_Renderer, *Rectangle) void
+extern func SDL_RenderFillRect(*SDL_Renderer, *Rectangle) void
+extern func SDL_RenderFillRectF(*SDL_Renderer, *FRectangle) void
+extern func SDL_Init(u32) i32
+extern func atexit(func() void) void
+extern func SDL_Quit() void
+extern func SDL_Delay(u32) void
+extern func SDL_CreateWindow(*i8, i32, i32, i32, i32, u32) *SDL_Window
+extern func SDL_GetWindowSurface(*SDL_Window) *i8
+extern func SDL_DestroyWindow(*SDL_Window) void
+extern func SDL_UpdateWindowSurface(*SDL_Window) void
+extern func SDL_CreateRenderer(*SDL_Window, Driver, u32) *SDL_Renderer
+extern func SDL_SetRenderDrawColor(*SDL_Renderer, i32, i32, i32, i32) i32;
+extern func SDL_RenderClear(*SDL_Renderer) void;
+extern func SDL_RenderPresent(*SDL_Renderer) void;
+extern func SDL_GetPerformanceCounter() u64;
+extern func SDL_GetPerformanceFrequency() u64;
+extern func SDL_GetTicks() u32;
+
+struct Event {
+    kind u32
+    // to be honest don't know the side of this struct, just put a bunch of padding just in case
+    padding [52]i8
+}
+
+extern func SDL_PollEvent(*Event) i32
+
+func poll_event(event *Event) i32 {
+    return SDL_PollEvent(event)
+}
+
+func quit() {
+    SDL_Quit();
+}
+
+
+struct Window {
+    _w  *SDL_Window
+}
+
+CENTERED := 805240832
+INIT_VIDEO := 0x00000020
+
+func create_window(
+    width i32,
+    height i32,
+    title *i8
+) Window {    
+    SDL_Init(INIT_VIDEO as u32);
+
+    window := SDL_CreateWindow(
+        title,
+        CENTERED, CENTERED, width, height, @cast(u32, 128)
+    );
+
+    return @Window{
+        _w: window,
+    };
+}
+
+QUIT := 768;
+
+func sdl() i32 {    
+        
+    w := create_window(1000, 1000, "hello world");    
+    renderer := SDL_CreateRenderer(w._w, -1, 0x2 as u32);
+    doQuit := 0
+    event := @Event{}
+    rect := @FRectangle{
+        x: 0.0,
+        y: 0.0,
+        w: 100.0,
+        h: 100.0,
+    };
+
+    keydown := 0x300;
+    up := 0x40000052
+    current_ticks := SDL_GetPerformanceCounter();
+    previous_ticks := 0 as u64;
+    UPDATE_FREQ := 60;
+    CYCLE_TIME := (1.0 as f64) / UPDATE_FREQ as f64;
+    accumulated_seconds := 0.0 as f64;
+    current_ticks_f := 0 as u64;
+    previous_ticks_f := 0 as u64;
+    
+    for !doQuit {
+        current_ticks = SDL_GetPerformanceCounter();    
+        delta := current_ticks - previous_ticks;
+        previous_ticks = current_ticks;
+        elapsed := (delta as f64) / (SDL_GetPerformanceFrequency() as f64);        
+        accumulated_seconds = accumulated_seconds + elapsed;
+
+        if accumulated_seconds > CYCLE_TIME { 
+            accumulated_seconds = -CYCLE_TIME;
+
+            // Calculate tick physics.
+            current_ticks_f = SDL_GetPerformanceCounter();
+            delta_f := current_ticks_f - previous_ticks_f;
+            previous_ticks_f = current_ticks_f
+            elapsed_f := (delta_f as f32) / (SDL_GetPerformanceFrequency() as f32);
+            
+            for poll_event(&event) {                        
+                
+                if event.kind == keydown as u32 {                
+                    eventKeyboard := &event as *KeyboardEvent;                    
+                    if eventKeyboard.keysym.sym == up {
+                        rect.x = (100.0 * elapsed_f) + rect.x;
+                    } else {
+                        doQuit = 1;
+                    }
+                }            
+            }
+
+            SDL_SetRenderDrawColor(renderer, 100, 0, 0, 255);            
+            SDL_RenderClear(renderer);       
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);            
+            SDL_SetRenderDrawColor(renderer, 100, 100, 0, 255);  
+            SDL_RenderFillRectF(renderer, &rect);         
+            SDL_RenderPresent(renderer);         
+        } else {
+            SDL_Delay(1 as u32);
+        }
+    }
+
+    SDL_DestroyWindow(w._w);
+    quit();
+    return 0
+}
