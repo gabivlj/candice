@@ -76,12 +76,13 @@ const (
 	IMPORT = TypeToken("IMPORT")
 	FOR    = TypeToken("FOR")
 
-	BREAK      = TypeToken("BREAK")
-	CONTINUE   = TypeToken("CONTINUE")
-	EXTERN     = TypeToken("EXTERN")
-	AS         = TypeToken("AS")
-	MACRO_IF   = TypeToken("#IF")
-	DOUBLE_DOT = TypeToken("..")
+	BREAK       = TypeToken("BREAK")
+	CONTINUE    = TypeToken("CONTINUE")
+	EXTERN      = TypeToken("EXTERN")
+	AS          = TypeToken("AS")
+	MACRO_IF    = TypeToken("#IF")
+	DOUBLE_DOT  = TypeToken("..")
+	DOUBLE_PLUS = TypeToken("++")
 )
 
 var keywords = map[string]TypeToken{

@@ -109,6 +109,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.FLOAT, p.parseFloat)
 	p.registerPrefixHandler(token.LPAREN, p.parseParenthesisPrefix)
 	p.registerPrefixHandler(token.LBRACKET, p.parseStaticArray)
+	p.registerPrefixHandler(token.DOUBLE_PLUS, p.parsePrefixExpression)
 
 	return p
 }
@@ -600,6 +601,7 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 		Right:     p.parseExpression(p.precedencePrefix()),
 		Operation: op,
 	}
+
 	return left
 }
 

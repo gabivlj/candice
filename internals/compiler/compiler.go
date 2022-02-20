@@ -844,6 +844,12 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 		return c.block().NewMul(prefixValue, negativeOne)
 	}
 
+	if prefix.Operation == ops.AddOne {
+		newValue := c.addOne(c.loadIfPointer(prefixValue))
+		c.block().NewStore(newValue, prefixValue)
+		return prefixValue
+	}
+
 	if prefix.Operation == ops.BinaryAND {
 		// This means that we are referencing a variable that either:
 		// * Has just been returned by a function, (func whatever() i32; whatever(); << we are on i32 instead of *i32)
@@ -1224,6 +1230,13 @@ func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
 		return c.block().NewFAdd(leftValue, rightValue)
 	}
 	return c.block().NewAdd(leftValue, rightValue)
+}
+
+func (c *Compiler) addOne(v value.Value) value.Value {
+	if types.IsFloat(v.Type()) {
+		return c.block().NewFAdd(v, constant.NewFloat(v.Type().(*types.FloatType), 1.0))
+	}
+	return c.block().NewAdd(v, constant.NewInt(v.Type().(*types.IntType), 1))
 }
 
 func (c *Compiler) compileMultiply(expr *ast.BinaryOperation) value.Value {

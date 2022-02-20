@@ -24,7 +24,7 @@ const (
 	Equals
 	NotEquals
 	Assigns
-
+	AddOne
 	TempAssign
 
 	// Dot is useful for struct access

@@ -740,6 +740,23 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 		return t
 	}
 
+	if prefixOperation.Operation == ops.AddOne {
+		if !ctypes.IsNumeric(t) {
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+			return t
+		}
+
+		if _, isInteger := prefixOperation.Right.(*ast.Integer); !isInteger {
+			if _, isFloat := prefixOperation.Right.(*ast.Float); isFloat {
+				s.error("you can't add a number literal", prefixOperation.Token)
+			}
+		} else {
+			s.error("you can't add a number literal", prefixOperation.Token)
+		}
+
+		return t
+	}
+
 	// We make this if because maybe in the future we don't want to '-' unsigned integers?
 	if prefixOperation.Operation == ops.Subtract {
 		if !ctypes.IsNumeric(t) {
