@@ -24,13 +24,12 @@ type Parser struct {
 	lexer        *lexer.Lexer
 	ID           string
 
-	prefixFunc                      map[token.TypeToken]prefixFunc
-	infixFunc                       map[token.TypeToken]infixFunc
-	explicitLiteralTypeDeclarations map[string]ctypes.Type
-	Errors                          []error
-	TypeParameters                  []ctypes.Type
-	definedGenericTypes             map[string]ctypes.Type
-	currentTypeParameter            int
+	prefixFunc           map[token.TypeToken]prefixFunc
+	infixFunc            map[token.TypeToken]infixFunc
+	Errors               []error
+	TypeParameters       []ctypes.Type
+	definedGenericTypes  map[string]ctypes.Type
+	currentTypeParameter int
 }
 
 func (p *Parser) registerPrefixHandler(tokenType token.TypeToken, prefixFunc prefixFunc) {
@@ -61,14 +60,14 @@ func (p *Parser) addErrorMessage(message string) {
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
-		lexer:                           l,
-		prefixFunc:                      map[token.TypeToken]prefixFunc{},
-		infixFunc:                       map[token.TypeToken]infixFunc{},
-		Errors:                          []error{},
-		ID:                              random.RandomString(10),
-		definedGenericTypes:             map[string]ctypes.Type{},
-		explicitLiteralTypeDeclarations: map[string]ctypes.Type{},
+		lexer:               l,
+		prefixFunc:          map[token.TypeToken]prefixFunc{},
+		infixFunc:           map[token.TypeToken]infixFunc{},
+		Errors:              []error{},
+		ID:                  random.RandomString(10),
+		definedGenericTypes: map[string]ctypes.Type{},
 	}
+
 	p.initBuiltinFunctions()
 	p.nextToken()
 	p.nextToken()
@@ -544,6 +543,7 @@ func (p *Parser) parseType() ctypes.Type {
 
 			parameters = append(parameters, p.parseType())
 		}
+
 		p.expect(token.RPAREN)
 		p.nextToken()
 		var returnType ctypes.Type
@@ -553,7 +553,10 @@ func (p *Parser) parseType() ctypes.Type {
 			returnType = p.parseType()
 		} else if p.currentToken.Type == token.LBRACKET {
 			returnType = p.parseType()
+		} else {
+			returnType = ctypes.VoidType
 		}
+
 		return &ctypes.Function{
 			Name:               ast.CreateIdentifier(name, p.ID),
 			Parameters:         parameters,

@@ -11,6 +11,7 @@ import (
 
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/eval"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
@@ -33,7 +34,6 @@ type Semantic struct {
 	insideBreakableBlock          bool
 	modules                       map[string]*Semantic
 	Root                          *ast.Program
-	Compiled                      bool
 }
 
 var paths map[string]*Semantic = map[string]*Semantic{}
@@ -401,6 +401,7 @@ func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
 
 func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationStatement) {
 	ctype := s.analyzeExpression(declaration.Expression)
+	declaration.Expression = eval.SimplifyExpression(declaration.Expression)
 
 	declType := declaration.Type
 

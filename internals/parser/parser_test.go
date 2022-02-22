@@ -289,7 +289,7 @@ break
 		},
 		{
 			expression: `extern func thing(i32, i32, i32);`,
-			expected: `extern func thing(i32, i32, i32);
+			expected: `extern func thing(i32, i32, i32) void;
 `,
 		},
 		{

@@ -1,0 +1,11 @@
+variable := 3 as i64
+variable2 := 3 as i32
+variable3 := 3 as i16
+variable4 := 3 as i8
+
+func main() {
+    copy : i64 = variable
+    copy2 : i32 = variable2
+    copy3 : i16 = variable3
+    copy4 : i8 = variable4
+}
