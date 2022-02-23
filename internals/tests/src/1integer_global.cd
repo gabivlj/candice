@@ -2,10 +2,18 @@ variable := 3 as i64
 variable2 := 3 as i32
 variable3 := 3 as i16
 variable4 := 3 as i8
+uvariable := 3 as u8
+uvariable1 := 3 as u16
+uvariable2 := 3 as u32
+uvariable3 := 3 as u64
 
 func main() {
     copy : i64 = variable
     copy2 : i32 = variable2
     copy3 : i16 = variable3
     copy4 : i8 = variable4
+    copy5 : u8 = uvariable
+    copy6 : u16 = uvariable1
+    copy7 : u32 = uvariable2
+    copy8 : u64 = uvariable3
 }

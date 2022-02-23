@@ -1,0 +1,22 @@
+func main() {    
+    element(3);
+}
+
+func element(t i32) {
+    if t != 3 {
+        @print("hello")
+    }
+    c := 4
+    t := 3 as i64
+    if t != 3 as i64 @print("hello bad 1")
+    {
+        t := 3 as i16
+        if t != 3 as i16 @print("hello bad 2")
+        {
+            t := 3 as i8
+            if t != 3 as i8 @print("hello bad 3")
+        }
+        if t != 3 as i16 @print("hello bad 2")
+    }    
+    if t != 3 as i64 @print("hello bad 1")
+}

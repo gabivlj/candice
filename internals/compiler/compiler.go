@@ -115,6 +115,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 
 // A small context stores variables stored by the current scope defined by if and for statements.
 func (c *Compiler) createSmallContext() {
+	c.stacks = append(c.stacks, map[string]value.Value{})
 	c.definitionsToBePopped = append(c.definitionsToBePopped, "<>")
 }
 
@@ -128,6 +129,7 @@ func (c *Compiler) removeCurrentSmallContext() {
 	for i = len(c.definitionsToBePopped) - 1; c.definitionsToBePopped[i] != "<>"; i-- {
 		delete(stack, c.definitionsToBePopped[i])
 	}
+	c.stacks = c.stacks[:len(c.stacks)-1]
 	c.definitionsToBePopped = c.definitionsToBePopped[:i]
 }
 
@@ -533,7 +535,7 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 	c.pushBlock(llvmFunction.NewBlock(funk.FunctionType.Name))
 
 	// Create a variable stack isolated from the rest of variable definitions
-	c.stacks = append(c.stacks, map[string]value.Value{})
+	// c.stacks = append(c.stacks, map[string]value.Value{})
 
 	// Declare parameters IR
 	for _, param := range llvmFunction.Params {
@@ -563,7 +565,7 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 
 	// Pop block, stack and restore current function
 	c.popBlock()
-	c.stacks = c.stacks[:len(c.stacks)-1]
+	// c.stacks = c.stacks[:len(c.stacks)-1]
 	c.currentFunction = prevFunction
 }
 
@@ -946,7 +948,7 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 		return fn.Value
 	}
 
-	c.exit("Variable doesn't exist.")
+	c.exit(fmt.Sprintf("Variable %s, %v doesn't exist.", name, c.stack()))
 	panic("")
 }
 
