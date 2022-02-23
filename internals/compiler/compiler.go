@@ -118,8 +118,6 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 
 // A small context stores variables stored by the current scope defined by if and for statements.
 func (c *Compiler) createSmallContext() {
-	// c.stacks = append(c.stacks, map[string]value.Value{})
-	// c.definitionsToBePopped = append(c.definitionsToBePopped, "<>")
 	c.variables.Add("<>", nil)
 }
 

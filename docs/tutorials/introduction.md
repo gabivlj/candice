@@ -2,7 +2,7 @@
 
 Candice is a simple programming language to use. It uses LLVM under the hood as
 the intermediate representation, and can be used on all machines that is compiled to, but you still need a linker/compiler
-to link your generated programs, but Candice out of the box will manage it for you if you have one installed.
+to link your generated objects, but Candice out of the box will manage it for you if you have one installed.
 
 It targets to be a simple language to write C-like code, but with a different syntax and more features.
 The syntax of Candice wants to be a mix of Golang, C and Rust. You'll find out as the tutorial goes on!
@@ -13,6 +13,7 @@ The syntax of Candice wants to be a mix of Golang, C and Rust. You'll find out a
 - If you want to build the compiler with LLVM included, so that we don't need Clang to compile programs,
   you need to install LLVM in your machine and add it in your PATH. If you don't know how search up how to install
   LLVM in your machine.
+- If you don't have LLVM, Candice will default to clang usage.
 
 Once you are set with those steps, go to cmd/build and execute:
 

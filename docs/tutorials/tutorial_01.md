@@ -57,6 +57,14 @@ candice run . --release
 It will also make appear a Hello world, but when you want to have a more optimized binary
 you should run candice with that flag.
 
+If you just want a binary to deploy somewhere, do:
+
+```bash
+candice build . --release
+```
+
+This will generate a binary of your current OS.
+
 ### Variables
 
 A variable declaration looks like this on candice:
@@ -638,6 +646,44 @@ You can create blocks of code as well.
 } // You can't use variable anymore
 
 ```
+
+### Order of declaration
+
+On candice you can declare in the order you want functions and structs.
+
+### Global Variables
+
+Global variables can only be initalised with constant expressions, at the moment constant expressions in candice
+are string literals, numbers, and number casts.
+
+### Variable shadowing
+
+This is totally valid Candice code.
+
+```go
+
+func thing(x i32) {
+    // redeclare x as a i64
+    x := 0 as i64;
+    {
+        // redeclare x in this block as a i16
+        x := 1 as i16
+        @print(x) // 1
+    }
+    @print(x) // 0
+}
+
+```
+
+### Undefined number of parameters on C functions
+
+You can declare printf C functions that accept and undefined number of parameters like this:
+
+```go
+extern func printf(*i8, ..);
+```
+
+Candice doesn't have any plans of supporting infinite number of variables on candice functions.
 
 ## Problems?
 
