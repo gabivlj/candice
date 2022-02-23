@@ -11,6 +11,7 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/semantic"
+	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/logger"
 	"github.com/gabivlj/candice/pkg/random"
 	"github.com/llir/llvm/ir"
@@ -36,11 +37,12 @@ type Compiler struct {
 	// Defined values
 	globalBuiltinDefinitions map[string]value.Value
 
-	builtins              map[string]func(*Compiler, *ast.BuiltinCall) value.Value
-	definitionsToBePopped []string
-	stacks                []map[string]value.Value
-	globalVariables       map[string]*Value
-	currentFunction       *ir.Func
+	builtins        map[string]func(*Compiler, *ast.BuiltinCall) value.Value
+	globalVariables map[string]*Value
+
+	variables *undomap.UndoMap[string, value.Value]
+
+	currentFunction *ir.Func
 
 	// Flag to indicate caller that this value shouldn't be loaded into memory
 	// This flag will be set to false again once loadIfPointer is called.
@@ -90,14 +92,15 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		globalBuiltinDefinitions: globalBuiltinDefinitions,
 		builtins:                 builtins,
 		types:                    map[string]*Type{},
-		definitionsToBePopped:    []string{"<>"},
-		stacks:                   []map[string]value.Value{{}},
+		variables:                undomap.New[string, value.Value](),
 		globalVariables:          globalVariables,
 		currentFunction:          nil,
 		context:                  context,
 		modules:                  map[string]*Compiler{},
 		compiledModules:          compiledModules,
 	}
+
+	c.variables.Add("<>", nil)
 
 	if len(parent) > 0 {
 		// necessary because we need references to types defined before importing.
@@ -115,31 +118,19 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 
 // A small context stores variables stored by the current scope defined by if and for statements.
 func (c *Compiler) createSmallContext() {
-	c.stacks = append(c.stacks, map[string]value.Value{})
-	c.definitionsToBePopped = append(c.definitionsToBePopped, "<>")
-}
-
-func (c *Compiler) addToCurrentSmallContext(variable string) {
-	c.definitionsToBePopped = append(c.definitionsToBePopped, variable)
+	// c.stacks = append(c.stacks, map[string]value.Value{})
+	// c.definitionsToBePopped = append(c.definitionsToBePopped, "<>")
+	c.variables.Add("<>", nil)
 }
 
 func (c *Compiler) removeCurrentSmallContext() {
-	var i int
-	stack := c.stack()
-	for i = len(c.definitionsToBePopped) - 1; c.definitionsToBePopped[i] != "<>"; i-- {
-		delete(stack, c.definitionsToBePopped[i])
+	for s, _ := c.variables.Pop(); s != "<>"; s, _ = c.variables.Pop() {
 	}
-	c.stacks = c.stacks[:len(c.stacks)-1]
-	c.definitionsToBePopped = c.definitionsToBePopped[:i]
 }
 
 func (c *Compiler) pushBlock(block *ir.Block) {
 	c.blocks = append(c.blocks, block)
 	c.createSmallContext()
-}
-
-func (c *Compiler) stack() map[string]value.Value {
-	return c.stacks[len(c.stacks)-1]
 }
 
 func (c *Compiler) block() *ir.Block {
@@ -717,8 +708,7 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 }
 
 func (c *Compiler) declare(name string, value value.Value) {
-	c.stack()[name] = value
-	c.addToCurrentSmallContext(name)
+	c.variables.Add(name, value)
 }
 
 func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
@@ -948,20 +938,12 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 		return fn.Value
 	}
 
-	c.exit(fmt.Sprintf("Variable %s, %v doesn't exist.", name, c.stack()))
+	c.exit(fmt.Sprintf("Variable %s doesn't exist.", name))
 	panic("")
 }
 
 func (c *Compiler) retrieveLocalVariable(name string) value.Value {
-	for i := len(c.stacks) - 1; i >= 0; i-- {
-		identifier := c.stacks[i][name]
-
-		if identifier != nil {
-			return identifier
-		}
-	}
-
-	return nil
+	return c.variables.Get(name)
 }
 
 /// Function calls
@@ -1186,11 +1168,11 @@ func (c *Compiler) compileModuleAccess(expr *ast.BinaryOperation) value.Value {
 	moduleName := expr.Left.(*ast.Identifier).Name
 	module := c.modules[moduleName]
 	// In case compileIdentifier tries to generate code or local variables
-	prevStack, prevBlock := module.stacks, module.blocks
-	module.stacks = c.stacks
+	prevStack, prevBlock := module.variables, module.blocks
+	module.variables = c.variables
 	module.blocks = c.blocks
 	identifier := module.compileIdentifier(expr.Right.(*ast.Identifier))
-	module.stacks = prevStack
+	module.variables = prevStack
 	module.blocks = prevBlock
 	c.doNotLoadIntoMemory = module.doNotLoadIntoMemory
 	module.doNotLoadIntoMemory = false
