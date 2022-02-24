@@ -336,20 +336,20 @@ struct Points {
 
 func main() {
     points := @Points{
-		points: @alloc(Point, 3),
-		number_of_points: 10 as u32
-	};
+        points: @alloc(Point, 3),
+        number_of_points: 10 as u32
+    };
 
-	@print(@sizeof(Points)); // 16 bytes
+    @print(@sizeof(Points)); // 16 bytes
 
-	points.points[0] = @Point{
-		x: 0.0 as f64,
-		y: 0.0 as f64,
-	};
+    points.points[0] = @Point{
+        x: 0.0 as f64,
+        y: 0.0 as f64,
+    };
 
-	points.points[0].x = points.points[0].x + (10.0 as f64);
+    points.points[0].x = points.points[0].x + (10.0 as f64);
 
-	@print(points.points[0].x); // 10.0
+    @print(points.points[0].x); // 10.0
 }
 
 ```
