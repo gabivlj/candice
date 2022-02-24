@@ -1,0 +1,80 @@
+struct inaddr {	saddr u32 }
+
+
+struct sockaddrin {
+	sin_family i16
+	sin_port u16
+	sin_addr inaddr
+    zero [8]i8
+}
+
+extern func socket(i32, i32, i32) i32;
+extern func bind(i32, *sockaddrin, u32) i32;
+extern func htons(u16) u16;
+extern func htonl(i32) u32;
+extern func close(i32) void;
+extern func bzero(*i8, i32);
+extern func inet_addr(*i8) u32;
+extern func listen(i32, i32) i32;
+extern func accept(i32, *sockaddrin, *i32) i32;
+extern func write(i32, *i8, i64);
+extern func setsockopt(i32, i32, i32, *i8, u64) i32;
+
+AF_INET := 2;
+SOCK_STREAM := 1;
+SOL_SOCKET := 0xffff;
+SO_REUSEADDR := 0x0004;
+
+
+func main() i32 {
+    PORT := 3010 as u16
+    INADDR_ANY := 0x00000000
+	addr := @sockaddrin{}
+    fd := socket(AF_INET, SOCK_STREAM, 0);    
+    if fd == -1 {
+        @print("socket creation failed...\n");
+        return 1;        
+    }
+
+    f := 1;
+    z := setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &f as *i8, 4 as u64)
+
+    if (-1 == z) {
+        @print("faill..", z)
+        return 1;
+    }
+
+    bzero(&addr as *i8, @sizeof(sockaddrin));
+    
+    addr.sin_family = AF_INET as i16;
+    addr.sin_addr.saddr = htonl(INADDR_ANY) as u32;
+    addr.sin_port = htons(PORT as u16);        
+    res := (bind(fd, &addr, @sizeof(sockaddrin) as u32));
+
+    if (res != 0) {
+        @print("socket bind failed...\n");
+        return 1;
+    } else {
+        @print("Socket successfully binded..\n");
+    }
+
+    if listen(fd, 5) != 0 {
+        @print("listen failed...");
+        return 1;
+    }
+
+    cli := @sockaddrin{}
+    bzero(&cli as *i8, @sizeof(sockaddrin));
+    connection := accept(fd, &cli, &@sizeof(sockaddrin));
+
+    if connection < 0 {
+        @print("failing accepting...\n")
+        return 1;
+    }
+
+    write(connection, "Hello World!", 11 as i64);
+
+	close(fd);
+    return 0;
+}
+
