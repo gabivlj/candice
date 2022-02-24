@@ -58,7 +58,7 @@ func Init() {
 
 	c := compiler.New(s)
 	c.Compile(tree)
-	err = c.GenerateExecutableExperimental(programName, "clang", objects, true)
+	err = c.GenerateExecutableExperimental(programName, "clang", objects, true, true)
 	if err != nil {
 		logger.Error("Internally At Compile Time", err.Error())
 		return

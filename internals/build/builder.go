@@ -86,8 +86,13 @@ func ExecuteProject() {
 		config.CompilerFlags = append(config.CompilerFlags, "-O3")
 	}
 
+	if config.BinaryKind == Object {
+		config.CompilerFlags = append(config.CompilerFlags, "-c")
+		config.Output += ".o"
+	}
+
 	if config.CompileKind == PureLLVM {
-		err := c.GenerateExecutableExperimental(config.Output, config.CXX, config.CompilerFlags, flags.Release)
+		err := c.GenerateExecutableExperimental(config.Output, config.CXX, config.CompilerFlags, flags.Release, config.BinaryKind != Object)
 		if err != nil {
 			logger.Error("Internally At Compile Time", err.Error())
 			return
@@ -106,6 +111,11 @@ func ExecuteProject() {
 	}
 
 	if flags.Mode == "run" {
+		if config.BinaryKind == Object {
+			logger.Error("you can't run a project that needs to an object!", "Consider setting 'binary' to 'exe' in candice.json")
+			return
+		}
+
 		cmd := exec.Command("./" + config.Output)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

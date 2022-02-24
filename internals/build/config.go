@@ -7,10 +7,14 @@ import (
 )
 
 type CompileKind string
+type BinaryKind string
 
 const (
 	PureLLVM CompileKind = "llvm"
-	CXX      CompileKind = "CXX"
+	CXX      CompileKind = "cxx"
+
+	Object BinaryKind = "obj"
+	Binary BinaryKind = "exe"
 )
 
 type ProjectConfiguration struct {
@@ -20,6 +24,7 @@ type ProjectConfiguration struct {
 	CompileKind   CompileKind `json:"kind"`
 	Output        string      `json:"output"`
 	CompilerFlags []string    `json:"flags"`
+	BinaryKind    BinaryKind  `json:"binary"`
 }
 
 func ParseConfiguration(reader io.Reader) (ProjectConfiguration, error) {

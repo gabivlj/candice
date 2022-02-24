@@ -265,11 +265,17 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	return nil
 }
 
-func (c *Compiler) GenerateExecutableExperimental(output string, cxx string, flags []string, optimized bool) error {
-	pathOutput, err := GenerateObjectLLVM(c.m, "output.o", optimized)
+func (c *Compiler) GenerateExecutableExperimental(output string, cxx string, flags []string, optimized bool, link bool) error {
+	objectOutput := output
+	pathOutput, err := GenerateObjectLLVM(c.m, objectOutput, optimized)
 	if err != nil {
 		return err
 	}
+
+	if !link {
+		return err
+	}
+
 	command := append(flags, pathOutput)
 	command = append(command, "-o", output)
 	// command = append(command, "-O3")
