@@ -817,6 +817,7 @@ func (p *Parser) parseIf() ast.Statement {
 	for p.currentToken.Type == token.ELSE {
 		p.nextToken()
 		if p.currentToken.Type != token.IF {
+			// expression := &ast.Integer{Node: &node.Node{Type: ctypes.I1}, In}
 			elseBlock = p.parseBlock()
 			break
 		} else if p.currentToken.Type == token.IF {

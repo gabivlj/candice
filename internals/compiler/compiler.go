@@ -584,11 +584,12 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 	strandedBlocks := []*ir.Block{}
 	block := c.currentFunction.NewBlock("if.then." + random.RandomString(10))
 	strandedBlocks = append(strandedBlocks, c.compileBlock(ifStatement.Block, block))
-	blockElse := c.currentFunction.NewBlock("if.else." + random.RandomString(10))
+	blockElseToJump := c.currentFunction.NewBlock("if.else." + random.RandomString(10))
 	blocks := []*ir.Block{block}
 	conditions := []ast.Expression{ifStatement.Condition}
 	if ifStatement.Else != nil {
-		strandedBlocks = append(strandedBlocks, c.compileBlock(ifStatement.Else, blockElse))
+		blockElse := c.compileBlock(ifStatement.Else, blockElseToJump)
+		strandedBlocks = append(strandedBlocks, blockElse)
 	}
 
 	for _, elseIf := range ifStatement.ElseIfs {
@@ -601,7 +602,7 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 	lastJumpToCondition := c.block()
 	for i, currentBlock := range blocks {
 
-		jumpToNextCondition := blockElse
+		jumpToNextCondition := blockElseToJump
 		if i+1 < len(blocks) {
 			jumpToNextCondition = c.currentFunction.NewBlock("leave." + random.RandomString(10))
 		}
@@ -635,10 +636,6 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 		if currentBlock.Term == nil {
 			currentBlock.NewBr(leaveBlock)
 		}
-	}
-
-	if blockElse.Term == nil {
-		blockElse.NewBr(leaveBlock)
 	}
 
 }
@@ -1232,10 +1229,10 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 
 	for {
 		rightName, last := getName(expr.Right)
-		i, field := candiceType.GetField(rightName)
+		i, field := candiceType.GetField(ast.RetrieveID(rightName))
 		var inner types.Type
 		inner = leftStruct.Type().(*types.PointerType).ElemType
-		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.NewInt(32), int64(i)))
+		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
 		leftStruct = ptr
 
 		// Previously here we were unwrapping pointer struct values now we don't...
@@ -1387,7 +1384,6 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		c.doNotLoadIntoMemory = true
 		return c.block().NewBitCast(variable, toReturnType)
 	}
-
 	c.exit("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
 	panic("")
 }

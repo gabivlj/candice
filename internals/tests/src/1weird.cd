@@ -1,0 +1,22 @@
+struct thing {
+    t i32
+}
+
+
+
+func main() i32 {
+    tt := 0;;
+    t := @thing{}
+    if 0 != 0 {
+        @print("s")
+        return 1;
+    } else {
+        
+    }
+
+    t.t = tt as i32;
+    t.t = 3;
+    t.t = 3;
+    t.t = 3;
+    return 0;
+}

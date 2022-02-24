@@ -1,8 +1,14 @@
 package undomap
 
+import "fmt"
+
 type UndoMap[K comparable, T any] struct {
 	values map[K][]T
 	stack  []K
+}
+
+func (u *UndoMap[K, T]) String() string {
+	return fmt.Sprintf("%v", u.values)
 }
 
 func New[K comparable, T any]() *UndoMap[K, T] {

@@ -342,14 +342,16 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 		if !ctypes.IsNumeric(condition) {
 			s.typeMismatchError(currentIf.Condition.String(), currentIf.GetToken(), ctypes.I32, condition)
 		}
+		s.returns = false
 		s.analyzeBlock(currentIf.Block)
 		if !s.returns {
 			doesReturn = false
-			s.returns = false
 		}
+		s.returns = false
 	}
 
 	if ifStatement.Else != nil {
+		s.returns = false
 		s.analyzeBlock(ifStatement.Else)
 		if !s.returns {
 			doesReturn = false
@@ -373,7 +375,9 @@ func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) 
 
 func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
 	s.definedTypes[statementType.Type.Name] = statementType.Type
-	for _, t := range statementType.Type.Fields {
+	for i, t := range statementType.Type.Fields {
+		t = s.UnwrapAnonymous(t)
+		// Get underlying type
 		unwrappedType := s.unwrap(t)
 		if anonymous, ok := unwrappedType.(*ctypes.Anonymous); ok {
 			definedType := s.UnwrapAnonymous(anonymous)
@@ -385,7 +389,13 @@ func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
 				return
 			}
 			s.swapTypes(t, definedType)
+		} else if statementType.Type == t {
+			s.error(
+				"Recursive type detected",
+				statementType.Token,
+			)
 		}
+		statementType.Type.Fields[i] = t
 	}
 }
 
@@ -548,7 +558,7 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 	case *ast.PrefixOperation:
 		return s.analyzePrefixOperation(expressionType)
 	case *ast.Identifier:
-		return s.analyzeSimpleIdentifier(expressionType)
+		return s.analyzeIdentifier(expressionType)
 	case *ast.Call:
 		return s.analyzeFunctionCall(expressionType)
 	case *ast.ArrayLiteral:
@@ -708,7 +718,7 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 	return ctypes.TODO()
 }
 
-func (s *Semantic) analyzeSimpleIdentifier(identifier *ast.Identifier) ctypes.Type {
+func (s *Semantic) analyzeIdentifier(identifier *ast.Identifier) ctypes.Type {
 	if module, ok := s.modules[identifier.Name]; ok {
 		identifier.Type = module
 		return module
