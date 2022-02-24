@@ -156,6 +156,9 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseGenericTypeDefinition()
 	case token.LBRACE:
 		return p.parseBlock()
+	case token.PUBLIC:
+		return p.parsePublicFunction()
+
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -167,6 +170,13 @@ func (p *Parser) parseTypeDefinition(name token.Token) ast.Statement {
 	p.nextToken()
 	parsedType := p.parseType()
 	return &ast.TypeDefinition{Name: ast.CreateIdentifier(name.Literal, p.ID), Token: name, Type: parsedType}
+}
+
+func (p *Parser) parsePublicFunction() ast.Statement {
+	p.nextToken()
+	fn := p.parseFunctionDeclaration().(*ast.FunctionDeclarationStatement)
+	fn.FunctionType.RedefineWithOriginalName = true
+	return fn
 }
 
 func (p *Parser) parseGenericTypeDefinition() ast.Statement {
@@ -367,10 +377,11 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	return &ast.FunctionDeclarationStatement{
 		Token: fun,
 		FunctionType: &ctypes.Function{
-			Name:       ast.CreateIdentifier(name.Literal, p.ID),
-			Parameters: types,
-			Names:      names,
-			Return:     returnType,
+			Name:         ast.CreateIdentifier(name.Literal, p.ID),
+			Parameters:   types,
+			Names:        names,
+			Return:       returnType,
+			ExternalName: name.Literal,
 		},
 		Block: block,
 	}

@@ -84,10 +84,12 @@ const (
 	DOUBLE_DOT   = TypeToken("..")
 	DOUBLE_PLUS  = TypeToken("++")
 	DOUBLE_MINUS = TypeToken("--")
+	PUBLIC       = TypeToken("pub")
 )
 
 var keywords = map[string]TypeToken{
 	"func":     FUNCTION,
+	"pub":      PUBLIC,
 	"true":     TRUE,
 	"false":    FALSE,
 	"if":       IF,

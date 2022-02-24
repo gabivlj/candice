@@ -511,7 +511,15 @@ func (c *Compiler) compileFunctionType(name string, funk *ast.FunctionDeclaratio
 
 	// Declare llvmFunction
 	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, c.ToLLVMType(funk.FunctionType.Return), params...)
-	llvmFunction.CallingConv = enum.CallingConvC
+
+	if funk.FunctionType.RedefineWithOriginalName {
+		llvmFunctionExtern := c.m.NewFunc(funk.FunctionType.ExternalName, c.ToLLVMType(funk.FunctionType.Return), params...)
+		llvmFunctionExtern.CallingConv = enum.CallingConvC
+		c.globalVariables[funk.FunctionType.ExternalName] = &Value{
+			Value: llvmFunctionExtern,
+			Type:  funk.FunctionType,
+		}
+	}
 
 	// Create function
 	c.globalVariables[name] = &Value{
@@ -558,10 +566,18 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 		}
 	}
 
+	if funk.FunctionType.RedefineWithOriginalName {
+		c.compileFunctionRedeclaration(c.currentFunction.Blocks, funk)
+	}
+
 	// Pop block, stack and restore current function
 	c.popBlock()
-	// c.stacks = c.stacks[:len(c.stacks)-1]
 	c.currentFunction = prevFunction
+}
+
+func (c *Compiler) compileFunctionRedeclaration(otherFunctionBlocks []*ir.Block, funk *ast.FunctionDeclarationStatement) {
+	llvmFunction := c.retrieveVariable(funk.FunctionType.ExternalName).(*ir.Func)
+	llvmFunction.Blocks = otherFunctionBlocks
 }
 
 func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {

@@ -685,6 +685,30 @@ extern func printf(*i8, ..);
 
 Candice doesn't have any plans of supporting infinite number of variables on candice functions.
 
+### Creating object files for libraries
+
+Do you want to support C calling conventions? Or generate object files for your own libraries?
+Set on candice.json the following flag:
+
+```js
+{
+    //...
+    "binary": "obj"
+}
+```
+
+And when you create your library functions you should define them as:
+
+```go
+pub func myLibraryFunction() {
+    //...
+}
+
+```
+
+That should work just fine! When you do `candice build .` it will generate an object file with
+myLibraryFunction defined as a symbol for your programs to call.
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
