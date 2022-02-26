@@ -483,6 +483,10 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 
 func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 	if ret.Expression == nil {
+		if c.currentFunction.Name() == "main" {
+			c.block().NewRet(zero)
+			return
+		}
 		c.block().NewRet(nil)
 		return
 	}

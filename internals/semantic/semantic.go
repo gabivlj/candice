@@ -94,11 +94,11 @@ func (s *Semantic) error(msg string, tok token.Token) {
 	if len(s.Errors) > 1 {
 		return
 	}
-	s.Errors = append(s.Errors, errors.New(fmt.Sprintf("error analyzing on %d:%d (at %s): %s", tok.Line, tok.Position, tok.Type, msg)))
+	s.Errors = append(s.Errors, errors.New(fmt.Sprintf("[%d:%d] %s", tok.Line, tok.Position, msg)))
 }
 
 func (s *Semantic) typeMismatchError(node string, tok token.Token, expected, got ctypes.Type) {
-	message := fmt.Sprintf("_%s_ :: mismatched types, expected=%s, got=%s", node, expected.String(), got.String())
+	message := fmt.Sprintf("\n%s \nmismatched types, expected a %s, got a %s\n", node, expected.String(), got.String())
 	s.error(message, tok)
 }
 
@@ -248,6 +248,7 @@ func (s *Semantic) analyzeBlock(block *ast.Block) {
 }
 
 func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
+	previousReturns := s.returns
 	s.enterFrame()
 
 	s.analyzeStatement(forStatement.InitializerStatement)
@@ -268,6 +269,7 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 	s.analyzeBlock(forStatement.Block)
 	s.insideBreakableBlock = tempInsideBlock
 	s.leaveFrame()
+	s.returns = previousReturns
 }
 
 func (s *Semantic) analyzeFunctionStatement(fun *ast.FunctionDeclarationStatement) {
@@ -307,7 +309,7 @@ func (s *Semantic) analyzeFunctionType(functionToken token.Token, fun *ctypes.Fu
 	}
 
 	if !s.returns && fun.Return != ctypes.VoidType {
-		s.error("not all paths of the function '"+fun.String()+"'  return a variable", functionToken)
+		s.error("not all paths of the function '"+fun.String()+"' return a value", functionToken)
 	}
 	fun.Return = s.UnwrapAnonymous(fun.Return)
 	s.returns = false
@@ -613,7 +615,7 @@ func (s *Semantic) retrieveModule(moduleName string) *Semantic {
 	module, ok := s.modules[moduleName]
 
 	if !ok {
-		s.Errors = append(s.Errors, errors.New("undefined module "+moduleName))
+		s.error("undefined module "+moduleName, s.currentStatementBeingAnalyzed.GetToken())
 		return s
 	}
 
@@ -627,7 +629,7 @@ func (s *Semantic) retrieveTypeFromStruct(structLiteral *ast.StructLiteral) (cty
 	structType, ok := module.definedTypes[structLiteral.Name]
 
 	if !ok {
-		return nil, errors.New("undefined struct " + structLiteral.Name + ": " + structLiteral.String())
+		return nil, errors.New("undefined struct " + ast.RetrieveID(structLiteral.Name) + ": " + structLiteral.String())
 	}
 
 	return structType, nil
@@ -638,7 +640,7 @@ func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes
 	possibleStructType, err := s.retrieveTypeFromStruct(structLiteral)
 
 	if err != nil {
-		s.Errors = append(s.Errors, err)
+		s.error(err.Error(), structLiteral.Token)
 
 		return ctypes.TODO()
 	}
@@ -737,7 +739,7 @@ func (s *Semantic) analyzeIdentifier(identifier *ast.Identifier) ctypes.Type {
 		return identifierType.Type
 	}
 
-	s.error("undefined variable "+identifier.Name, identifier.Token)
+	s.error("undefined variable "+ast.RetrieveID(identifier.Name), identifier.Token)
 	return ctypes.TODO()
 }
 
