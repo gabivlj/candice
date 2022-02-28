@@ -115,11 +115,18 @@ func (s *Semantic) error(msg string, tok token.Token) {
 }
 
 func (s *Semantic) typeMismatchError(node string, wrongPart ast.Expression, tok token.Token, expected, got ctypes.Type) {
+	var message string
+	if len(s.Errors) == 0 {
+		message = fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
+	} else {
+		message = fmt.Sprintf("can't recover from the errors\n")
+	}
 
-	message := fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
-	if wrongPart != nil {
+	if wrongPart != nil && len(s.Errors) == 0 {
 		left := wrongPart.String()
 		message += fmt.Sprintf("Hint: maybe are you missing a cast here?\n%s\n%s\n", left, strings.Repeat("^", len(left)))
+	} else if len(s.Errors) > 0 {
+		message += fmt.Sprintf("Hint: check compiler errors above.")
 	}
 
 	s.error(message, tok)
@@ -655,7 +662,7 @@ func (s *Semantic) retrieveModule(moduleName string) *Semantic {
 	module, ok := s.modules[moduleName]
 
 	if !ok {
-		s.error("undefined module "+moduleName, s.currentStatementBeingAnalyzed.GetToken())
+		s.error("undefined module "+ast.RetrieveID(moduleName), s.currentStatementBeingAnalyzed.GetToken())
 		return s
 	}
 
