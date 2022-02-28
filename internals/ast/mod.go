@@ -69,3 +69,7 @@ func CreateIdentifier(name string, id string) string {
 func RetrieveID(name string) string {
 	return strings.Split(name, "-")[0]
 }
+
+func RetrieveRightID(name string) string {
+	return strings.Split(name, "-")[1]
+}
