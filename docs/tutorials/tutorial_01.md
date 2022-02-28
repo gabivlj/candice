@@ -744,6 +744,24 @@ func main() {
 }
 ```
 
+## Unreachable
+
+Sometimes you might wanna indicate the compiler that some code is unreachable
+
+```go
+
+func infinite_loop() i32 {
+    for {
+        @print("hello world!");
+    }
+
+    @unreachable();
+}
+
+```
+
+Be careful though, because if unreachable block runs, it will crash!
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
