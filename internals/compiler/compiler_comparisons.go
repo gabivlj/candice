@@ -11,6 +11,18 @@ import (
 )
 
 func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.Value {
+	if expr.Operation == ops.Equals && ctypes.IsPointer(expr.Left.GetType()) {
+		return c.compareMemoryI8(c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)),
+			enum.IPredEQ)
+	}
+
+	if expr.Operation == ops.NotEquals && ctypes.IsPointer(expr.Left.GetType()) {
+		return c.compareMemoryI8(c.loadIfPointer(c.compileExpression(expr.Left)),
+			c.loadIfPointer(c.compileExpression(expr.Right)),
+			enum.IPredNE)
+	}
+
 	if _, isFloat := expr.Left.GetType().(*ctypes.Float); isFloat {
 		return c.block().NewFCmp(
 			c.getFPredComparison(expr.Operation, expr.Left.GetType()),

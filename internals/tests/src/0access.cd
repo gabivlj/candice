@@ -1,0 +1,10 @@
+import a, i32, "./src/libs/array.cd";
+
+func main() {
+
+    hello := "hello " + " world";
+    if hello != "hello  world" @print("??????")
+    else {
+        // @print("ff")
+    }
+}

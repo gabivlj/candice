@@ -988,13 +988,6 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	left := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Left))
 	right := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Right))
-	if !ctypes.IsNumeric(left) {
-		s.error("expected numeric type, got: "+left.String(), binaryOperation.Token)
-	}
-
-	if !ctypes.IsNumeric(right) {
-		s.error("expected numeric type, got: "+right.String(), binaryOperation.Token)
-	}
 
 	if !s.areTypesEqual(left, right) {
 		s.typeMismatchError(binaryOperation.String(), binaryOperation.Token, right, left)
@@ -1004,7 +997,18 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 		return ctypes.I1
 	}
 
-	return left
+	if ctypes.IsNumeric(left) {
+		return left
+	}
+
+	if ctypes.IsPointer(left) {
+		binaryOperation.Type = left
+		return left
+	}
+
+	s.error("unsupported types for arithmetic: "+left.String(), binaryOperation.Token)
+
+	return ctypes.TODO()
 }
 
 func (s *Semantic) analyzeInteger(integer *ast.Integer) ctypes.Type {

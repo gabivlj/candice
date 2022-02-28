@@ -2,7 +2,7 @@ struct S {
 
 }
 
-func thing(s *S) {
+func thing(s *S, i i32) {
 
 }
 
@@ -12,6 +12,6 @@ func t(s S) {
 
 func main() {
     s := &@S{}
-    s.thing();
+    s.thing(3);
     (*s).t();
 }

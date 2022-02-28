@@ -37,8 +37,9 @@ type Compiler struct {
 	// Defined values
 	globalBuiltinDefinitions map[string]value.Value
 
-	builtins        map[string]func(*Compiler, *ast.BuiltinCall) value.Value
-	globalVariables map[string]*Value
+	concatenationUtilsLoaded bool
+	builtins                 map[string]func(*Compiler, *ast.BuiltinCall) value.Value
+	globalVariables          map[string]*Value
 
 	variables *undomap.UndoMap[string, value.Value]
 
@@ -78,6 +79,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		// When importing we might import an already compiled module, but with another name,
 		// let's remember those!
 		compiledModules = parent[0].compiledModules
+
 	} else {
 		m = ir.NewModule()
 		globalVariables = map[string]*Value{}
@@ -109,7 +111,6 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 	}
 
 	c.initializeBuiltinLib()
-
 	// define structs and functions
 	c.compileStructTypes(context.Root.Statements)
 	c.compileFunctionTypes(context.Root.Statements)
@@ -213,7 +214,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		ir.NewParam("", types.I64),
 	)
 	c.globalBuiltinDefinitions["malloc"] = malloc
-	printf.CallingConv = enum.CallingConvC
+	malloc.CallingConv = enum.CallingConvC
 	// alloc accepts one type parameter, and how many you want to allocate
 	c.builtins["alloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		typeParameter := call.TypeParameters[0]
@@ -1257,6 +1258,10 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+	if types.IsPointer(rightValue.Type()) {
+		c.doNotLoadIntoMemory = true
+		return c.concatenateMemoryI8(leftValue, rightValue)
+	}
 	if types.IsFloat(leftValue.Type()) {
 		return c.block().NewFAdd(leftValue, rightValue)
 	}

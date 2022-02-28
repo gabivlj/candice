@@ -1,11 +1,11 @@
-%aStruct-UIrDIthzmi = type { i32, i64 }
+%aStruct-FdceyLWqez = type { i32, i64 }
 
 @"%u " = global [4 x i8] c"%u \00"
 @"%d " = global [4 x i8] c"%d \00"
-@string.literal.MqyoVLfYrb = global [21 x i8] c"this shouldn't print\00"
+@string.literal.BeDjISZfrB = global [21 x i8] c"this shouldn't print\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.etYEbrjcct = global [30 x i8] c"this should not print as well\00"
-@string.literal.XxfLVLEawU = global [25 x i8] c"this shouldnt print!!!!!\00"
+@string.literal.FewRQDlNYy = global [30 x i8] c"this should not print as well\00"
+@string.literal.nWQXLnhwPm = global [25 x i8] c"this shouldnt print!!!!!\00"
 
 declare ccc void @free(i8* %0, ...)
 
@@ -13,12 +13,12 @@ declare ccc i8* @realloc(i8* %0, i64 %1, ...)
 
 declare ccc i32 @printf(i8* %0, ...)
 
-declare i8* @malloc(i64 %0)
+declare ccc i8* @malloc(i64 %0)
 
-define i32 @loadByPointer-UIrDIthzmi(i32* %i-UIrDIthzmi) {
-loadByPointer-UIrDIthzmi:
+define i32 @loadByPointer-FdceyLWqez(i32* %i-FdceyLWqez) {
+loadByPointer-FdceyLWqez:
 	%0 = alloca i32*
-	store i32* %i-UIrDIthzmi, i32** %0
+	store i32* %i-FdceyLWqez, i32** %0
 	%1 = load i32*, i32** %0
 	%2 = load i32, i32* %1
 	ret i32 %2
@@ -34,94 +34,94 @@ main:
 	%3 = load i32, i32* %0
 	%4 = load i32, i32* %0
 	%5 = icmp eq i32 %3, %4
-	br i1 %5, label %if.then.pWOHSlWLOA, label %if.else.OVAySrYbKy
+	br i1 %5, label %if.then.wGYiQtynWB, label %if.else.dFQfZhYiiD
 
-if.then.pWOHSlWLOA:
+if.then.wGYiQtynWB:
 	%6 = load i32, i32* %0
 	%7 = getelementptr [4 x i8], [4 x i8]* @"%u ", i32 0, i32 0
 	%8 = call i32 (i8*, ...) @printf(i8* %7, i32 %6)
 	%9 = load i32, i32* %0
 	%10 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%11 = call i32 (i8*, ...) @printf(i8* %10, i32 %9)
-	br label %lastLeave.PuZqepmeES
+	br label %lastLeave.ereYdJEGZt
 
-if.else.OVAySrYbKy:
-	br label %lastLeave.PuZqepmeES
+if.else.dFQfZhYiiD:
+	br label %lastLeave.ereYdJEGZt
 
-lastLeave.PuZqepmeES:
+lastLeave.ereYdJEGZt:
 	%12 = alloca i32
 	store i32 3, i32* %12
 	%13 = alloca i32*
 	store i32* %12, i32** %13
 	%14 = load i32*, i32** %13
-	%15 = call i32 @loadByPointer-UIrDIthzmi(i32* %14)
+	%15 = call i32 @loadByPointer-FdceyLWqez(i32* %14)
 	%16 = alloca i32
 	store i32 %15, i32* %16
 	%17 = load i32, i32* %16
 	%18 = icmp ne i32 %17, 3
-	br i1 %18, label %if.then.qUwShJfyyv, label %if.else.YtiYSWkaqy
+	br i1 %18, label %if.then.kLYtYcQAcy, label %if.else.hKknSNKaHe
 
-if.then.qUwShJfyyv:
-	%19 = getelementptr [21 x i8], [21 x i8]* @string.literal.MqyoVLfYrb, i32 0, i32 0
+if.then.kLYtYcQAcy:
+	%19 = getelementptr [21 x i8], [21 x i8]* @string.literal.BeDjISZfrB, i32 0, i32 0
 	%20 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%21 = call i32 (i8*, ...) @printf(i8* %20, i8* %19)
-	br label %lastLeave.WMVgbasYvO
+	br label %lastLeave.nIeTDKaNPS
 
-if.else.YtiYSWkaqy:
-	br label %lastLeave.WMVgbasYvO
+if.else.hKknSNKaHe:
+	br label %lastLeave.nIeTDKaNPS
 
-lastLeave.WMVgbasYvO:
-	%22 = alloca %aStruct-UIrDIthzmi
-	%23 = getelementptr %aStruct-UIrDIthzmi, %aStruct-UIrDIthzmi* %22, i32 0, i32 0
+lastLeave.nIeTDKaNPS:
+	%22 = alloca %aStruct-FdceyLWqez
+	%23 = getelementptr %aStruct-FdceyLWqez, %aStruct-FdceyLWqez* %22, i32 0, i32 0
 	store i32 3, i32* %23
-	%24 = alloca %aStruct-UIrDIthzmi
-	%25 = load %aStruct-UIrDIthzmi, %aStruct-UIrDIthzmi* %22
-	store %aStruct-UIrDIthzmi %25, %aStruct-UIrDIthzmi* %24
-	%26 = alloca %aStruct-UIrDIthzmi*
-	store %aStruct-UIrDIthzmi* %24, %aStruct-UIrDIthzmi** %26
-	%27 = load %aStruct-UIrDIthzmi*, %aStruct-UIrDIthzmi** %26
-	%28 = bitcast %aStruct-UIrDIthzmi* %27 to i32*
+	%24 = alloca %aStruct-FdceyLWqez
+	%25 = load %aStruct-FdceyLWqez, %aStruct-FdceyLWqez* %22
+	store %aStruct-FdceyLWqez %25, %aStruct-FdceyLWqez* %24
+	%26 = alloca %aStruct-FdceyLWqez*
+	store %aStruct-FdceyLWqez* %24, %aStruct-FdceyLWqez** %26
+	%27 = load %aStruct-FdceyLWqez*, %aStruct-FdceyLWqez** %26
+	%28 = bitcast %aStruct-FdceyLWqez* %27 to i32*
 	%29 = alloca i32*
 	store i32* %28, i32** %29
 	%30 = load i32*, i32** %29
 	%31 = getelementptr i32, i32* %30, i32 0
 	%32 = load i32, i32* %31
-	%33 = getelementptr %aStruct-UIrDIthzmi, %aStruct-UIrDIthzmi* %24, i32 0, i32 0
+	%33 = getelementptr %aStruct-FdceyLWqez, %aStruct-FdceyLWqez* %24, i32 0, i32 0
 	%34 = load i32, i32* %33
 	%35 = icmp ne i32 %32, %34
-	br i1 %35, label %if.then.MvbemOrFjP, label %if.else.zURUzgYkUR
+	br i1 %35, label %if.then.CfZGxrggLa, label %if.else.YyBblmHtSe
 
-if.then.MvbemOrFjP:
-	%36 = getelementptr [30 x i8], [30 x i8]* @string.literal.etYEbrjcct, i32 0, i32 0
+if.then.CfZGxrggLa:
+	%36 = getelementptr [30 x i8], [30 x i8]* @string.literal.FewRQDlNYy, i32 0, i32 0
 	%37 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%38 = call i32 (i8*, ...) @printf(i8* %37, i8* %36)
-	br label %lastLeave.fzshVHwdyY
+	br label %lastLeave.SUGkRHeyoQ
 
-if.else.zURUzgYkUR:
-	br label %lastLeave.fzshVHwdyY
+if.else.YyBblmHtSe:
+	br label %lastLeave.SUGkRHeyoQ
 
-lastLeave.fzshVHwdyY:
+lastLeave.SUGkRHeyoQ:
 	%39 = load i32*, i32** %29
-	%40 = bitcast i32* %39 to %aStruct-UIrDIthzmi*
-	%41 = load %aStruct-UIrDIthzmi, %aStruct-UIrDIthzmi* %40
-	%42 = alloca %aStruct-UIrDIthzmi
-	store %aStruct-UIrDIthzmi %41, %aStruct-UIrDIthzmi* %42
-	%43 = getelementptr %aStruct-UIrDIthzmi, %aStruct-UIrDIthzmi* %42, i32 0, i32 0
+	%40 = bitcast i32* %39 to %aStruct-FdceyLWqez*
+	%41 = load %aStruct-FdceyLWqez, %aStruct-FdceyLWqez* %40
+	%42 = alloca %aStruct-FdceyLWqez
+	store %aStruct-FdceyLWqez %41, %aStruct-FdceyLWqez* %42
+	%43 = getelementptr %aStruct-FdceyLWqez, %aStruct-FdceyLWqez* %42, i32 0, i32 0
 	%44 = load i32, i32* %43
-	%45 = getelementptr %aStruct-UIrDIthzmi, %aStruct-UIrDIthzmi* %24, i32 0, i32 0
+	%45 = getelementptr %aStruct-FdceyLWqez, %aStruct-FdceyLWqez* %24, i32 0, i32 0
 	%46 = load i32, i32* %45
 	%47 = icmp ne i32 %44, %46
-	br i1 %47, label %if.then.qDRDTsMEKh, label %if.else.dYYgOugCYx
+	br i1 %47, label %if.then.NIrVguAXhq, label %if.else.WzlHvaxZmJ
 
-if.then.qDRDTsMEKh:
-	%48 = getelementptr [25 x i8], [25 x i8]* @string.literal.XxfLVLEawU, i32 0, i32 0
+if.then.NIrVguAXhq:
+	%48 = getelementptr [25 x i8], [25 x i8]* @string.literal.nWQXLnhwPm, i32 0, i32 0
 	%49 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%50 = call i32 (i8*, ...) @printf(i8* %49, i8* %48)
-	br label %lastLeave.eeHFeLJILt
+	br label %lastLeave.zPFGGLSKlj
 
-if.else.dYYgOugCYx:
-	br label %lastLeave.eeHFeLJILt
+if.else.WzlHvaxZmJ:
+	br label %lastLeave.zPFGGLSKlj
 
-lastLeave.eeHFeLJILt:
+lastLeave.zPFGGLSKlj:
 	ret i32 0
 }
