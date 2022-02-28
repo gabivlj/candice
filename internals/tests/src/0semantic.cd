@@ -1,0 +1,17 @@
+struct S {
+
+}
+
+func thing(s *S) {
+
+}
+
+func t(s S) {
+
+}
+
+func main() {
+    s := &@S{}
+    s.thing();
+    (*s).t();
+}

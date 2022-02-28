@@ -565,8 +565,10 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 	if lastBlock.Term == nil {
 		if funk.FunctionType.IsMainFunction() {
 			lastBlock.NewRet(zero)
-		} else {
+		} else if funk.FunctionType.Return == ctypes.VoidType {
 			lastBlock.NewRet(nil)
+		} else {
+			lastBlock.NewUnreachable()
 		}
 	}
 

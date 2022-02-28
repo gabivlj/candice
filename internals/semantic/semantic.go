@@ -34,6 +34,7 @@ type Semantic struct {
 	insideBreakableBlock          bool
 	modules                       map[string]*Semantic
 	Root                          *ast.Program
+	additionalExpression          ast.Expression
 }
 
 var paths map[string]*Semantic = map[string]*Semantic{}
@@ -127,6 +128,7 @@ func (s *Semantic) TranslateName(name string) string {
 }
 
 func (s *Semantic) analyzeStatement(statement ast.Statement) {
+	s.additionalExpression = nil
 
 	if statement == nil {
 		return
@@ -694,9 +696,25 @@ func (s *Semantic) analyzeArrayLiteral(arrayLiteral *ast.ArrayLiteral) ctypes.Ty
 
 func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 	possibleFuncType := s.analyzeExpression(call.Left)
+
+	// it is possible that we are retrieving a sturct access with function
+
 	if funcType, ok := possibleFuncType.(*ctypes.Function); !ok {
 		s.error("can't call non function "+call.Left.String()+" of type "+possibleFuncType.String(), call.Token)
 	} else {
+
+		if s.additionalExpression != nil {
+			call.Parameters = append([]ast.Expression{s.additionalExpression}, call.Parameters...)
+			s.additionalExpression = nil
+			call.Left = &ast.Identifier{
+				Node: &node.Node{
+					Token: call.Token,
+					Type:  possibleFuncType,
+				},
+				Name: funcType.Name,
+			}
+		}
+
 		if len(call.Parameters) != len(funcType.Parameters) && !funcType.InfiniteParameters {
 			s.error("mismatch number of parameters", call.Token)
 		}
@@ -853,6 +871,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 			s.error("expected struct on access, got "+ptr.Inner.String(), binaryOperation.Token)
 			return ctypes.TODO()
 		}
+		ptr.Inner = strukt
 	} else {
 		strukt, isStruct = s.UnwrapAnonymous(left).(*ctypes.Struct)
 		if !isStruct {
@@ -868,11 +887,25 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 	}
 
 	// Just in case that the identifier.Name is poisoned by ID generation, extract original name
+	namePlusId := identifier.Name
 	identifier.Name = ast.RetrieveID(identifier.Name)
 	idx, t := strukt.GetField(identifier.Name)
 	if idx < 0 || t == nil {
-		s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
-		return ctypes.TODO()
+		// Maybe the user wanted to access a member function
+		variable := s.variables.Get(namePlusId)
+
+		if variable == nil || !ctypes.IsFunction(variable.Type) {
+			s.error("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
+			return ctypes.TODO()
+		}
+
+		fn := variable.Type.(*ctypes.Function)
+		if len(fn.Parameters) == 0 || !s.areTypesEqual(fn.Parameters[0], left) {
+			s.typeMismatchError(binaryOperation.String(), binaryOperation.Token, fn.Parameters[0], left)
+			return ctypes.TODO()
+		}
+		s.additionalExpression = binaryOperation.Left
+		return variable.Type
 	}
 
 	binaryOperation.Type = t

@@ -1,0 +1,11 @@
+func t() i32 {
+    if 1 {
+        return 0;
+    } else {
+        return 0;
+    }
+}
+
+func main() i32 {
+    return t();
+}
