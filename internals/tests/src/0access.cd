@@ -4,7 +4,7 @@ func main() {
     arr := &a.New()
     arr.Push(1);
     arr.Free();
-    
+
     hello := "hello " + " world";
     if hello != "hello  world" @print("??????")
     else {

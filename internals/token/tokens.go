@@ -8,6 +8,9 @@ type Token struct {
 	Literal  string
 	Line     uint32
 	Position uint32
+	// This is only for retrieving error messages, maybe we shouldn't increase 4 bytes our tokens because of
+	// that.
+	OverallPosition int
 }
 
 const (

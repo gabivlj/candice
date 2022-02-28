@@ -52,6 +52,14 @@ func (l *Lexer) skipUntilJL() {
 	l.column = 1
 }
 
+func (l *Lexer) RetrieveLine(t token.Token) string {
+	currentColumn := t.OverallPosition - 1
+	for currentColumn >= 0 && l.input[currentColumn] != '\n' && l.input[currentColumn] != '\t' {
+		currentColumn--
+	}
+	return l.input[currentColumn+1 : t.OverallPosition+1]
+}
+
 // Returns if there is a combination with the next char, else returns otherwise param
 func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.TypeToken) token.Token {
 	// Peek next character
@@ -63,7 +71,7 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 		// Next character
 		l.readChar()
 		// Return the token for that combination
-		return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column}
+		return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column, OverallPosition: l.position}
 	}
 	// Otherwise return the token that it falls to
 	return otherwise
@@ -202,7 +210,7 @@ func (l *Lexer) readString() string {
 }
 
 func (l *Lexer) newToken(tokenType token.TypeToken, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch), Line: l.line, Position: l.column}
+	return token.Token{Type: tokenType, Literal: string(ch), Line: l.line, Position: l.column, OverallPosition: l.position}
 }
 
 func isDigit(ch byte) bool {
