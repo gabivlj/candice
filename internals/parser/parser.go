@@ -30,6 +30,10 @@ type Parser struct {
 	TypeParameters       []ctypes.Type
 	definedGenericTypes  map[string]ctypes.Type
 	currentTypeParameter int
+	currentProgram       *ast.Program
+
+	// Useful for error messages.
+	previousExpresion ast.Expression
 }
 
 func (p *Parser) registerPrefixHandler(tokenType token.TypeToken, prefixFunc prefixFunc) {
@@ -53,8 +57,8 @@ func (p *Parser) expect(expected token.TypeToken) {
 }
 
 func (p *Parser) addErrorMessage(message string) {
-	errMsg := errors.New(fmt.Sprintf("expect on %d:%d 'token: %s %s': %s",
-		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, p.currentToken.Type, message))
+	errMsg := errors.New(fmt.Sprintf("on %d:%d 'token: %s': %s",
+		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, message))
 	p.Errors = append(p.Errors, errMsg)
 }
 
@@ -116,6 +120,7 @@ func New(l *lexer.Lexer) *Parser {
 
 func (p *Parser) Parse() *ast.Program {
 	program := &ast.Program{Statements: []ast.Statement{}, ID: p.ID}
+	p.currentProgram = program
 	for p.currentToken.Type != token.EOF {
 		program.Statements = append(program.Statements, p.parseStatement())
 	}
@@ -602,11 +607,23 @@ func (p *Parser) parsePrefix() ast.Expression {
 		return &ast.Integer{Value: 1}
 	}
 
-	return fn()
+	p.checkPrefixErrors()
+
+	p.previousExpresion = fn()
+	return p.previousExpresion
+}
+
+func (p *Parser) checkPrefixErrors() {
+	// Handle error case of <expression>'++';
+	if p.peekToken.Type == token.SEMICOLON &&
+		(p.currentToken.Type == token.DOUBLE_PLUS || p.currentToken.Type == token.DOUBLE_MINUS) {
+		p.afterFixDoubleError(p.previousExpresion)
+	}
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	op := p.currentTokenToOperation()
+	p.checkPrefixErrors()
 	tok := p.nextToken()
 	left := &ast.PrefixOperation{
 		Node: &node.Node{
@@ -629,7 +646,9 @@ func (p *Parser) parseExpression(prec int) ast.Expression {
 		}
 		prefixExpr = infix(prefixExpr)
 	}
-	return prefixExpr
+
+	p.previousExpresion = prefixExpr
+	return p.previousExpresion
 }
 
 func (p *Parser) parseInfix(expression ast.Expression) ast.Expression {
@@ -1014,4 +1033,33 @@ func (p *Parser) parseExtern() ast.Statement {
 		Token: extern,
 		Type:  t,
 	}
+}
+
+func (p *Parser) afterFixDoubleError(prev ast.Expression) ast.Expression {
+	l := p.currentToken.Literal
+	if prev == nil {
+		p.addErrorMessage(
+			fmt.Sprintf("using '%s' after an expression is not permitted, try putting it before the variable\nTry applying these changes:\n'--variable;'",
+				l,
+			),
+		)
+		return &ast.Identifier{}
+	}
+	s := l + prev.String()
+	p.addErrorMessage(
+		fmt.Sprintf("using '%s' after an expression is not permitted, try putting it before the variable\nTry applying these changes:\n'%s;'",
+			l, s,
+		),
+	)
+	p.nextToken()
+	return &ast.Identifier{}
+}
+
+func (p *Parser) afterFixDoubleErrorStatement(statement ast.Statement) {
+	if expr, ok := statement.(*ast.ExpressionStatement); ok {
+		p.afterFixDoubleError(expr.Expression)
+	} else {
+		p.afterFixDoubleError(nil)
+	}
+
 }

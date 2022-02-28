@@ -242,6 +242,7 @@ value := 10
 for value > 0 {
     @print("value is", value);
     value = value - 1;
+    // you can also do --value.
 }
 
 ```

@@ -21,7 +21,8 @@ func Free(a *Array) {
 
 func Push(a *Array, element T) {
     if a.size >= a.cap {
-        // this cannot be handled yet sadly... 
+        a.cap = a.cap * 2 + 1;
+        a.elements = @realloc(a.elements, a.cap);
     }
 
     a.elements[a.size] = element

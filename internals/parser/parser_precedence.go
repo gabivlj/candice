@@ -27,6 +27,9 @@ var precedences = map[token.TypeToken]int{
 	token.LBRACKET: 11,
 	token.DOT:      12,
 	token.AS:       7,
+	// This is only for showcasing errors.
+	token.DOUBLE_MINUS: 20,
+	token.DOUBLE_PLUS:  20,
 }
 
 func (p *Parser) precedencePrefix() int {
