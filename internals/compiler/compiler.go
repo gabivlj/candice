@@ -151,20 +151,11 @@ func (c *Compiler) initializeBuiltinLib() {
 		return
 	}
 
-	free := c.m.NewFunc("free", types.Void, ir.NewParam("", types.I8Ptr))
-	c.globalBuiltinDefinitions["free"] = free
-	free.Sig.Variadic = true
-	free.CallingConv = enum.CallingConvC
 	c.builtins["free"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		ptr := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
-		returnedValue := c.block().NewCall(free, c.block().NewBitCast(ptr, types.I8Ptr))
+		returnedValue := c.block().NewCall(c.free(), c.block().NewBitCast(ptr, types.I8Ptr))
 		return returnedValue
 	}
-
-	realloc := c.m.NewFunc("realloc", types.I8Ptr, ir.NewParam("", types.I8Ptr), ir.NewParam("", types.I64))
-	c.globalBuiltinDefinitions["realloc"] = realloc
-	realloc.Sig.Variadic = true
-	realloc.CallingConv = enum.CallingConvC
 
 	c.builtins["realloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		typeParameter := call.GetType()
@@ -173,7 +164,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		length := c.loadIfPointer(c.compileExpression(call.Parameters[1]))
 		length = c.handleIntegerCast(types.I64, length)
 		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
-		returnedValue := c.block().NewCall(realloc, c.block().NewBitCast(ptr, types.I8Ptr), totalSize)
+		returnedValue := c.block().NewCall(c.realloc(), c.block().NewBitCast(ptr, types.I8Ptr), totalSize)
 		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
 		alloca := c.block().NewAlloca(castedValue.Type())
 		c.block().NewStore(castedValue, alloca)
@@ -184,14 +175,6 @@ func (c *Compiler) initializeBuiltinLib() {
 		return constant.NewInt(types.I32, call.TypeParameters[0].SizeOf())
 	}
 
-	printf := c.m.NewFunc(
-		"printf",
-		types.I32,
-		ir.NewParam("", types.NewPointer(types.I8)),
-	)
-	c.globalBuiltinDefinitions["printf"] = printf
-	printf.Sig.Variadic = true
-	printf.CallingConv = enum.CallingConvC
 	c.builtins["print"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		expressions := make([]value.Value, len(call.Parameters)+1)
 		for i := 0; i < len(call.Parameters); i++ {
@@ -204,17 +187,10 @@ func (c *Compiler) initializeBuiltinLib() {
 		}
 		s := constantString.String()
 		expressions[0] = c.createString(s)
-		c.block().NewCall(printf, expressions...)
+		c.block().NewCall(c.printf(), expressions...)
 		return constant.NewUndef(types.Void)
 	}
 
-	malloc := c.m.NewFunc(
-		"malloc",
-		types.NewPointer(types.I8),
-		ir.NewParam("", types.I64),
-	)
-	c.globalBuiltinDefinitions["malloc"] = malloc
-	malloc.CallingConv = enum.CallingConvC
 	// alloc accepts one type parameter, and how many you want to allocate
 	c.builtins["alloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		typeParameter := call.TypeParameters[0]
@@ -222,7 +198,7 @@ func (c *Compiler) initializeBuiltinLib() {
 		length := c.loadIfPointer(c.compileExpression(call.Parameters[0]))
 		length = c.handleIntegerCast(types.I64, length)
 		totalSize := c.block().NewMul(length, constant.NewInt(types.I64, typeParameter.SizeOf()))
-		returnedValue := c.block().NewCall(malloc, totalSize)
+		returnedValue := c.block().NewCall(c.malloc(), totalSize)
 		castedValue := c.block().NewBitCast(returnedValue, toReturnType)
 		alloca := c.block().NewAlloca(castedValue.Type())
 		c.block().NewStore(castedValue, alloca)

@@ -63,6 +63,42 @@ func (c *Compiler) malloc() *ir.Func {
 	return malloc
 }
 
+func (c *Compiler) printf() *ir.Func {
+	if fn, ok := c.globalBuiltinDefinitions["printf"]; ok {
+		return fn.(*ir.Func)
+	}
+	printf := c.m.NewFunc(
+		"printf",
+		types.I32,
+		ir.NewParam("", types.NewPointer(types.I8)),
+	)
+	c.globalBuiltinDefinitions["printf"] = printf
+	printf.Sig.Variadic = true
+	printf.CallingConv = enum.CallingConvC
+	return printf
+}
+
+func (c *Compiler) realloc() *ir.Func {
+	if fn, ok := c.globalBuiltinDefinitions["realloc"]; ok {
+		return fn.(*ir.Func)
+	}
+	realloc := c.m.NewFunc("realloc", types.I8Ptr, ir.NewParam("", types.I8Ptr), ir.NewParam("", types.I64))
+	c.globalBuiltinDefinitions["realloc"] = realloc
+	realloc.Sig.Variadic = true
+	realloc.CallingConv = enum.CallingConvC
+	return realloc
+}
+
+func (c *Compiler) free() *ir.Func {
+	if fn, ok := c.globalBuiltinDefinitions["free"]; ok {
+		return fn.(*ir.Func)
+	}
+	free := c.m.NewFunc("free", types.Void, ir.NewParam("", types.I8Ptr))
+	c.globalBuiltinDefinitions["free"] = free
+	free.CallingConv = enum.CallingConvC
+	return free
+}
+
 func (c *Compiler) strcmp() *ir.Func {
 	if fn, ok := c.globalBuiltinDefinitions["strcmp"]; ok {
 		return fn.(*ir.Func)
