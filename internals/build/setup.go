@@ -4,7 +4,7 @@ const CandiceJSONDefault = `{
 	"name": "project",
 	"entrypoint": "main.cd",
 	"cxx": "clang",
-	"kind": "CXX",
+	"kind": "cxx",
 	"flags": ["-m64"],
 	"output": "program"
 }

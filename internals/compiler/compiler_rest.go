@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func GenerateObjectLLVM(writer io.WriterTo, path string) (string, error) {
+func GenerateObjectLLVM(writer io.WriterTo, path string, _ bool) (string, error) {
 	logger.Warning("You are using a Clang and LLVM dependant build of candice, consider contributing by building candice on your platform!")
 	_ = os.Remove(path)
 	intermediateOutputFd, err := os.Create(path + ".ll")
