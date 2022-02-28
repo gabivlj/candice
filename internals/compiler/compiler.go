@@ -191,6 +191,11 @@ func (c *Compiler) initializeBuiltinLib() {
 		return constant.NewUndef(types.Void)
 	}
 
+	c.builtins["unreachable"] = func(c *Compiler, _ *ast.BuiltinCall) value.Value {
+		c.block().NewUnreachable()
+		return constant.NewUndef(types.Void)
+	}
+
 	// alloc accepts one type parameter, and how many you want to allocate
 	c.builtins["alloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		typeParameter := call.TypeParameters[0]

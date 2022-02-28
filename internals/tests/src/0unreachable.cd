@@ -1,0 +1,6 @@
+func main() i32 {
+    for i := 0; i < 100; ++i {
+        return 0;
+    }
+    @unreachable();
+}

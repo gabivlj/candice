@@ -709,6 +709,45 @@ pub func myLibraryFunction() {
 That should work just fine! When you do `candice build .` it will generate an object file with
 myLibraryFunction defined as a symbol for your programs to call.
 
+## Strings
+
+We can concatenate, but be careful with memory leaks!
+
+```go
+func main() {
+    s := "hello";
+    c := "world";
+
+    // 🚨🚨🚨🚨🚨🚨🚨🚨
+    // Be careful!!! You are dynamically allocating memory here, you have to free it!
+    @print(s + " " + c + "!");
+
+    // This is correct ✅
+    string := s + " ";
+    string2 := string + c
+    string3 := string2 + "!";
+    @print(string); // hello world!
+    @free(string);
+    @free(string2);
+    @free(string3);
+}
+```
+
+Or compare them
+
+```go
+
+func main() {
+    if "hello world" != "hello world" {
+        @print("this shouldn't be printing...");
+    }
+}
+```
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
+
+```
+
+```

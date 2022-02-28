@@ -7,4 +7,21 @@ func main() {
     else {
         // @print("ff")
     }
+
+    
+    s := "hello";
+    c := "world";
+
+    // 🚨🚨🚨🚨🚨🚨🚨🚨
+    // Be careful!!! You are dynamically allocating memory here, you have to free it!
+    // @print(s + " " + c + "!");
+
+    // This is correct ✅
+    string := s + " ";
+    string2 := string + c
+    string3 := string2 + "!";
+    if string3 != "hello world!" { @print(":("); }
+    @free(string2);
+    @free(string3);
+    @free(string);   
 }
