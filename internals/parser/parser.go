@@ -51,19 +51,28 @@ func (p *Parser) nextToken() token.Token {
 	return prev
 }
 
+func (p *Parser) retrieveCurrentLineMessage() string {
+	blameLine := p.lexer.RetrieveLine(p.currentToken)
+	numberOfSpaces := len(blameLine) - len(p.currentToken.Literal)
+	if numberOfSpaces < 0 {
+		numberOfSpaces = 0
+	}
+	literalLen := len(p.currentToken.Literal)
+	if literalLen <= 0 {
+		literalLen = 1
+	}
+	c := fmt.Sprintf("\n%s\n%s happened here", blameLine, strings.Repeat(" ", numberOfSpaces)+strings.Repeat("^", literalLen))
+	return c
+}
+
 func (p *Parser) expect(expected token.TypeToken) {
 	if p.currentToken.Type != expected {
-		blameLine := p.lexer.RetrieveLine(p.currentToken)
-		numberOfSpaces := len(blameLine) - len(p.currentToken.Literal)
-		if numberOfSpaces < 0 {
-			numberOfSpaces = 0
+		if expected == token.RBRACE && p.currentToken.Type == token.EOF {
+			p.addErrorMessage("mismatch number of braces, missing a right brace")
+			return
 		}
-		literalLen := len(p.currentToken.Literal)
-		if literalLen < 0 {
-			literalLen = 0
-		}
-		c := fmt.Sprintf("\n%s\n%s happened here", blameLine, strings.Repeat(" ", numberOfSpaces)+strings.Repeat("^", literalLen))
-		p.addErrorMessage(fmt.Sprintf("expected a %s, received a '%s'\n%s", string(expected), p.currentToken.Literal, c))
+
+		p.addErrorMessage(fmt.Sprintf("expected a %s, received a '%s'\n%s", string(expected), p.currentToken.Literal, p.retrieveCurrentLineMessage()))
 	}
 }
 
@@ -77,8 +86,8 @@ func (p *Parser) addErrorMessage(message string) {
 	if len(p.Errors) >= 2 {
 		return
 	}
-	errMsg := errors.New(fmt.Sprintf("on %d:%d 'token: %s': %s",
-		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, message))
+	errMsg := errors.New(fmt.Sprintf("on %d:%d 'token: %s': %s\n%s",
+		p.currentToken.Line, p.currentToken.Position, p.currentToken.Literal, message, p.retrieveCurrentLineMessage()))
 	p.Errors = append(p.Errors, errMsg)
 }
 

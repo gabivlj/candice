@@ -54,6 +54,10 @@ func (l *Lexer) skipUntilJL() {
 
 func (l *Lexer) RetrieveLine(t token.Token) string {
 	currentColumn := t.OverallPosition - 1
+	if t.Type == token.EOF {
+		t.OverallPosition = len(l.input) - 1
+		currentColumn = len(l.input) - 2
+	}
 	for currentColumn >= 0 && l.input[currentColumn] != '\n' && l.input[currentColumn] != '\t' {
 		currentColumn--
 	}
@@ -71,7 +75,7 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 		// Next character
 		l.readChar()
 		// Return the token for that combination
-		return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column, OverallPosition: l.position}
+		return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column - 2, OverallPosition: l.position}
 	}
 	// Otherwise return the token that it falls to
 	return otherwise
@@ -116,6 +120,9 @@ func (l *Lexer) NextToken() token.Token {
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
+		tok.Line = l.line
+		tok.Position = l.column - uint32(len(tok.Literal))
+		tok.OverallPosition = l.position
 	case '=':
 		tok = l.peekerForTwoChars('=', l.newToken(token.ASSIGN, '='), token.EQ)
 	case '!':
@@ -159,8 +166,9 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			// lookup the literal in the keyword table, if it doesn't exist it's a IDENT.
 			tok.Type = token.LookupIdent(tok.Literal)
-			tok.Position = l.column
+			tok.Position = l.column - uint32(len(tok.Literal))
 			tok.Line = l.line
+			tok.OverallPosition = l.position
 			return tok
 		}
 		if isDigit(l.ch) {
@@ -177,8 +185,9 @@ func (l *Lexer) NextToken() token.Token {
 func (l *Lexer) parseNumericToken() token.Token {
 	var tok token.Token
 	tok.Literal, tok.Type = l.readNumber()
-	tok.Position = l.column
+	tok.OverallPosition = l.position
 	tok.Line = l.line
+	tok.Position = l.column - uint32(len(tok.Literal))
 	return tok
 }
 
@@ -210,7 +219,7 @@ func (l *Lexer) readString() string {
 }
 
 func (l *Lexer) newToken(tokenType token.TypeToken, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch), Line: l.line, Position: l.column, OverallPosition: l.position}
+	return token.Token{Type: tokenType, Literal: string(ch), Line: l.line, Position: l.column - 1, OverallPosition: l.position}
 }
 
 func isDigit(ch byte) bool {
