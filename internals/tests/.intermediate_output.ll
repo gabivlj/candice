@@ -1,16 +1,16 @@
-%aStruct-XQiHTSBdie = type { i32, i64 }
+%aStruct-cesCKGBrIL = type { i32, i64 }
 
 @"%u " = global [4 x i8] c"%u \00"
 @"%d " = global [4 x i8] c"%d \00"
-@string.literal.YqJzPlgMJo = global [21 x i8] c"this shouldn't print\00"
+@string.literal.QZiHxbAnfQ = global [21 x i8] c"this shouldn't print\00"
 @"%s " = global [4 x i8] c"%s \00"
-@string.literal.oxQvkYBRDT = global [30 x i8] c"this should not print as well\00"
-@string.literal.MHodDkTspI = global [25 x i8] c"this shouldnt print!!!!!\00"
+@string.literal.wUFeLKpDIL = global [30 x i8] c"this should not print as well\00"
+@string.literal.JyIJJtzxVT = global [25 x i8] c"this shouldnt print!!!!!\00"
 
-define i32 @loadByPointer-XQiHTSBdie(i32* %i-XQiHTSBdie) {
-loadByPointer-XQiHTSBdie:
+define i32 @loadByPointer-cesCKGBrIL(i32* %i-cesCKGBrIL) {
+loadByPointer-cesCKGBrIL:
 	%0 = alloca i32*
-	store i32* %i-XQiHTSBdie, i32** %0
+	store i32* %i-cesCKGBrIL, i32** %0
 	%1 = load i32*, i32** %0
 	%2 = load i32, i32* %1
 	ret i32 %2
@@ -26,95 +26,95 @@ main:
 	%3 = load i32, i32* %0
 	%4 = load i32, i32* %0
 	%5 = icmp eq i32 %3, %4
-	br i1 %5, label %if.then.itiWPKRxWD, label %if.else.eREAVKsZaP
+	br i1 %5, label %if.then.hmVgSgPuTx, label %if.else.DBJILqKdaS
 
-if.then.itiWPKRxWD:
+if.then.hmVgSgPuTx:
 	%6 = load i32, i32* %0
 	%7 = getelementptr [4 x i8], [4 x i8]* @"%u ", i32 0, i32 0
 	%8 = call i32 (i8*, ...) @printf(i8* %7, i32 %6)
 	%9 = load i32, i32* %0
 	%10 = getelementptr [4 x i8], [4 x i8]* @"%d ", i32 0, i32 0
 	%11 = call i32 (i8*, ...) @printf(i8* %10, i32 %9)
-	br label %lastLeave.jxBMIyVkvK
+	br label %lastLeave.bsupaHeoNB
 
-if.else.eREAVKsZaP:
-	br label %lastLeave.jxBMIyVkvK
+if.else.DBJILqKdaS:
+	br label %lastLeave.bsupaHeoNB
 
-lastLeave.jxBMIyVkvK:
+lastLeave.bsupaHeoNB:
 	%12 = alloca i32
 	store i32 3, i32* %12
 	%13 = alloca i32*
 	store i32* %12, i32** %13
 	%14 = load i32*, i32** %13
-	%15 = call i32 @loadByPointer-XQiHTSBdie(i32* %14)
+	%15 = call i32 @loadByPointer-cesCKGBrIL(i32* %14)
 	%16 = alloca i32
 	store i32 %15, i32* %16
 	%17 = load i32, i32* %16
 	%18 = icmp ne i32 %17, 3
-	br i1 %18, label %if.then.LFVpqewXRO, label %if.else.fPlcnTYKhb
+	br i1 %18, label %if.then.QQlywuQcQs, label %if.else.nHYhHdsHmV
 
-if.then.LFVpqewXRO:
-	%19 = getelementptr [21 x i8], [21 x i8]* @string.literal.YqJzPlgMJo, i32 0, i32 0
+if.then.QQlywuQcQs:
+	%19 = getelementptr [21 x i8], [21 x i8]* @string.literal.QZiHxbAnfQ, i32 0, i32 0
 	%20 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%21 = call i32 (i8*, ...) @printf(i8* %20, i8* %19)
-	br label %lastLeave.naezcNqbCU
+	br label %lastLeave.ggWeVTbOdi
 
-if.else.fPlcnTYKhb:
-	br label %lastLeave.naezcNqbCU
+if.else.nHYhHdsHmV:
+	br label %lastLeave.ggWeVTbOdi
 
-lastLeave.naezcNqbCU:
-	%22 = alloca %aStruct-XQiHTSBdie
-	%23 = getelementptr %aStruct-XQiHTSBdie, %aStruct-XQiHTSBdie* %22, i32 0, i32 0
+lastLeave.ggWeVTbOdi:
+	%22 = alloca %aStruct-cesCKGBrIL
+	%23 = getelementptr %aStruct-cesCKGBrIL, %aStruct-cesCKGBrIL* %22, i32 0, i32 0
 	store i32 3, i32* %23
-	%24 = alloca %aStruct-XQiHTSBdie
-	%25 = load %aStruct-XQiHTSBdie, %aStruct-XQiHTSBdie* %22
-	store %aStruct-XQiHTSBdie %25, %aStruct-XQiHTSBdie* %24
-	%26 = alloca %aStruct-XQiHTSBdie*
-	store %aStruct-XQiHTSBdie* %24, %aStruct-XQiHTSBdie** %26
-	%27 = load %aStruct-XQiHTSBdie*, %aStruct-XQiHTSBdie** %26
-	%28 = bitcast %aStruct-XQiHTSBdie* %27 to i32*
+	%24 = alloca %aStruct-cesCKGBrIL
+	%25 = load %aStruct-cesCKGBrIL, %aStruct-cesCKGBrIL* %22
+	store %aStruct-cesCKGBrIL %25, %aStruct-cesCKGBrIL* %24
+	%26 = alloca %aStruct-cesCKGBrIL*
+	store %aStruct-cesCKGBrIL* %24, %aStruct-cesCKGBrIL** %26
+	%27 = load %aStruct-cesCKGBrIL*, %aStruct-cesCKGBrIL** %26
+	%28 = bitcast %aStruct-cesCKGBrIL* %27 to i32*
 	%29 = alloca i32*
 	store i32* %28, i32** %29
 	%30 = load i32*, i32** %29
 	%31 = getelementptr i32, i32* %30, i32 0
 	%32 = load i32, i32* %31
-	%33 = getelementptr %aStruct-XQiHTSBdie, %aStruct-XQiHTSBdie* %24, i32 0, i32 0
+	%33 = getelementptr %aStruct-cesCKGBrIL, %aStruct-cesCKGBrIL* %24, i32 0, i32 0
 	%34 = load i32, i32* %33
 	%35 = icmp ne i32 %32, %34
-	br i1 %35, label %if.then.fWvggmNOrH, label %if.else.eznuIRlCzQ
+	br i1 %35, label %if.then.PcQSWKwLtG, label %if.else.zboeJWQEfF
 
-if.then.fWvggmNOrH:
-	%36 = getelementptr [30 x i8], [30 x i8]* @string.literal.oxQvkYBRDT, i32 0, i32 0
+if.then.PcQSWKwLtG:
+	%36 = getelementptr [30 x i8], [30 x i8]* @string.literal.wUFeLKpDIL, i32 0, i32 0
 	%37 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%38 = call i32 (i8*, ...) @printf(i8* %37, i8* %36)
-	br label %lastLeave.arOJuRaNyd
+	br label %lastLeave.ASazqKsJjX
 
-if.else.eznuIRlCzQ:
-	br label %lastLeave.arOJuRaNyd
+if.else.zboeJWQEfF:
+	br label %lastLeave.ASazqKsJjX
 
-lastLeave.arOJuRaNyd:
+lastLeave.ASazqKsJjX:
 	%39 = load i32*, i32** %29
-	%40 = bitcast i32* %39 to %aStruct-XQiHTSBdie*
-	%41 = load %aStruct-XQiHTSBdie, %aStruct-XQiHTSBdie* %40
-	%42 = alloca %aStruct-XQiHTSBdie
-	store %aStruct-XQiHTSBdie %41, %aStruct-XQiHTSBdie* %42
-	%43 = getelementptr %aStruct-XQiHTSBdie, %aStruct-XQiHTSBdie* %42, i32 0, i32 0
+	%40 = bitcast i32* %39 to %aStruct-cesCKGBrIL*
+	%41 = load %aStruct-cesCKGBrIL, %aStruct-cesCKGBrIL* %40
+	%42 = alloca %aStruct-cesCKGBrIL
+	store %aStruct-cesCKGBrIL %41, %aStruct-cesCKGBrIL* %42
+	%43 = getelementptr %aStruct-cesCKGBrIL, %aStruct-cesCKGBrIL* %42, i32 0, i32 0
 	%44 = load i32, i32* %43
-	%45 = getelementptr %aStruct-XQiHTSBdie, %aStruct-XQiHTSBdie* %24, i32 0, i32 0
+	%45 = getelementptr %aStruct-cesCKGBrIL, %aStruct-cesCKGBrIL* %24, i32 0, i32 0
 	%46 = load i32, i32* %45
 	%47 = icmp ne i32 %44, %46
-	br i1 %47, label %if.then.EDXzXlJSqM, label %if.else.vTPxyGXXpl
+	br i1 %47, label %if.then.BOGWLXAwzC, label %if.else.zZqlBwsRFn
 
-if.then.EDXzXlJSqM:
-	%48 = getelementptr [25 x i8], [25 x i8]* @string.literal.MHodDkTspI, i32 0, i32 0
+if.then.BOGWLXAwzC:
+	%48 = getelementptr [25 x i8], [25 x i8]* @string.literal.JyIJJtzxVT, i32 0, i32 0
 	%49 = getelementptr [4 x i8], [4 x i8]* @"%s ", i32 0, i32 0
 	%50 = call i32 (i8*, ...) @printf(i8* %49, i8* %48)
-	br label %lastLeave.vZNLjaKUDa
+	br label %lastLeave.eTvCFIXFZM
 
-if.else.vTPxyGXXpl:
-	br label %lastLeave.vZNLjaKUDa
+if.else.zZqlBwsRFn:
+	br label %lastLeave.eTvCFIXFZM
 
-lastLeave.vZNLjaKUDa:
+lastLeave.eTvCFIXFZM:
 	ret i32 0
 }
 

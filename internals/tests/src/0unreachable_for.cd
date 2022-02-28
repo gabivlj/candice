@@ -1,0 +1,9 @@
+func infinite_loop() i32 {
+    for {
+        @print("hello world!");
+    }
+
+    @unreachable();
+}
+
+func main() {}

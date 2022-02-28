@@ -746,17 +746,28 @@ func main() {
 
 ## Unreachable
 
-Sometimes you might wanna indicate the compiler that some code is unreachable
+Sometimes you might wanna indicate the compiler that some code is unreachable, and it will infer that
+it's ok to have some kind of return types
 
 ```go
 
 func infinite_loop() i32 {
-    for {
+    for 1 {
         @print("hello world!");
     }
 
     @unreachable();
 }
+
+func loop_that_runs_once() i32 {
+    for 1 {
+        @print("hello world!");
+        return 1;
+    }
+
+    @unreachable();
+}
+
 
 ```
 
