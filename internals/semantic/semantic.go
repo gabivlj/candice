@@ -1056,7 +1056,8 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 		return left
 	}
 
-	if ctypes.IsPointer(left) {
+	if ctypes.IsPointer(left) && left.(*ctypes.Pointer).Inner == ctypes.I8 {
+		s.checkWarningForMultipleStringAdding(binaryOperation)
 		binaryOperation.Type = left
 		return left
 	}

@@ -228,7 +228,6 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	defer func() {
 		os.Remove(".intermediate_output.ll")
 	}()
-	logger.Success("Finished compiling on Candice.")
 	fd, _ := os.Create(".intermediate_output.ll")
 	_, _ = c.m.WriteTo(fd)
 	endFlags := []string{".intermediate_output.ll", "-o", output}
@@ -237,9 +236,7 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	stdout := &bytes.Buffer{}
 	cmd.Stdout = stdout
 	cmd.Stderr = stdout
-	logger.Success("Compiling on " + cxx)
 	err := cmd.Run()
-	logger.Success("Compiled on " + cxx)
 	if err != nil {
 		return errors.New("error compiling with clang:\n" + stdout.String())
 	}
