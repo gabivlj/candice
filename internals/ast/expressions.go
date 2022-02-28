@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -47,7 +48,10 @@ func (b *BinaryOperation) GetToken() token.Token {
 }
 
 func (b *BinaryOperation) String() string {
-	return "(" + b.Left.String() + b.Operation.String() + b.Right.String() + ")"
+	if b.Operation == ops.Dot {
+		return b.Left.String() + b.Operation.String() + b.Right.String()
+	}
+	return "(" + b.Left.String() + " " + b.Operation.String() + " " + b.Right.String() + ")"
 }
 
 type PrefixOperation struct {
@@ -109,7 +113,15 @@ func (bc *BuiltinCall) GetToken() token.Token {
 	return bc.Token
 }
 
+func (bc *BuiltinCall) castString() string {
+	return fmt.Sprintf("%s as %s", bc.Parameters[0], bc.TypeParameters[0])
+}
+
 func (bc *BuiltinCall) String() string {
+	if bc.Name == "cast" {
+		return bc.castString()
+	}
+
 	builder := strings.Builder{}
 	builder.WriteString("@")
 	builder.WriteString(bc.Name)

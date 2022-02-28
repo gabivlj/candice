@@ -114,8 +114,29 @@ func (s *Semantic) error(msg string, tok token.Token) {
 	s.Errors = append(s.Errors, errors.New(fmt.Sprintf("[%d:%d] %s", tok.Line, tok.Position, msg)))
 }
 
-func (s *Semantic) typeMismatchError(node string, tok token.Token, expected, got ctypes.Type) {
-	message := fmt.Sprintf("\n%s \nmismatched types, expected a %s, got a %s\n", node, expected.String(), got.String())
+func (s *Semantic) typeMismatchError(node string, wrongPart ast.Expression, tok token.Token, expected, got ctypes.Type) {
+
+	message := fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
+	if wrongPart != nil {
+		left := wrongPart.String()
+		message += fmt.Sprintf("Hint: maybe are you missing a cast here?\n%s\n%s\n", left, strings.Repeat("^", len(left)))
+	}
+
+	s.error(message, tok)
+}
+
+// Same error but with a cast hint.
+func (s *Semantic) typeMismatchBlameBinaryExpressionError(node string, binary *ast.BinaryOperation, tok token.Token, expected, got ctypes.Type) {
+	binary.Left = &ast.BuiltinCall{
+		Name:           "cast",
+		TypeParameters: []ctypes.Type{got},
+		Parameters:     []ast.Expression{binary.Left},
+	}
+	message := fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
+	if ctypes.IsNumeric(expected) && ctypes.IsNumeric(got) {
+		message += fmt.Sprintf("Try doing:\n- [%d:%d] %s\n", binary.GetToken().Line, binary.GetToken().Position, binary.String())
+	}
+
 	s.error(message, tok)
 }
 
@@ -241,7 +262,7 @@ func (s *Semantic) analyzeGenericTypeDefinition(genericType *ast.GenericTypeDefi
 func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
 	funk, ok := extern.Type.(*ctypes.Function)
 	if !ok {
-		s.typeMismatchError(extern.String(), extern.Token, &ctypes.Function{Name: "function"}, extern.Type)
+		s.typeMismatchError(extern.String(), nil, extern.Token, &ctypes.Function{Name: "function"}, extern.Type)
 	}
 	s.variables.Add(funk.Name, s.newType(funk))
 }
@@ -250,7 +271,7 @@ func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
 	right := s.analyzeExpression(assign.Expression)
 	left := s.analyzeExpression(assign.Left)
 	if !s.areTypesEqual(left, right) {
-		s.typeMismatchError(assign.String(), s.currentStatementBeingAnalyzed.GetToken(), left, right)
+		s.typeMismatchError(assign.String(), assign.Expression, s.currentStatementBeingAnalyzed.GetToken(), left, right)
 	}
 }
 
@@ -278,7 +299,7 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 	condition := s.analyzeExpression(forStatement.Condition)
 
 	if !ctypes.IsNumeric(condition) && condition != ctypes.VoidType {
-		s.typeMismatchError(forStatement.Condition.String(), forStatement.Token, ctypes.I32, condition)
+		s.typeMismatchError(forStatement.Condition.String(), forStatement.Condition, forStatement.Token, ctypes.I1, condition)
 	}
 
 	s.analyzeStatement(forStatement.Operation)
@@ -347,7 +368,7 @@ func (s *Semantic) analyzeAnonymousFunction(anonymousFunction *ast.AnonymousFunc
 func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 	condition := s.analyzeExpression(ifStatement.Condition)
 	if !ctypes.IsNumeric(condition) {
-		s.typeMismatchError(ifStatement.Condition.String(), ifStatement.Token, ctypes.I32, condition)
+		s.typeMismatchError(ifStatement.Condition.String(), ifStatement.Condition, ifStatement.Token, ctypes.I8, condition)
 	}
 
 	doesReturn := true
@@ -360,7 +381,7 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 	for _, currentIf := range ifStatement.ElseIfs {
 		condition := s.analyzeExpression(currentIf.Condition)
 		if !ctypes.IsNumeric(condition) {
-			s.typeMismatchError(currentIf.Condition.String(), currentIf.GetToken(), ctypes.I32, condition)
+			s.typeMismatchError(currentIf.Condition.String(), currentIf.Condition, currentIf.GetToken(), ctypes.I32, condition)
 		}
 		s.returns = false
 		s.analyzeBlock(currentIf.Block)
@@ -387,7 +408,7 @@ func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
 func (s *Semantic) analyzeReturnStatement(returnStatement *ast.ReturnStatement) {
 	theType := s.UnwrapAnonymous(s.analyzeExpression(returnStatement.Expression))
 	if !s.areTypesEqual(theType, s.currentExpectedReturnType) {
-		s.typeMismatchError(returnStatement.String(), returnStatement.Token, s.currentExpectedReturnType, theType)
+		s.typeMismatchError(returnStatement.String(), returnStatement.Expression, returnStatement.Token, s.currentExpectedReturnType, theType)
 	}
 	returnStatement.Type = s.UnwrapAnonymous(theType)
 	s.returns = true
@@ -431,14 +452,15 @@ func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
 
 func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationStatement) {
 	ctype := s.analyzeExpression(declaration.Expression)
-	declaration.Expression = eval.SimplifyExpression(declaration.Expression)
+	originalExpression := declaration.Expression
+	declaration.Expression = eval.SimplifyExpression(originalExpression)
 
 	declType := declaration.Type
 
 	// Check if declaration is forcing the type
 	if declType != ctypes.TODO() {
 		if !s.areTypesEqual(declType, ctype) {
-			s.typeMismatchError(declaration.String(), declaration.Token, declType, ctype)
+			s.typeMismatchError(declaration.String(), originalExpression, declaration.Token, declType, ctype)
 			return
 		}
 		s.variables.Add(declaration.Name, s.newType(declType))
@@ -607,7 +629,7 @@ func (s *Semantic) analyzeIndexAccess(indexAccess *ast.IndexAccess) ctypes.Type 
 
 	indexType := s.analyzeExpression(indexAccess.Access)
 	if !ctypes.IsNumeric(indexType) {
-		s.typeMismatchError(indexAccess.String(), indexAccess.Token, ctypes.I32, indexType)
+		s.typeMismatchError(indexAccess.String(), indexAccess.Access, indexAccess.Token, ctypes.I32, indexType)
 	}
 
 	if arr, ok := leftType.(*ctypes.Array); ok {
@@ -684,7 +706,7 @@ func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes
 		}
 		expression := s.analyzeExpression(value.Expression)
 		if !s.areTypesEqual(structType.Fields[index], expression) {
-			s.typeMismatchError(structLiteral.String(), structLiteral.Token, structType.Fields[index], expression)
+			s.typeMismatchError(structLiteral.String(), structLiteral, structLiteral.Token, structType.Fields[index], expression)
 		}
 	}
 
@@ -702,7 +724,7 @@ func (s *Semantic) analyzeArrayLiteral(arrayLiteral *ast.ArrayLiteral) ctypes.Ty
 	for _, expr := range arrayLiteral.Values {
 		t := s.analyzeExpression(expr)
 		if !s.areTypesEqual(currType, t) {
-			s.typeMismatchError(arrayLiteral.String(), arrayLiteral.Token, currType, t)
+			s.typeMismatchError(arrayLiteral.String(), expr, arrayLiteral.Token, currType, t)
 		}
 	}
 
@@ -743,7 +765,7 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 			}
 
 			if !s.areTypesEqual(funcType.Parameters[i], paramType) {
-				s.typeMismatchError(param.String(), call.Token, funcType.Parameters[i], paramType)
+				s.typeMismatchError(param.String(), param, call.Token, funcType.Parameters[i], paramType)
 			}
 		}
 
@@ -782,14 +804,14 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 	prefixOperation.Type = t
 	if prefixOperation.Operation == ops.Bang || prefixOperation.Operation == ops.Add {
 		if !ctypes.IsNumeric(t) {
-			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Right, prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 		}
 		return t
 	}
 
 	if prefixOperation.Operation == ops.AddOne || prefixOperation.Operation == ops.SubtractOne {
 		if !ctypes.IsNumeric(t) {
-			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Right, prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 			return t
 		}
 
@@ -807,7 +829,7 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 	// We make this if because maybe in the future we don't want to '-' unsigned integers?
 	if prefixOperation.Operation == ops.Subtract {
 		if !ctypes.IsNumeric(t) {
-			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Right, prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 		}
 		return t
 	}
@@ -819,7 +841,7 @@ func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) 
 
 	if prefixOperation.Operation == ops.Multiply {
 		if ptr, ok := t.(*ctypes.Pointer); !ok {
-			s.typeMismatchError(prefixOperation.String(), prefixOperation.Token, &ctypes.Pointer{Inner: t}, t)
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Right, prefixOperation.Token, &ctypes.Pointer{Inner: t}, t)
 			return t
 		} else {
 			prefixOperation.Type = s.UnwrapAnonymous(ptr.Inner)
@@ -922,7 +944,7 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 
 		fn := variable.Type.(*ctypes.Function)
 		if len(fn.Parameters) == 0 || !s.areTypesEqual(fn.Parameters[0], left) {
-			s.typeMismatchError(binaryOperation.String(), binaryOperation.Token, fn.Parameters[0], left)
+			s.typeMismatchError(binaryOperation.String(), binaryOperation.Left, binaryOperation.Token, fn.Parameters[0], left)
 			return ctypes.TODO()
 		}
 		s.additionalExpression = binaryOperation.Left
@@ -1015,7 +1037,7 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 	right := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Right))
 
 	if !s.areTypesEqual(left, right) {
-		s.typeMismatchError(binaryOperation.String(), binaryOperation.Token, right, left)
+		s.typeMismatchBlameBinaryExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, left, right)
 	}
 
 	if binaryOperation.Operation.IsComparison() {

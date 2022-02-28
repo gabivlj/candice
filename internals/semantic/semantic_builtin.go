@@ -23,7 +23,7 @@ func (s *Semantic) analyzeAlloc(allocCall *ast.BuiltinCall) ctypes.Type {
 	s.replaceAnonymous(t)
 	expr := s.analyzeExpression(allocCall.Parameters[0])
 	if !ctypes.IsNumeric(expr) {
-		s.typeMismatchError(allocCall.String(), allocCall.Token, ctypes.I32, expr)
+		s.typeMismatchError(allocCall.String(), allocCall.Parameters[0], allocCall.Token, ctypes.I32, expr)
 	}
 	allocCall.Type = &ctypes.Pointer{Inner: t}
 	return allocCall.Type
@@ -67,7 +67,7 @@ func (s *Semantic) analyzeRealloc(reallocCall *ast.BuiltinCall) ctypes.Type {
 	secondParameter := s.analyzeExpression(reallocCall.Parameters[1])
 
 	if _, isInteger := secondParameter.(*ctypes.Integer); !isInteger {
-		s.typeMismatchError(reallocCall.String(), reallocCall.Token, ctypes.I64, secondParameter)
+		s.typeMismatchError(reallocCall.String(), reallocCall.Parameters[1], reallocCall.Token, ctypes.I64, secondParameter)
 	}
 
 	reallocCall.Type = t

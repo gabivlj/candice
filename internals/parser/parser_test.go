@@ -64,7 +64,7 @@ func TestParser_ParseBinaryOperation(t *testing.T) {
 	lex := lexer.New(src)
 	p := New(lex)
 	tt := p.Parse()
-	a.AssertEqual(tt.String(), "(3+3);\n")
+	a.AssertEqual(tt.String(), "(3 + 3);\n")
 }
 
 func TestParser_MultipleExpressions(t *testing.T) {
@@ -74,22 +74,22 @@ func TestParser_MultipleExpressions(t *testing.T) {
 	}{
 		{
 			expression: `if aConstant2 as i64 != aConstant as i64 @print("bad...")`,
-			expected: `if (@cast(i64, aConstant2)!=@cast(i64, aConstant)) {
+			expected: `if (aConstant2 as i64 != aConstant as i64) {
 @print("bad...");
 }
 `,
 		},
 		{
 			expression: "exp :int = 3==3+(3+3)/4*6+-&element.element.element.element",
-			expected:   "exp :int = (3==((3+(((3+3)/4)*6))+-&(((element.element).element).element)));\n",
+			expected:   "exp :int = (3 == ((3 + (((3 + 3) / 4) * 6)) + -&element.element.element.element));\n",
 		},
 		{
 			expression: "hello :int = 4; 55  >=   33 && 33 <= 11 || 44==-33",
-			expected:   "hello :int = 4;\n(((55>=33)&&(33<=11))||(44==-33));\n",
+			expected:   "hello :int = 4;\n(((55 >= 33) && (33 <= 11)) || (44 == -33));\n",
 		},
 		{
 			expression: "*hello.ss[3].ss = 3;",
-			expected:   "*((hello.ss)[3].ss) = 3;\n",
+			expected:   "*hello.ss[3].ss = 3;\n",
 		},
 		{
 			expression: "cool = \"Hello world\"",
@@ -105,7 +105,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: "pointer : *i32 = @alloc(i32, @alloc(i64, 223 * 333 + 212921) + 329323 & 3333);",
-			expected:   "pointer :*i32 = @alloc(i32, (@alloc(i64, ((223*333)+212921))+(329323&3333)));\n",
+			expected:   "pointer :*i32 = @alloc(i32, (@alloc(i64, ((223 * 333) + 212921)) + (329323 & 3333)));\n",
 		},
 		{
 			expression: `
@@ -116,7 +116,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 					`,
 			expected: `if 3 {
 
-} else if ((((3+3)+3)==((((3/4)/3)/3)+(hello.hello)))==4) {
+} else if ((((3 + 3) + 3) == ((((3 / 4) / 3) / 3) + hello.hello)) == 4) {
 
 } else {
 
@@ -144,7 +144,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `if 1 == 1 @print("cool") else @print("not cool")`,
-			expected: `if (1==1) {
+			expected: `if (1 == 1) {
 @print("cool");
 } else {
 @print("not cool");
@@ -153,14 +153,14 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `for i := 0; i < 1000; i = i + 1 { @print("hello world!") }`,
-			expected: `for i :errors = 0; (i<1000); i = (i+1); {
+			expected: `for i :errors = 0; (i < 1000); i = (i + 1); {
 @print("hello world!");
 }
 `,
 		},
 		{
 			expression: `for i := 0; i < 1000; i = i + 1 @print("hello world!") @print("hello world...")`,
-			expected: `for i :errors = 0; (i<1000); i = (i+1); {
+			expected: `for i :errors = 0; (i < 1000); i = (i + 1); {
 @print("hello world!");
 }
 @print("hello world...");
@@ -170,7 +170,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 			expression: `for i.i.i.i.i[0] = 0; i < 1000 && cool && thing || works == 3; // sdds
 									i.i.i.i.i[0] = i + 1 @print("hello world!");///sss
 // sss`,
-			expected: `for ((((i.i).i).i).i)[0] = 0; ((((i<1000)&&cool)&&thing)||(works==3)); ((((i.i).i).i).i)[0] = (i+1); {
+			expected: `for i.i.i.i.i[0] = 0; ((((i < 1000) && cool) && thing) || (works == 3)); i.i.i.i.i[0] = (i + 1); {
 @print("hello world!");
 }
 `,
@@ -208,7 +208,7 @@ func TestParser_MultipleExpressions(t *testing.T) {
 		},
 		{
 			expression: `for i := 0; i < 100; {}`,
-			expected: `for i :errors = 0; (i<100); {
+			expected: `for i :errors = 0; (i < 100); {
 
 }
 `,
@@ -251,7 +251,7 @@ pog2: 4,
 						return 0;
 					}`,
 			expected: `func hello_world(hello i32, world [111]i32) i32 {
-@print((hello+world[0]));
+@print((hello + world[0]));
 return 0;
 }
 `,
@@ -265,12 +265,12 @@ return 0;
 				return 0;
 			}`,
 			expected: `func helloworld(hello i32, world [111]a_module.Element) i32 {
-if (33>hello) {
-return (module.@hello{
+if (33 > hello) {
+return module.@hello{
 hellobaby: 3,
-});
+};
 }
-helloworld((hello+world[0]), 0);
+helloworld((hello + world[0]), 0);
 return 0;
 }
 `,

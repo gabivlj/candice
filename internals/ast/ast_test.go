@@ -1,9 +1,10 @@
 package ast
 
 import (
+	"testing"
+
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/pkg/a"
-	"testing"
 )
 
 func TestIdentifier_String(t *testing.T) {
@@ -24,6 +25,6 @@ func TestBinaryOperation_String(t *testing.T) {
 	}
 	a.Assert(
 		binaryOp.String() ==
-			`((3*4)+3)`,
+			`((3 * 4) + 3)`,
 	)
 }
