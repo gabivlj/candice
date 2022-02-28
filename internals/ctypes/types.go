@@ -39,6 +39,7 @@ var typeLiteral = map[string]Type{
 	"f64":  F64,
 	"void": VoidType,
 	"i0":   VoidType,
+	"bool": I1,
 }
 
 func LiteralToType(literal string) Type {

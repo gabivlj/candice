@@ -15,6 +15,9 @@ func (c *Compiler) toBool(value value.Value) value.Value {
 		}
 		return c.block().NewICmp(enum.IPredNE, value, zero)
 	}
+	if _, ok := value.Type().(*types.PointerType); ok {
+		return c.block().NewICmp(enum.IPredNE, c.block().NewPtrToInt(value, types.I64), zero)
+	}
 	c.exit("can't pass to a boolean the value: " + value.String())
 	panic("")
 }

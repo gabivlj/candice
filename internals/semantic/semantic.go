@@ -802,11 +802,19 @@ func (s *Semantic) analyzeIdentifier(identifier *ast.Identifier) ctypes.Type {
 func (s *Semantic) analyzePrefixOperation(prefixOperation *ast.PrefixOperation) ctypes.Type {
 	t := s.UnwrapAnonymous(s.analyzeExpression(prefixOperation.Right))
 	prefixOperation.Type = t
-	if prefixOperation.Operation == ops.Bang || prefixOperation.Operation == ops.Add {
+	if prefixOperation.Operation == ops.Add {
 		if !ctypes.IsNumeric(t) {
 			s.typeMismatchError(prefixOperation.String(), prefixOperation.Right, prefixOperation.Token, ctypes.LiteralToType("i32"), t)
 		}
 		return t
+	}
+
+	if prefixOperation.Operation == ops.Bang {
+		if !ctypes.IsPointer(t) && !ctypes.IsNumeric(t) {
+			s.typeMismatchError(prefixOperation.String(), prefixOperation.Right, prefixOperation.Token, ctypes.LiteralToType("i32"), t)
+		}
+
+		return ctypes.I1
 	}
 
 	if prefixOperation.Operation == ops.AddOne || prefixOperation.Operation == ops.SubtractOne {
