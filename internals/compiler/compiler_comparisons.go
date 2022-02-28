@@ -11,16 +11,11 @@ import (
 )
 
 func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.Value {
-	if expr.Operation == ops.Equals && ctypes.IsPointer(expr.Left.GetType()) {
+	if ctypes.IsPointer(expr.Left.GetType()) {
 		return c.compareMemoryI8(c.loadIfPointer(c.compileExpression(expr.Left)),
 			c.loadIfPointer(c.compileExpression(expr.Right)),
-			enum.IPredEQ)
-	}
-
-	if expr.Operation == ops.NotEquals && ctypes.IsPointer(expr.Left.GetType()) {
-		return c.compareMemoryI8(c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)),
-			enum.IPredNE)
+			c.getIPredComparison(expr.Operation, ctypes.I32),
+		)
 	}
 
 	if _, isFloat := expr.Left.GetType().(*ctypes.Float); isFloat {
@@ -33,7 +28,8 @@ func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.V
 
 	return c.block().NewICmp(c.getIPredComparison(expr.Operation, expr.Left.GetType()),
 		c.loadIfPointer(c.loadIfPointer(c.compileExpression(expr.Left))),
-		c.loadIfPointer(c.compileExpression(expr.Right)))
+		c.loadIfPointer(c.compileExpression(expr.Right)),
+	)
 }
 
 func (c *Compiler) getFPredComparison(op ops.Operation, t ctypes.Type) enum.FPred {
