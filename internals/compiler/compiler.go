@@ -1106,6 +1106,16 @@ func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Valu
 			return c.compileOr(expr)
 		}
 
+	case ops.LeftShift:
+		{
+			return c.compileShiftLeftBinary(expr)
+		}
+
+	case ops.RightShift:
+		{
+			return c.compileShiftRightBinary(expr)
+		}
+
 	default:
 		return c.handleComparisonOperations(expr)
 	}

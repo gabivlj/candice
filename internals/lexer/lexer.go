@@ -145,14 +145,16 @@ func (l *Lexer) NextToken() token.Token {
 		tok = l.newToken(token.ASTERISK, l.ch)
 	case '<':
 		if l.peekChar() == '<' {
-			return l.readTwoBytesToken(token.LS, l.peekChar())
+			tok = l.readTwoBytesToken(token.LS, l.peekChar())
+		} else {
+			tok = l.peekerForTwoChars('=', l.newToken(token.LT, l.ch), token.LTE)
 		}
-		tok = l.peekerForTwoChars('=', l.newToken(token.LT, l.ch), token.LTE)
 	case '>':
 		if l.peekChar() == '>' {
-			return l.readTwoBytesToken(token.LS, l.peekChar())
+			tok = l.readTwoBytesToken(token.RS, l.peekChar())
+		} else {
+			tok = l.peekerForTwoChars('=', l.newToken(token.GT, l.ch), token.GTE)
 		}
-		tok = l.peekerForTwoChars('=', l.newToken(token.GT, l.ch), token.GTE)
 	case '&':
 		tok = l.peekerForTwoChars('&', l.newToken(token.ANDBIN, l.ch), token.AND)
 	case '|':
@@ -168,6 +170,9 @@ func (l *Lexer) NextToken() token.Token {
 	case '}':
 		tok = l.newToken(token.RBRACE, l.ch)
 	case 0:
+		tok.Line = l.line
+		tok.Position = l.column
+		tok.OverallPosition = l.position
 		tok.Literal = ""
 		tok.Type = token.EOF
 	default:

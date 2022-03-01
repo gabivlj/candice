@@ -122,6 +122,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.SLASH, p.parseInfix)
 	p.registerInfixHandler(token.EQ, p.parseInfix)
 	p.registerInfixHandler(token.ASSIGN, p.parseInfix)
+	p.registerInfixHandler(token.LS, p.parseInfix)
+	p.registerInfixHandler(token.RS, p.parseInfix)
 	p.registerInfixHandler(token.LBRACKET, p.parseIndex)
 	p.registerInfixHandler(token.LPAREN, p.parseCall)
 	p.registerInfixHandler(token.AS, p.parseAs)

@@ -133,12 +133,22 @@ func (s *Semantic) typeMismatchError(node string, wrongPart ast.Expression, tok 
 }
 
 // Same error but with a cast hint.
-func (s *Semantic) typeMismatchBlameBinaryExpressionError(node string, binary *ast.BinaryOperation, tok token.Token, expected, got ctypes.Type) {
-	binary.Left = &ast.BuiltinCall{
-		Name:           "cast",
-		TypeParameters: []ctypes.Type{got},
-		Parameters:     []ast.Expression{binary.Left},
+func (s *Semantic) typeMismatchBlameBinaryExpressionError(node string, binary *ast.BinaryOperation, tok token.Token, expected, got ctypes.Type, blameRight bool) {
+	// Decide which side of the operation do you want to cast
+	if blameRight {
+		binary.Right = &ast.BuiltinCall{
+			Name:           "cast",
+			TypeParameters: []ctypes.Type{expected},
+			Parameters:     []ast.Expression{binary.Right},
+		}
+	} else {
+		binary.Left = &ast.BuiltinCall{
+			Name:           "cast",
+			TypeParameters: []ctypes.Type{got},
+			Parameters:     []ast.Expression{binary.Left},
+		}
 	}
+
 	message := fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
 	if ctypes.IsNumeric(expected) && ctypes.IsNumeric(got) {
 		message += fmt.Sprintf("Try doing:\n- [%d:%d] %s\n", binary.GetToken().Line, binary.GetToken().Position, binary.String())
@@ -974,7 +984,7 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 	return op == ops.OR || op == ops.Multiply || op == ops.BinaryXOR || op == ops.BinaryOR ||
 		op == ops.BinaryAND || op == ops.AND || op == ops.Add || op == ops.Subtract || op == ops.LessThanEqual ||
 		op == ops.LessThan || op == ops.Equals || op == ops.GreaterThan || op == ops.GreaterThanEqual ||
-		op == ops.NotEquals || op == ops.Divide
+		op == ops.NotEquals || op == ops.Divide || op == ops.LeftShift || op == ops.RightShift
 }
 
 // analyzeImport works in a really tricky way
@@ -1047,12 +1057,31 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	s.modules[importStatement.Name] = internalSemantic
 }
 
+func (s *Semantic) analyzeShiftOperation(binaryOperation *ast.BinaryOperation, left ctypes.Type, right ctypes.Type) ctypes.Type {
+	if _, isNumber := right.(*ctypes.Integer); !isNumber {
+		s.typeMismatchBlameBinaryExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, ctypes.I32, right, true)
+	}
+	if !ctypes.IsNumeric(left) {
+		s.typeMismatchError(binaryOperation.String(), binaryOperation, binaryOperation.Token, ctypes.I32, left)
+	}
+
+	if _, isFloat := left.(*ctypes.Float); isFloat {
+		s.typeMismatchBlameBinaryExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, ctypes.I32, left, false)
+	}
+
+	binaryOperation.Type = left
+	return left
+}
+
 func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	left := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Left))
 	right := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Right))
+	if binaryOperation.Operation == ops.LeftShift || binaryOperation.Operation == ops.RightShift {
+		return s.analyzeShiftOperation(binaryOperation, left, right)
+	}
 
 	if !s.areTypesEqual(left, right) {
-		s.typeMismatchBlameBinaryExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, left, right)
+		s.typeMismatchBlameBinaryExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, left, right, true)
 	}
 
 	if binaryOperation.Operation.IsComparison() {
@@ -1063,7 +1092,7 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 		return left
 	}
 
-	if ctypes.IsPointer(left) && left.(*ctypes.Pointer).Inner == ctypes.I8 {
+	if ctypes.IsPointer(left) && left.(*ctypes.Pointer).Inner == ctypes.I8 && binaryOperation.Operation == ops.Add {
 		s.checkWarningForMultipleStringAdding(binaryOperation)
 		binaryOperation.Type = left
 		return left
