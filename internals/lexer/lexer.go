@@ -70,15 +70,19 @@ func (l *Lexer) peekerForTwoChars(expect byte, otherwise token.Token, t token.Ty
 	peek := l.peekChar()
 	// Checks if the peeked character is the expected one
 	if peek == expect {
-		// Store the current character
-		ch := l.ch
-		// Next character
-		l.readChar()
-		// Return the token for that combination
-		return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column - 2, OverallPosition: l.position}
+		return l.readTwoBytesToken(t, peek)
 	}
 	// Otherwise return the token that it falls to
 	return otherwise
+}
+
+func (l *Lexer) readTwoBytesToken(t token.TypeToken, peek byte) token.Token {
+	// Store the current character
+	ch := l.ch
+	// Next character
+	l.readChar()
+	// Return the token for that combination
+	return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column - 2, OverallPosition: l.position}
 }
 
 func (l *Lexer) getMacroToken() token.Token {
@@ -140,8 +144,14 @@ func (l *Lexer) NextToken() token.Token {
 	case '*':
 		tok = l.newToken(token.ASTERISK, l.ch)
 	case '<':
+		if l.peekChar() == '<' {
+			return l.readTwoBytesToken(token.LS, l.peekChar())
+		}
 		tok = l.peekerForTwoChars('=', l.newToken(token.LT, l.ch), token.LTE)
 	case '>':
+		if l.peekChar() == '>' {
+			return l.readTwoBytesToken(token.LS, l.peekChar())
+		}
 		tok = l.peekerForTwoChars('=', l.newToken(token.GT, l.ch), token.GTE)
 	case '&':
 		tok = l.peekerForTwoChars('&', l.newToken(token.ANDBIN, l.ch), token.AND)

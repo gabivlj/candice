@@ -30,8 +30,8 @@ func TestSemantic_Analyze(t *testing.T) {
 			true,
 		},
 		{
-			`variable : i32 = !!!*&44
-					 variable2 := variable + variable`,
+			`variable : bool = !!!*&44
+					 variable2 := variable as i32 + variable as i32`,
 			true,
 		},
 		{

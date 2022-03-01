@@ -42,6 +42,8 @@ const (
 	ASTERISK = TypeToken("*")
 	SLASH    = TypeToken("/")
 	LT       = TypeToken("<")
+	LS       = TypeToken("<<")
+	RS       = TypeToken(">>")
 	GT       = TypeToken(">")
 	EQ       = TypeToken("==")
 	NOTEQ    = TypeToken("!=")

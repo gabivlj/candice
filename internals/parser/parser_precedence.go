@@ -19,6 +19,8 @@ var precedences = map[token.TypeToken]int{
 	token.MINUS:    4,
 	token.XORBIN:   5,
 	token.ANDBIN:   5,
+	token.LS:       5,
+	token.RS:       5,
 	token.ORBIN:    5,
 	token.BANG:     8,
 	token.SLASH:    6,
@@ -64,6 +66,8 @@ var operations = map[token.TypeToken]ops.Operation{
 	token.AS:           ops.As,
 	token.DOUBLE_PLUS:  ops.AddOne,
 	token.DOUBLE_MINUS: ops.SubtractOne,
+	token.LS:           ops.LeftShift,
+	token.RS:           ops.RightShift,
 }
 
 func (p *Parser) currentTokenToOperation() ops.Operation {

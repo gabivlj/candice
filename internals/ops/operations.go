@@ -38,6 +38,8 @@ const (
 	Paren
 
 	As
+	LeftShift
+	RightShift
 )
 
 func (o Operation) String() string {
@@ -88,7 +90,10 @@ func (o Operation) String() string {
 		return "++"
 	case SubtractOne:
 		return "--"
-
+	case RightShift:
+		return ">>"
+	case LeftShift:
+		return "<<"
 	}
 
 	panic("unknown operand: " + strconv.FormatInt(int64(o), 10))
