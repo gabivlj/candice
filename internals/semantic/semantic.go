@@ -758,7 +758,7 @@ func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes
 	structType, ok := s.UnwrapAnonymous(possibleStructType).(*ctypes.Struct)
 
 	if !ok {
-		s.error("undefined struct "+structLiteral.Name+": "+structLiteral.String(), structLiteral.Token)
+		s.error("undefined struct "+ast.RetrieveID(structLiteral.Name)+": "+structLiteral.String(), structLiteral.Token)
 		return ctypes.TODO()
 	}
 

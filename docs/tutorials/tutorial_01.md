@@ -772,6 +772,57 @@ func loop_that_runs_once() i32 {
 
 ```
 
+## Union Types
+
+On Candice there are not enums (yet?), but we have union types, where you can represent your polymorphic data. Here
+is an example.
+
+```go
+union NumberData {
+    bit   i1
+    byte  i8
+    short i16
+    int   i32
+    long  i64
+}
+
+BIT := 0 as i8
+BYTE := 1 as i8
+SHORT := 2 as i8
+INT := 3 as i8
+LONG := 4 as i8
+
+struct Number {
+    kind i8
+    data NumberData
+}
+
+func newInteger(integer i32) Number {
+    return @Number{
+        kind: INT,
+        data: integer,
+    }
+}
+
+func newByte(byte i8) Number {
+    return @Number{
+        kind: BYTE,
+        data: byte,
+    }
+}
+
+// etc...
+
+func main() {
+    integer := newInteger(10);
+    if integer.kind == INT {
+        @print("I am the integer", integer.data.int , "nice to meet you!")
+    } else if integer.kind == BIT {
+        @print("I am a bit...")
+    }
+}
+```
+
 Be careful though, because if unreachable block runs, it will crash!
 
 ## Problems?
