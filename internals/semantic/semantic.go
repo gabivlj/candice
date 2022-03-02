@@ -114,49 +114,6 @@ func (s *Semantic) error(msg string, tok token.Token) {
 	s.Errors = append(s.Errors, errors.New(fmt.Sprintf("[%d:%d] %s", tok.Line, tok.Position, msg)))
 }
 
-func (s *Semantic) typeMismatchError(node string, wrongPart ast.Expression, tok token.Token, expected, got ctypes.Type) {
-	var message string
-	if len(s.Errors) == 0 {
-		message = fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
-	} else {
-		message = fmt.Sprintf("can't recover from the errors\n")
-	}
-
-	if wrongPart != nil && len(s.Errors) == 0 {
-		left := wrongPart.String()
-		message += fmt.Sprintf("Hint: maybe are you missing a cast here?\n%s\n%s\n", left, strings.Repeat("^", len(left)))
-	} else if len(s.Errors) > 0 {
-		message += fmt.Sprintf("Hint: check compiler errors above.")
-	}
-
-	s.error(message, tok)
-}
-
-// Same error but with a cast hint.
-func (s *Semantic) typeMismatchBlameBinaryExpressionError(node string, binary *ast.BinaryOperation, tok token.Token, expected, got ctypes.Type, blameRight bool) {
-	// Decide which side of the operation do you want to cast
-	if blameRight {
-		binary.Right = &ast.BuiltinCall{
-			Name:           "cast",
-			TypeParameters: []ctypes.Type{expected},
-			Parameters:     []ast.Expression{binary.Right},
-		}
-	} else {
-		binary.Left = &ast.BuiltinCall{
-			Name:           "cast",
-			TypeParameters: []ctypes.Type{got},
-			Parameters:     []ast.Expression{binary.Left},
-		}
-	}
-
-	message := fmt.Sprintf("\n\n%s \n%s mismatched types, expected a %s, got a %s\n", node, strings.Repeat("^", len(node)), expected.String(), got.String())
-	if ctypes.IsNumeric(expected) && ctypes.IsNumeric(got) {
-		message += fmt.Sprintf("Try doing:\n- [%d:%d] %s\n", binary.GetToken().Line, binary.GetToken().Position, binary.String())
-	}
-
-	s.error(message, tok)
-}
-
 func (s *Semantic) GetModule(name string) *Semantic {
 	return s.modules[name]
 }
@@ -1134,7 +1091,7 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 	}
 
 	if !s.areTypesEqual(left, right) {
-		s.typeMismatchBlameBinaryExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, left, right, true)
+		s.typeMismatchBlameArithmeticExpressionError(binaryOperation.String(), binaryOperation, binaryOperation.Token, true)
 	}
 
 	if binaryOperation.Operation.IsComparison() {
@@ -1151,6 +1108,7 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 		return left
 	}
 
+	s.checkDereferenceOnArithmeticErrors(left, right, binaryOperation, true)
 	s.cantOperateThisOperationError(binaryOperation, left, right)
 
 	return ctypes.TODO()

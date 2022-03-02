@@ -126,6 +126,16 @@ type Pointer struct {
 	Inner Type
 }
 
+func (p *Pointer) UnwrapAndDepth() (Type, int) {
+	var t Type = p
+	i := 0
+	for IsPointer(t) {
+		t = t.(*Pointer).Inner
+		i++
+	}
+	return t, i
+}
+
 func (p *Pointer) String() string {
 	return "*" + p.Inner.String()
 }
@@ -328,6 +338,10 @@ type Anonymous struct {
 
 func (_ *Anonymous) CandiceType() {}
 func (a *Anonymous) String() string {
+	if a == todoType {
+		return ""
+	}
+
 	showcase := make([]string, len(a.Modules))
 	for i, module := range a.Modules {
 		showcase[i] = helper.RetrieveID(module)
@@ -442,4 +456,12 @@ func IsUnsignedInteger(t Type) bool {
 func IsFunction(t Type) bool {
 	_, ok := t.(*Function)
 	return ok
+}
+
+func UnwrapPossiblePointerAndDepth(t Type) (Type, int) {
+	if pointer, isPointer := t.(*Pointer); isPointer {
+		return pointer.UnwrapAndDepth()
+	}
+
+	return t, 0
 }

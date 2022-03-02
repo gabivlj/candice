@@ -164,14 +164,14 @@ otherElement u32
 		},
 		{
 			expression: `for i := 0; i < 1000; i = i + 1 { @print("hello world!") }`,
-			expected: `for i :errors = 0; (i < 1000); i = (i + 1); {
+			expected: `for i : = 0; (i < 1000); i = (i + 1); {
 @print("hello world!");
 }
 `,
 		},
 		{
 			expression: `for i := 0; i < 1000; i = i + 1 @print("hello world!") @print("hello world...")`,
-			expected: `for i :errors = 0; (i < 1000); i = (i + 1); {
+			expected: `for i : = 0; (i < 1000); i = (i + 1); {
 @print("hello world!");
 }
 @print("hello world...");
@@ -219,7 +219,7 @@ otherElement u32
 		},
 		{
 			expression: `for i := 0; i < 100; {}`,
-			expected: `for i :errors = 0; (i < 100); {
+			expected: `for i : = 0; (i < 100); {
 
 }
 `,
@@ -242,7 +242,7 @@ p ********[100][100][100]OtherStruct
 		},
 		{
 			expression: `structLiteral := @StructLiteral{ a: 1, b: &*&@AnotherStruct { pog: 3, pog2: 4, } }`,
-			expected: `structLiteral :errors = @StructLiteral{
+			expected: `structLiteral : = @StructLiteral{
 a: 1,
 b: &*&@AnotherStruct{
 pog: 3,
@@ -295,7 +295,7 @@ break
 		},
 		{
 			expression: `arr := [1000]i32{1, 1, 1, 1, 2}`,
-			expected: `arr :errors = [1000]i32 {1, 1, 1, 1, 2};
+			expected: `arr : = [1000]i32 {1, 1, 1, 1, 2};
 `,
 		},
 		{
