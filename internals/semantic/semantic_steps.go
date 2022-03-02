@@ -6,6 +6,11 @@ func (s *Semantic) predefineTypes(statements []ast.Statement) {
 	for _, statement := range statements {
 		s.currentStatementBeingAnalyzed = statement
 		switch t := statement.(type) {
+		case *ast.UnionStatement:
+			{
+				s.definedTypes[t.Type.Name] = t.Type
+			}
+
 		case *ast.StructStatement:
 			{
 				s.definedTypes[t.Type.Name] = t.Type
@@ -63,6 +68,11 @@ func (s *Semantic) fillTypes(statements []ast.Statement) {
 		case *ast.StructStatement:
 			{
 				s.analyzeStructStatement(t)
+			}
+
+		case *ast.UnionStatement:
+			{
+				s.analyzeUnionStatement(t)
 			}
 
 		case *ast.MacroBlock:

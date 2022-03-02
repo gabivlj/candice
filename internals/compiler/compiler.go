@@ -700,7 +700,8 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	var val value.Value
 	if !c.doNotAllocate {
 		val = c.block().NewAlloca(t)
-		c.block().NewStore(c.loadIfPointer(valueCompiled), val)
+		valueCompiled = c.loadIfPointer(valueCompiled)
+		c.block().NewStore(valueCompiled, c.bitcastIfUnion(decl.Type, val, types.NewPointer(valueCompiled.Type())))
 	} else {
 		c.doNotAllocate = false
 		val = valueCompiled
@@ -709,12 +710,25 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	c.declare(decl.Name, val)
 }
 
+func (c *Compiler) bitcastIfUnion(t ctypes.Type, toBeBitcasted value.Value, unionType types.Type) value.Value {
+
+	if _, isUnion := t.(*ctypes.Union); isUnion {
+		return c.block().NewBitCast(toBeBitcasted, unionType)
+	}
+
+	return toBeBitcasted
+}
+
 func (c *Compiler) declare(name string, value value.Value) {
 	c.variables.Add(name, value)
 }
 
 func (c *Compiler) compileStruct(strukt *ast.StructStatement) {
 	c.compileType(strukt.Type.Name, strukt.Type)
+}
+
+func (c *Compiler) compileUnion(union *ast.UnionStatement) {
+	c.compileType(union.Type.Name, union.Type)
 }
 
 func (c *Compiler) compileType(name string, ct ctypes.Type) {
@@ -975,8 +989,9 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 
 func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 	l := c.compileExpression(assignment.Left)
-	r := c.loadIfPointer(c.compileExpression(assignment.Expression))
-	c.block().NewStore(r, l)
+	rightElement := c.compileExpression(assignment.Expression)
+	r := c.loadIfPointer(rightElement)
+	c.block().NewStore(r, c.bitcastIfUnion(assignment.Left.GetType(), l, types.NewPointer(r.Type())))
 }
 
 func (c *Compiler) compileIndexAccess(access *ast.IndexAccess) value.Value {
@@ -1042,7 +1057,7 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 		var ptr value.Value = c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
 
 		// Unwrap value pointer
-		compiledValue = c.loadIfPointer(compiledValue)
+		compiledValue = c.loadIfPointer(c.bitcastIfUnion(field, compiledValue, ptr.Type()))
 
 		// Store in the pointer the compiler value
 		c.block().NewStore(compiledValue, ptr)
@@ -1198,7 +1213,7 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 
 	leftStruct := c.compileExpression(expr.Left)
 	currentCandiceType := expr.Left.GetType()
-	var candiceType *ctypes.Struct
+	var candiceType ctypes.FieldType
 	if s, ok := leftStruct.Type().(*types.PointerType); ok {
 		if types.IsPointer(s.ElemType) {
 			leftStruct = c.loadIfPointer(leftStruct)
@@ -1213,33 +1228,37 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		if anonymous, ok := currentCandiceType.(*ctypes.Anonymous); ok {
 			if anonymous.Modules != nil && len(anonymous.Modules) != 0 {
 				module := anonymous.Modules[0]
-				candiceType = c.modules[module].types[s.ElemType.Name()].candiceType.(*ctypes.Struct)
+				candiceType = c.modules[module].types[s.ElemType.Name()].candiceType.(ctypes.FieldType)
 			} else {
-				candiceType = c.types[s.ElemType.Name()].candiceType.(*ctypes.Struct)
+				candiceType = c.types[s.ElemType.Name()].candiceType.(ctypes.FieldType)
 			}
 		} else {
-			candiceType = currentCandiceType.(*ctypes.Struct)
+			candiceType = currentCandiceType.(ctypes.FieldType)
 		}
 	}
 
 	for {
 		rightName, last := getName(expr.Right)
 		i, field := candiceType.GetField(ast.RetrieveID(rightName))
-		var inner types.Type
-		inner = leftStruct.Type().(*types.PointerType).ElemType
-		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
-		leftStruct = ptr
+		if _, isStruct := candiceType.(*ctypes.Struct); isStruct {
+			inner := leftStruct.Type().(*types.PointerType).ElemType
+			ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
+			leftStruct = ptr
+		} else {
+			// we know this is a union
+			leftStruct = c.block().NewBitCast(leftStruct, types.NewPointer(c.ToLLVMType(field)))
+		}
 
-		// Previously here we were unwrapping pointer struct values now we don't...
-		// We only need to unwrap when we really need to load
-
+		// We knwo that there ain't more dot accesses to the right, break
 		if last {
 			break
 		}
 
+		// Go to the next dot access
 		expr = expr.Right.(*ast.BinaryOperation)
-		candiceType = c.UnwrapStruct(field)
+		candiceType = c.UnwrapFieldAccessor(field)
 	}
+
 	return leftStruct
 }
 

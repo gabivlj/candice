@@ -203,6 +203,10 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		s.analyzeBlock(statementType)
 		return
 
+	case *ast.UnionStatement:
+		// moved to fillTypes
+		return
+
 	case *ast.ImportStatement:
 		// moved to step of structs
 		// s.analyzeImport(statementType)
@@ -211,7 +215,6 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		s.analyzeDeclarationStatement(statementType)
 		return
 	case *ast.StructStatement:
-		s.analyzeStructStatement(statementType)
 		return
 
 	case *ast.IfStatement:
@@ -457,6 +460,32 @@ func (s *Semantic) analyzeStructStatement(statementType *ast.StructStatement) {
 	}
 }
 
+func (s *Semantic) analyzeUnionStatement(statementType *ast.UnionStatement) {
+	s.definedTypes[statementType.Type.Name] = statementType.Type
+	for i, t := range statementType.Type.Fields {
+		t = s.UnwrapAnonymous(t)
+		// Get underlying type
+		unwrappedType := s.unwrap(t)
+		if anonymous, ok := unwrappedType.(*ctypes.Anonymous); ok {
+			definedType := s.UnwrapAnonymous(anonymous)
+			if t == anonymous && statementType.Type == definedType {
+				s.error(
+					"can't analyze field for this union because you are referencing a union that has been later defined or it's a recursive type.\nHint: maybe define this field's type before this type or fix recursive type",
+					statementType.Token,
+				)
+				return
+			}
+			s.swapTypes(t, definedType)
+		} else if statementType.Type == t {
+			s.error(
+				"Recursive type detected",
+				statementType.Token,
+			)
+		}
+		statementType.Type.Fields[i] = t
+	}
+}
+
 func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
 	if builtinHandler, ok := s.builtinHandlers[call.Name]; ok {
 		t := builtinHandler(call)
@@ -480,6 +509,8 @@ func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationState
 			s.typeMismatchError(declaration.String(), originalExpression, declaration.Token, declType, ctype)
 			return
 		}
+		declType = s.UnwrapAnonymous(declType)
+		declaration.Type = declType
 		s.variables.Add(declaration.Name, s.newType(declType))
 		return
 	}
@@ -564,12 +595,34 @@ func (s *Semantic) swapTypes(t ctypes.Type, toSwap ctypes.Type) ctypes.Type {
 	return toSwap
 }
 
+func (s *Semantic) existsTypeInUnion(union *ctypes.Union, other ctypes.Type) bool {
+	for _, field := range union.Fields {
+		if s.areTypesEqual(field, other) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
 	first = s.UnwrapAnonymous(first)
 	second = s.UnwrapAnonymous(second)
 
+	if first == second {
+		return true
+	}
+
 	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {
 		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
+	}
+
+	if union, isUnion := first.(*ctypes.Union); isUnion {
+		return s.existsTypeInUnion(union, second)
+	}
+
+	if union, isUnion := second.(*ctypes.Union); isUnion {
+		return s.existsTypeInUnion(union, first)
 	}
 
 	if firstFunc, ok := first.(*ctypes.Function); ok {
@@ -595,7 +648,7 @@ func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
 		return fArray.Length == sArray.Length && s.areTypesEqual(fArray.Inner, sArray.Inner)
 	}
 
-	return first == second
+	return false
 }
 
 func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
@@ -888,7 +941,7 @@ func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) 
 	}
 
 	if op == ops.Dot {
-		t := s.UnwrapAnonymous(s.analyzeStructAccess(binaryOperation))
+		t := s.UnwrapAnonymous(s.analyzeFieldAccess(binaryOperation))
 		binaryOperation.Type = t
 		return t
 	}
@@ -919,26 +972,26 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 	return accessedElement.Type
 }
 
-func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) ctypes.Type {
+func (s *Semantic) analyzeFieldAccess(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	left := s.analyzeExpression(binaryOperation.Left)
-	var strukt *ctypes.Struct
-	var isStruct bool
+	var fieldAccessor ctypes.FieldType
+	var isFieldAccessor bool
 
 	if module, isModule := left.(*Semantic); isModule {
 		return s.analyzeModuleAccess(module, binaryOperation)
 	}
 
 	if ptr, isPointer := left.(*ctypes.Pointer); isPointer {
-		strukt, isStruct = s.UnwrapAnonymous(ptr.Inner).(*ctypes.Struct)
-		if !isStruct {
-			s.error("expected struct on access, got "+ptr.Inner.String(), binaryOperation.Token)
+		fieldAccessor, isFieldAccessor = s.UnwrapAnonymous(ptr.Inner).(ctypes.FieldType)
+		if !isFieldAccessor {
+			s.error("expected a struct or union on access, got "+ptr.Inner.String(), binaryOperation.Token)
 			return ctypes.TODO()
 		}
-		ptr.Inner = strukt
+		ptr.Inner = fieldAccessor
 	} else {
-		strukt, isStruct = s.UnwrapAnonymous(left).(*ctypes.Struct)
-		if !isStruct {
-			s.error("expected struct on access, got "+left.String(), binaryOperation.Token)
+		fieldAccessor, isFieldAccessor = s.UnwrapAnonymous(left).(ctypes.FieldType)
+		if !isFieldAccessor {
+			s.error("expected a struct or union on access, got "+left.String(), binaryOperation.Token)
 			return ctypes.TODO()
 		}
 	}
@@ -952,10 +1005,10 @@ func (s *Semantic) analyzeStructAccess(binaryOperation *ast.BinaryOperation) cty
 	// Just in case that the identifier.Name is poisoned by ID generation, extract original name
 	namePlusId := identifier.Name
 	identifier.Name = ast.RetrieveID(identifier.Name)
-	idx, t := strukt.GetField(identifier.Name)
+	idx, t := fieldAccessor.GetField(identifier.Name)
 	if idx < 0 || t == nil {
 		// Retrieve origin module
-		m := s.modules[ast.RetrieveRightID(strukt.Name)]
+		m := s.modules[ast.RetrieveRightID(fieldAccessor.GetName())]
 		if m == nil {
 			m = s
 		}
@@ -1098,7 +1151,7 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 		return left
 	}
 
-	s.error("unsupported types for arithmetic: "+left.String(), binaryOperation.Token)
+	s.cantOperateThisOperationError(binaryOperation, left, right)
 
 	return ctypes.TODO()
 }

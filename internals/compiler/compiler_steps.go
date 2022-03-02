@@ -12,6 +12,9 @@ func (c *Compiler) compileStructTypes(statements []ast.Statement) {
 		case *ast.StructStatement:
 			c.compileStruct(t)
 
+		case *ast.UnionStatement:
+			c.compileUnion(t)
+
 		case *ast.MacroBlock:
 			c.compileStructTypes(t.Statements)
 		}

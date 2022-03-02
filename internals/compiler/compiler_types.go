@@ -16,22 +16,39 @@ type Value struct {
 	Type  ctypes.Type
 }
 
-// UnwrapStruct unwraps the underlying pointer/anonymous/struct type and returns a pure struct.
-// This is useful when you have a pointer to a struct, but you want to get some fields.
-func (c *Compiler) UnwrapStruct(field ctypes.Type) *ctypes.Struct {
+func (c *Compiler) searchForType(name string) types.Type {
+	if t, ok := c.types[name]; ok {
+		return t.llvmType
+	}
+
+	// TODO: Optimize this to use a single lookup
+	// we need to do this because we don't know the module name from a struct
+	// and sometimes we will find imported types from other modules that have been parsed.
+	for _, module := range c.modules {
+		if t, ok := module.types[name]; ok {
+			return t.llvmType
+		}
+	}
+
+	return nil
+}
+
+// UnwrapFieldAccessor unwraps the underlying pointer/anonymous/struct/union type and returns a pure field accessor.
+// This is useful when you have a pointer to a struct/union, but you want to get some fields.
+func (c *Compiler) UnwrapFieldAccessor(field ctypes.Type) ctypes.FieldType {
 	prev, ok := field.(*ctypes.Pointer)
-	var candiceType *ctypes.Struct
+	var candiceType ctypes.FieldType
 	if ok {
-		possibleStruct, ok := prev.Inner.(*ctypes.Struct)
+		possibleStruct, ok := prev.Inner.(ctypes.FieldType)
 		if !ok {
-			candiceType = c.types[prev.Inner.(*ctypes.Anonymous).Name].candiceType.(*ctypes.Struct)
+			candiceType = c.types[prev.Inner.(*ctypes.Anonymous).Name].candiceType.(ctypes.FieldType)
 		} else {
 			candiceType = possibleStruct
 		}
 	} else {
-		possibleStruct, ok := field.(*ctypes.Struct)
+		possibleStruct, ok := field.(ctypes.FieldType)
 		if !ok {
-			candiceType = c.types[field.(*ctypes.Anonymous).Name].candiceType.(*ctypes.Struct)
+			candiceType = c.types[field.(*ctypes.Anonymous).Name].candiceType.(ctypes.FieldType)
 		} else {
 			candiceType = possibleStruct
 		}
@@ -69,19 +86,21 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		{
 			return types.NewPointer(c.ToLLVMType(el.Inner))
 		}
-	case *ctypes.Struct:
+
+	case *ctypes.Union:
 		{
-			if t, ok := c.types[el.Name]; ok {
-				return t.llvmType
+			if union := c.searchForType(el.Name); union != nil {
+				return union
 			}
 
-			// TODO: Optimize this to use a single lookup
-			// we need to do this because we don't know the module name from a struct
-			// and sometimes we will find imported types from other modules that have been parsed.
-			for _, module := range c.modules {
-				if t, ok := module.types[el.Name]; ok {
-					return t.llvmType
-				}
+			unionType := types.NewArray(uint64(el.SizeOf()), types.I8)
+			return unionType
+		}
+
+	case *ctypes.Struct:
+		{
+			if strukt := c.searchForType(el.Name); strukt != nil {
+				return strukt
 			}
 
 			llvmTypes := make([]types.Type, 0, len(el.Fields))

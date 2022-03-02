@@ -1,0 +1,42 @@
+union SomeUnion {
+    first f32
+    second i32
+    high i64
+}
+
+union Integer {
+    i32 i32
+    i64 i64
+    u32 u32
+    u64 u64
+    u16 u16
+  // ... etc 
+  }
+
+struct Container {
+    element SomeUnion
+}
+
+func main() {
+    thing : SomeUnion = 3;
+    thing2 := thing.second + 3;
+    if thing2 != 6 {
+        @print("this is bad")
+    }
+    thing.second = 4;
+    if thing.second != 4 @print("also bad")
+    thing = 3 as i64;
+
+    integer : Integer = 3;
+    integer = 3 as u32
+    integer = 3 as u16;
+    integer = 3 as i64;
+    if integer.i64 != 3 as i64 @print("this is really bad!!!!!");
+
+    container := @Container {
+        element: thing
+    };
+    if container.element.high  != 3 as i64 {
+        @print("bad as well")
+    }
+}

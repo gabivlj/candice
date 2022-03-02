@@ -245,11 +245,25 @@ func (f *Function) String() string {
 	return builder.String()
 }
 
+type FieldType interface {
+	Type
+	GetName() string
+	candiceType()
+	GetField(string) (int, Type)
+	FullString() string
+}
+
 type Union struct {
 	Fields []Type
 	Names  []string
 	Name   string
 	ID     string
+}
+
+func (u *Union) candiceType() {}
+
+func (u *Union) GetName() string {
+	return u.Name
 }
 
 func (u *Union) GetField(fieldName string) (int, Type) {
@@ -328,6 +342,12 @@ type Struct struct {
 	Names  []string
 	Name   string
 	ID     string
+}
+
+func (s *Struct) candiceType() {}
+
+func (s *Struct) GetName() string {
+	return s.Name
 }
 
 func (s *Struct) GetField(fieldName string) (int, Type) {
