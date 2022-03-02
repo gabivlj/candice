@@ -772,6 +772,8 @@ func loop_that_runs_once() i32 {
 
 ```
 
+Be careful though, because if unreachable block runs, it will crash!
+
 ## Union Types
 
 On Candice there are not enums (yet?), but we have union types, where you can represent your polymorphic data. Here
@@ -823,7 +825,7 @@ func main() {
 }
 ```
 
-Be careful though, because if unreachable block runs, it will crash!
+Be careful with accessing unions that you don't know the type of!
 
 ## Problems?
 
