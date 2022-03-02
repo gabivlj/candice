@@ -178,6 +178,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseFor()
 	case token.STRUCT:
 		return p.parseStruct()
+	case token.UNION:
+		return p.parseUnion()
 	case token.FUNCTION:
 		return p.parseFunctionDeclaration()
 	case token.RETURN:
@@ -463,10 +465,7 @@ func (p *Parser) parseStructLiteral(module string) ast.Expression {
 	}
 }
 
-func (p *Parser) parseStruct() ast.Statement {
-	_ = p.nextToken()
-	p.expect(token.IDENT)
-	identifier := p.nextToken()
+func (p *Parser) parseIdTypePairs() ([]ctypes.Type, []string) {
 	p.expect(token.LBRACE)
 	p.nextToken()
 	var types []ctypes.Type
@@ -480,19 +479,40 @@ func (p *Parser) parseStruct() ast.Statement {
 		types = append(types, t)
 
 	}
-
 	p.expect(token.RBRACE)
 	p.nextToken()
+	return types, names
+}
+
+func (p *Parser) parseStruct() ast.Statement {
+	_ = p.nextToken()
+	p.expect(token.IDENT)
+	identifier := p.nextToken()
+	types, names := p.parseIdTypePairs()
 	s := ast.StructStatement{
 		Token: identifier,
 		Type: &ctypes.Struct{
 			Fields: types,
 			Names:  names,
 			Name:   ast.CreateIdentifier(identifier.Literal, p.ID),
-			ID:     identifier.Literal + random.RandomString(10),
 		},
 	}
+	return &s
+}
 
+func (p *Parser) parseUnion() ast.Statement {
+	_ = p.nextToken()
+	p.expect(token.IDENT)
+	identifier := p.nextToken()
+	types, names := p.parseIdTypePairs()
+	s := ast.UnionStatement{
+		Token: identifier,
+		Type: &ctypes.Union{
+			Fields: types,
+			Names:  names,
+			Name:   ast.CreateIdentifier(identifier.Literal, p.ID),
+		},
+	}
 	return &s
 }
 

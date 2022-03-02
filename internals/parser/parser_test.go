@@ -80,6 +80,17 @@ func TestParser_MultipleExpressions(t *testing.T) {
 `,
 		},
 		{
+			expression: `union Union {
+					element i32
+					otherElement u32
+				}`,
+			expected: `union Union {
+element i32
+otherElement u32
+}
+`,
+		},
+		{
 			expression: "exp :int = 3==3+(3+3)/4*6+-&element.element.element.element",
 			expected:   "exp :int = (3 == ((3 + (((3 + 3) / 4) * 6)) + -&element.element.element.element));\n",
 		},

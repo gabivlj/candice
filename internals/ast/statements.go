@@ -69,6 +69,21 @@ func (s *StructStatement) String() string {
 	return s.Type.FullString()
 }
 
+type UnionStatement struct {
+	Token token.Token
+	Type  *ctypes.Union
+}
+
+func (s *UnionStatement) GetToken() token.Token {
+	return s.Token
+}
+
+func (s *UnionStatement) statementNode() {}
+
+func (s *UnionStatement) String() string {
+	return s.Type.FullString()
+}
+
 type DeclarationStatement struct {
 	Token      token.Token
 	Name       string

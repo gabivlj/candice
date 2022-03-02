@@ -245,6 +245,65 @@ func (f *Function) String() string {
 	return builder.String()
 }
 
+type Union struct {
+	Fields []Type
+	Names  []string
+	Name   string
+	ID     string
+}
+
+func (u *Union) GetField(fieldName string) (int, Type) {
+	for i, field := range u.Fields {
+		if u.Names[i] == fieldName {
+			return i, field
+		}
+	}
+	return -1, nil
+}
+
+func (u *Union) FullString() string {
+	str := strings.Builder{}
+	str.WriteString("union " + strings.Split(u.Name, "-")[0] + " {\n")
+	for i, field := range u.Fields {
+		if i >= 1 {
+			str.WriteByte('\n')
+		}
+		str.WriteString(fmt.Sprintf("%s %s", u.Names[i], field.String()))
+	}
+	str.WriteString("\n}")
+	return str.String()
+}
+
+func (u *Union) String() string {
+	return strings.Split(u.Name, "-")[0]
+}
+
+func (_ *Union) CandiceType() {}
+
+func (u *Union) SizeOf() int64 {
+	max := int64(0)
+	for _, t := range u.Fields {
+		typeSize := t.SizeOf()
+		if max < typeSize {
+			max = typeSize
+		}
+	}
+
+	return max
+}
+
+func (u *Union) Alignment() int64 {
+	maximumAlignment := int64(0)
+	for _, t := range u.Fields {
+		alignment := t.Alignment()
+		if alignment > maximumAlignment {
+			maximumAlignment = alignment
+		}
+	}
+
+	return maximumAlignment
+}
+
 // Anonymous type is a type that is not yet declared or not processed by the semantic tree.
 // The front-end compiler will try to lookup by name the type and throw an exception if
 // it's not defined. We can do fancy lazy stuff with this.

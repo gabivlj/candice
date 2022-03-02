@@ -90,6 +90,7 @@ const (
 	DOUBLE_PLUS  = TypeToken("++")
 	DOUBLE_MINUS = TypeToken("--")
 	PUBLIC       = TypeToken("pub")
+	UNION        = TypeToken("union")
 )
 
 var keywords = map[string]TypeToken{
@@ -108,6 +109,7 @@ var keywords = map[string]TypeToken{
 	"continue": CONTINUE,
 	"type":     TYPE,
 	"as":       AS,
+	"union":    UNION,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken
