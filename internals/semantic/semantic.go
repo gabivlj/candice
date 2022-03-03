@@ -19,6 +19,7 @@ import (
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/internals/undomap"
 	"github.com/gabivlj/candice/pkg/a"
+	"github.com/gabivlj/candice/pkg/logger"
 )
 
 type Semantic struct {
@@ -486,13 +487,27 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		if anonymous.Modules != nil && len(anonymous.Modules) > 0 {
 			module = anonymous.Modules[0]
 		}
-
-		semantic := s.retrieveModule(module)
+		var semantic *Semantic
+		// Sometimes when there is an empty module on the type access, there still might be
+		// a module defined
+		if module == "" {
+			id := ast.RetrieveRightID(anonymous.Name)
+			semantic = s.modules[id]
+			// Unexisting module, it is this module
+			if semantic == nil && s.Root.ID == id {
+				semantic = s
+			} else {
+				logger.Warning("there might be an error on the compiler, we can't find a module for some reason")
+			}
+		} else {
+			semantic = s.retrieveModule(module)
+		}
 		name := semantic.TranslateName(anonymous.Name)
 		// replace anonymous type name to the module one.
 		anonymous.Name = name
 
 		t, ok := semantic.definedTypes[name]
+		log.Println(semantic.definedTypes, module)
 		if !ok {
 			typesDefined := ""
 			for _, t := range semantic.definedTypes {
