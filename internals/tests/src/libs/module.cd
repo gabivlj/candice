@@ -1,0 +1,13 @@
+struct Module {
+}
+
+type Mod = *Module;
+
+func do(callback func(Mod) void) {
+    m := @Module{};
+    callback(&m);
+}
+
+func create(m Mod) Module {
+    return @Module{}
+}

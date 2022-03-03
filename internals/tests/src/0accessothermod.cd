@@ -1,0 +1,12 @@
+import mod, "./src/libs/module.cd"
+
+
+func main() {
+	mod.do(func (m mod.Mod) {
+		(&m.create()).create();
+	});
+
+	mod.do(func (m *mod.Module) {
+		(&m.create()).create();
+	})
+}

@@ -777,44 +777,49 @@ func (s *Semantic) analyzeFunctionCall(call *ast.Call) ctypes.Type {
 	possibleFuncType := s.analyzeExpression(call.Left)
 
 	// it is possible that we are retrieving a sturct access with function
+	var funcType *ctypes.Function
+	var ok bool
 
-	if funcType, ok := possibleFuncType.(*ctypes.Function); !ok {
+	if funcType, ok = possibleFuncType.(*ctypes.Function); !ok {
 		s.error("can't call non function "+call.Left.String()+" of type "+possibleFuncType.String(), call.Token)
-	} else {
-
-		if s.additionalExpression != nil {
-			call.Parameters = append([]ast.Expression{s.additionalExpression}, call.Parameters...)
-			s.additionalExpression = nil
-			call.Left = &ast.Identifier{
-				Node: &node.Node{
-					Token: call.Token,
-					Type:  possibleFuncType,
-				},
-				Name: funcType.Name,
-			}
-		}
-
-		if len(call.Parameters) != len(funcType.Parameters) && !funcType.InfiniteParameters {
-			s.error("mismatch number of parameters", call.Token)
-		}
-
-		for i, param := range call.Parameters {
-			paramType := s.analyzeExpression(param)
-
-			if i >= len(funcType.Parameters) {
-				continue
-			}
-
-			if !s.areTypesEqual(funcType.Parameters[i], paramType) {
-				s.typeMismatchError(param.String(), param, call.Token, funcType.Parameters[i], paramType)
-			}
-		}
-
-		call.Type = funcType.Return
-		return call.Type
+		return ctypes.TODO()
 	}
 
-	return ctypes.TODO()
+	additionalExpression := s.additionalExpression
+	s.additionalExpression = nil
+	if additionalExpression != nil {
+		call.Parameters = append([]ast.Expression{additionalExpression}, call.Parameters...)
+		call.Left = &ast.Identifier{
+			Node: &node.Node{
+				Token: call.Token,
+				Type:  possibleFuncType,
+			},
+			Name: funcType.Name,
+		}
+	}
+
+	if len(call.Parameters) != len(funcType.Parameters) && !funcType.InfiniteParameters {
+		s.error("mismatch number of parameters", call.Token)
+	}
+
+	for i, param := range call.Parameters {
+		if param == additionalExpression {
+			continue
+		}
+
+		paramType := s.analyzeExpression(param)
+
+		if i >= len(funcType.Parameters) {
+			continue
+		}
+
+		if !s.areTypesEqual(funcType.Parameters[i], paramType) {
+			s.typeMismatchError(param.String(), param, call.Token, funcType.Parameters[i], paramType)
+		}
+	}
+
+	call.Type = funcType.Return
+	return call.Type
 }
 
 func (s *Semantic) analyzeIdentifier(identifier *ast.Identifier) ctypes.Type {
@@ -947,7 +952,6 @@ func (s *Semantic) analyzeFieldAccess(binaryOperation *ast.BinaryOperation) ctyp
 	left := s.analyzeExpression(binaryOperation.Left)
 	var fieldAccessor ctypes.FieldType
 	var isFieldAccessor bool
-
 	if module, isModule := left.(*Semantic); isModule {
 		return s.analyzeModuleAccess(module, binaryOperation)
 	}
