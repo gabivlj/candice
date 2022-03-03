@@ -496,7 +496,7 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 			// Unexisting module, it is this module
 			if semantic == nil && s.Root.ID == id {
 				semantic = s
-			} else {
+			} else if semantic == nil {
 				logger.Warning("there might be an error on the compiler, we can't find a module for some reason")
 			}
 		} else {
@@ -507,7 +507,6 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		anonymous.Name = name
 
 		t, ok := semantic.definedTypes[name]
-		log.Println(semantic.definedTypes, module)
 		if !ok {
 			typesDefined := ""
 			for _, t := range semantic.definedTypes {
