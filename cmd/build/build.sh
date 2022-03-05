@@ -1,0 +1,1 @@
+mv build candice && sudo mv candice /usr/local/bin

@@ -437,8 +437,15 @@ func (c *Compiler) compileTypeDefinition(t *ast.TypeDefinition) {
 func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 	funcType := externFunc.Type.(*ctypes.Function)
 
+	// Check if the variable has been defined anywhere in LLVM
 	if f, ok := c.globalVariables[funcType.ExternalName]; ok {
 		c.globalVariables[funcType.Name] = f
+		return
+	}
+
+	if f, ok := c.globalBuiltinDefinitions[funcType.ExternalName]; ok {
+		funk := &Value{Value: f, Type: funcType}
+		c.globalVariables[funcType.Name] = funk
 		return
 	}
 
@@ -456,8 +463,15 @@ func (c *Compiler) compileExternFunc(externFunc *ast.ExternStatement) {
 	}
 
 	funk := &Value{Value: f, Type: funcType}
+	// Define the variable to local module facing references
 	c.globalVariables[funcType.Name] = funk
+	// Define the variable to C ABI facing code so the rest of modules
+	// can know if this variable has been defined
 	c.globalVariables[funcType.ExternalName] = funk
+	// Define the variable for builtin functions in case that they are trying to
+	// define this variable. For example @alloc wants to define malloc but it has been
+	// defined on an extern funcs
+	c.globalBuiltinDefinitions[funcType.ExternalName] = funk.Value
 }
 
 func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {

@@ -33,6 +33,7 @@ func (c *Compiler) memcpy() *ir.Func {
 	if fn, ok := c.globalBuiltinDefinitions["memcpy"]; ok {
 		return fn.(*ir.Func)
 	}
+
 	memcpy := c.m.NewFunc("memcpy", types.Void, ir.NewParam("", types.I8Ptr), ir.NewParam("", types.I8Ptr), ir.NewParam("", types.I64))
 	c.globalBuiltinDefinitions["memcpy"] = memcpy
 	memcpy.CallingConv = enum.CallingConvC
