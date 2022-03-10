@@ -60,6 +60,7 @@ func TestSrcs(t *testing.T) {
 			t.Fatal(p.Errors)
 		}
 		semantic.ResetPaths()
+		s.ContextDirectoryPath = "./src"
 		s.Analyze(root)
 
 		if len(s.Errors) > 0 {

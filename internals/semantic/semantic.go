@@ -51,6 +51,9 @@ type Semantic struct {
 	modules              map[string]*Semantic
 	Root                 *ast.Program
 	additionalExpression ast.Expression
+
+	// path of the directory in the context where the compiler is running
+	ContextDirectoryPath string
 }
 
 var paths map[string]*Semantic = map[string]*Semantic{}
@@ -1045,15 +1048,16 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 		s.Errors = append(s.Errors, err)
 		currentPath = "/"
 	}
-
-	path := path.Join(currentPath, importStatement.Path.Value)
-	hash := strings.Builder{}
-
+	// Join total path from the compiler standpoint to the context directory path
+	currentPath = path.Join(currentPath, s.ContextDirectoryPath)
+	// Join that path with import path, having the complete path to the file
+	currentPathPlusImport := path.Join(currentPath, importStatement.Path.Value)
+	hashType := strings.Builder{}
 	for _, t := range types {
-		hash.WriteByte(',')
-		hash.WriteString(t.String())
+		hashType.WriteByte(',')
+		hashType.WriteString(t.String())
 	}
-	endHash := path + hash.String()
+	endHash := currentPathPlusImport + hashType.String()
 	if existingSemantic, ok := paths[endHash]; ok {
 		s.modules[importStatement.Name] = existingSemantic
 		// We need this for methods that are referenced as
@@ -1061,8 +1065,7 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 		s.modules[existingSemantic.Root.ID] = existingSemantic
 		return
 	}
-
-	text, err := os.ReadFile(path)
+	text, err := os.ReadFile(currentPathPlusImport)
 	if err != nil {
 		s.errorWithStatement(fmt.Sprintf("error importing file with path %s: %s", importStatement.Path, err.Error()), importStatement.Token)
 		return
@@ -1079,6 +1082,10 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	}
 
 	internalSemantic := New()
+	// Get the local directory where the user is importing
+	dir, _ := path.Split(importStatement.Path.Value)
+	// Join with the context path
+	internalSemantic.ContextDirectoryPath = path.Join(s.ContextDirectoryPath, dir)
 	internalSemantic.Analyze(tree)
 	if len(internalSemantic.Errors) > 0 {
 		s.errorWithStatement("error analyzing file imported on path "+importStatement.Path.String(), importStatement.Token)

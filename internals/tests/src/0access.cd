@@ -1,4 +1,4 @@
-import a, i32, "./src/libs/array.cd";
+import a, i32, "./libs/array.cd";
 
 func main() {
     arr := &a.New()

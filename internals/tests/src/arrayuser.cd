@@ -1,11 +1,11 @@
-import arr, i32, "./src/libs/array.cd"
-import arr2, i32, "./src/libs/usearray.cd"
-import arr3, i64, "./src/libs/array.cd"
-import arr4, i64, "./src/libs/usearray.cd"
+import arr, i32, "./libs/array.cd"
+import arr2, i32, "./libs/usearray.cd"
+import arr3, i64, "./libs/array.cd"
+import arr4, i64, "./libs/usearray.cd"
 
 type Array = *arr3.Array
 
-import arrayInArray, Array, "./src/libs/array.cd"
+import arrayInArray, Array, "./libs/array.cd"
 
 func main() i32 {
     a := arr.New()

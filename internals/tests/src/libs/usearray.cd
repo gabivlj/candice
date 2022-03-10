@@ -1,6 +1,6 @@
 type C
 
-import a, C, "./src/libs/array.cd"
+import a, C, "./array.cd"
 
 struct useArray {
     arr ***a.Array
