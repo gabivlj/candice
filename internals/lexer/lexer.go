@@ -131,6 +131,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = l.peekerForTwoChars('=', l.newToken(token.ASSIGN, '='), token.EQ)
 	case '!':
 		tok = l.peekerForTwoChars('=', l.newToken(token.BANG, '!'), token.NOTEQ)
+	case '%':
+		tok = l.newToken(token.MODULO, l.ch)
 	case ';':
 		tok = l.newToken(token.SEMICOLON, l.ch)
 	case '(':

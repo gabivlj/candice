@@ -91,6 +91,7 @@ const (
 	DOUBLE_MINUS = TypeToken("--")
 	PUBLIC       = TypeToken("pub")
 	UNION        = TypeToken("union")
+	MODULO       = TypeToken("%")
 )
 
 var keywords = map[string]TypeToken{

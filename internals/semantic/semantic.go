@@ -1023,7 +1023,8 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 	return op == ops.OR || op == ops.Multiply || op == ops.BinaryXOR || op == ops.BinaryOR ||
 		op == ops.BinaryAND || op == ops.AND || op == ops.Add || op == ops.Subtract || op == ops.LessThanEqual ||
 		op == ops.LessThan || op == ops.Equals || op == ops.GreaterThan || op == ops.GreaterThanEqual ||
-		op == ops.NotEquals || op == ops.Divide || op == ops.LeftShift || op == ops.RightShift
+		op == ops.NotEquals || op == ops.Divide || op == ops.LeftShift || op == ops.RightShift ||
+		op == ops.Modulo
 }
 
 // analyzeImport works in a really tricky way

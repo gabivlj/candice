@@ -27,6 +27,7 @@ const (
 	AddOne
 	SubtractOne
 	TempAssign
+	Modulo
 
 	// Dot is useful for struct access
 	// like struct.thing
@@ -94,6 +95,8 @@ func (o Operation) String() string {
 		return ">>"
 	case LeftShift:
 		return "<<"
+	case Modulo:
+		return "%"
 	}
 
 	panic("unknown operand: " + strconv.FormatInt(int64(o), 10))

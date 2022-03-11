@@ -1085,6 +1085,11 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 /// than storing callbacks on a hashmap. Let's keep it simple.
 func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Value {
 	switch expr.Operation {
+	case ops.Modulo:
+		{
+			return c.compileModulo(expr)
+		}
+
 	case ops.Multiply:
 		{
 			return c.compileMultiply(expr)
@@ -1335,7 +1340,22 @@ func (c *Compiler) compileDivide(expr *ast.BinaryOperation) value.Value {
 	}
 	c.exitErrorExpression("can't divide these types", expr)
 	panic("")
+}
 
+func (c *Compiler) compileModulo(expr *ast.BinaryOperation) value.Value {
+	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
+	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+	if types.IsInt(leftValue.Type()) {
+		if _, isUnsigned := expr.Type.(*ctypes.UInteger); isUnsigned {
+			return c.block().NewURem(leftValue, rightValue)
+		}
+		return c.block().NewSRem(leftValue, rightValue)
+	}
+	if types.IsFloat(leftValue.Type()) {
+		return c.block().NewFRem(leftValue, rightValue)
+	}
+	c.exitErrorExpression("can't divide these types", expr)
+	panic("")
 }
 
 func (c *Compiler) compileAndBinary(expr *ast.BinaryOperation) value.Value {

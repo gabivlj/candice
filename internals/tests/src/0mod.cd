@@ -1,0 +1,9 @@
+func main() {
+    d := 3 % 6;
+    if d != 3 {
+        @print("bad1");
+    }
+
+    if 5 % 2 != 1 @print("bad2");
+    if 8.0 % 2.0 != 0.0 @print("bad3")
+}
