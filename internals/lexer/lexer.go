@@ -217,6 +217,7 @@ func (l *Lexer) readString() string {
 			if l.peekChar() == 'n' {
 				l.readChar()
 				l.readChar()
+				// Byte of a jumpline in Unix
 				s += string(byte(10))
 				continue
 			}

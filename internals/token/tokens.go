@@ -14,84 +14,73 @@ type Token struct {
 }
 
 const (
-	// ILLEGAL
-
 	ILLEGAL = TypeToken("ILLEGAL") // Unknown token
 	EOF     = TypeToken("EOF")     // End of file
 
 	// Identifier + Literals
-
 	IDENT  = TypeToken("IDENT")  // VARIABLE NAME
 	INT    = TypeToken("INT")    // 12345
 	FLOAT  = TypeToken("FLOAT")  // 1.0
 	HEX    = TypeToken("HEX")    // 0x12191
 	BINARY = TypeToken("BINARY") // 0b1101010
+	STRING = TypeToken("STRING")
 
 	// Operators
+	AT           = TypeToken("@")
+	OR           = TypeToken("||")
+	AND          = TypeToken("&&")
+	ANDBIN       = TypeToken("&")
+	ORBIN        = TypeToken("|")
+	XORBIN       = TypeToken("^")
+	COMMA        = TypeToken(",")
+	PLUS         = TypeToken("+")
+	MINUS        = TypeToken("-")
+	BANG         = TypeToken("!")
+	ASTERISK     = TypeToken("*")
+	SLASH        = TypeToken("/")
+	LT           = TypeToken("<")
+	LS           = TypeToken("<<")
+	RS           = TypeToken(">>")
+	GT           = TypeToken(">")
+	EQ           = TypeToken("==")
+	NOTEQ        = TypeToken("!=")
+	LTE          = TypeToken("<=")
+	GTE          = TypeToken(">=")
+	DOT          = TypeToken(".")
+	DOUBLE_DOT   = TypeToken("..")
+	DOUBLE_PLUS  = TypeToken("++")
+	DOUBLE_MINUS = TypeToken("--")
+	MODULO       = TypeToken("%")
 
-	AT       = TypeToken("@")
-	OR       = TypeToken("||")
-	AND      = TypeToken("&&")
-	ANDBIN   = TypeToken("&")
-	ORBIN    = TypeToken("|")
-	XORBIN   = TypeToken("^")
-	COMMA    = TypeToken(",")
-	PLUS     = TypeToken("+")
-	MINUS    = TypeToken("-")
-	BANG     = TypeToken("!")
-	ASTERISK = TypeToken("*")
-	SLASH    = TypeToken("/")
-	LT       = TypeToken("<")
-	LS       = TypeToken("<<")
-	RS       = TypeToken(">>")
-	GT       = TypeToken(">")
-	EQ       = TypeToken("==")
-	NOTEQ    = TypeToken("!=")
-	LTE      = TypeToken("<=")
-	GTE      = TypeToken(">=")
-	TYPE     = TypeToken("type")
-
-	DOT = TypeToken(".")
 	// Delimiters
-
-	LPAREN = TypeToken("(")
-	RPAREN = TypeToken(")")
-	LBRACE = TypeToken("{")
-	RBRACE = TypeToken("}")
-
+	LPAREN    = TypeToken("(")
+	RPAREN    = TypeToken(")")
+	LBRACE    = TypeToken("{")
+	RBRACE    = TypeToken("}")
+	LBRACKET  = TypeToken("[")
+	RBRACKET  = TypeToken("]")
 	SEMICOLON = TypeToken(";")
 	COLON     = TypeToken(":")
 	ASSIGN    = TypeToken("=")
 
 	// Keywords
-
+	TYPE     = TypeToken("type")
+	PUBLIC   = TypeToken("pub")
+	UNION    = TypeToken("union")
 	STRUCT   = TypeToken("STRUCT")
 	FUNCTION = TypeToken("FUNCTION")
-	LET      = TypeToken("LET")
 	TRUE     = TypeToken("TRUE")
 	FALSE    = TypeToken("FALSE")
 	IF       = TypeToken("IF")
 	ELSE     = TypeToken("ELSE")
 	RETURN   = TypeToken("RETURN")
-
-	STRING   = TypeToken("STRING")
-	LBRACKET = TypeToken("[")
-	RBRACKET = TypeToken("]")
-
-	IMPORT = TypeToken("IMPORT")
-	FOR    = TypeToken("FOR")
-
-	BREAK        = TypeToken("BREAK")
-	CONTINUE     = TypeToken("CONTINUE")
-	EXTERN       = TypeToken("EXTERN")
-	AS           = TypeToken("AS")
-	MACRO_IF     = TypeToken("#IF")
-	DOUBLE_DOT   = TypeToken("..")
-	DOUBLE_PLUS  = TypeToken("++")
-	DOUBLE_MINUS = TypeToken("--")
-	PUBLIC       = TypeToken("pub")
-	UNION        = TypeToken("union")
-	MODULO       = TypeToken("%")
+	IMPORT   = TypeToken("IMPORT")
+	FOR      = TypeToken("FOR")
+	BREAK    = TypeToken("BREAK")
+	CONTINUE = TypeToken("CONTINUE")
+	EXTERN   = TypeToken("EXTERN")
+	AS       = TypeToken("AS")
+	MACRO_IF = TypeToken("#IF")
 )
 
 var keywords = map[string]TypeToken{
