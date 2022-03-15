@@ -1,0 +1,21 @@
+func max(i i32, j i32) i32 {
+    if i >= j {
+        return i;
+    } else {
+        return j;
+    }
+}
+
+func main() {
+    maximum := 32
+        .max(2)
+        .max(3)
+        .max(4)
+        .max(5)
+        .max(33)
+        .max(34)
+        .max(12);        
+    if maximum != 34 {
+        @print("BAD")
+    }
+}

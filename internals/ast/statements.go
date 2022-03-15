@@ -13,8 +13,15 @@ type Block struct {
 	Token      token.Token
 }
 
-type MacroBlock struct {
-	*Block
+func (b *Block) String() string {
+	s := strings.Builder{}
+	for i, statement := range b.Statements {
+		if i >= 1 {
+			s.WriteByte('\n')
+		}
+		s.WriteString(statement.String())
+	}
+	return s.String()
 }
 
 func (b *Block) GetToken() token.Token {
@@ -22,6 +29,10 @@ func (b *Block) GetToken() token.Token {
 }
 
 func (b *Block) statementNode() {}
+
+type MacroBlock struct {
+	*Block
+}
 
 type ConditionPlusBlock struct {
 	Block     *Block
@@ -40,17 +51,6 @@ func (c *ConditionPlusBlock) String() string {
 	s.WriteString(" {\n")
 	s.WriteString(c.Block.String())
 	s.WriteString("\n}")
-	return s.String()
-}
-
-func (b *Block) String() string {
-	s := strings.Builder{}
-	for i, statement := range b.Statements {
-		if i >= 1 {
-			s.WriteByte('\n')
-		}
-		s.WriteString(statement.String())
-	}
 	return s.String()
 }
 

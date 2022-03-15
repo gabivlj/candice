@@ -959,6 +959,39 @@ func (s *Semantic) analyzeModuleAccess(module *Semantic, binaryOp *ast.BinaryOpe
 	return accessedElement.Type
 }
 
+func (s *Semantic) findFunctionInAllModules(t ctypes.Type, accessName string) *ctypes.Function {
+	for _, semantic := range s.modules {
+		v := semantic.variables.Get(semantic.TranslateName(accessName))
+		if v == nil {
+			continue
+		}
+
+		if funk, isFunction := v.Type.(*ctypes.Function); isFunction {
+			if !s.areTypesEqual(funk.Parameters[0], t) {
+				continue
+			}
+
+			return funk
+		}
+	}
+
+	v := s.variables.Get(s.TranslateName(accessName))
+
+	if v == nil {
+		return nil
+	}
+
+	if funk, isFunction := v.Type.(*ctypes.Function); isFunction {
+		if !s.areTypesEqual(funk.Parameters[0], t) {
+			return nil
+		}
+
+		return funk
+	}
+
+	return nil
+}
+
 func (s *Semantic) analyzeFieldAccess(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	left := s.analyzeExpression(binaryOperation.Left)
 	var fieldAccessor ctypes.FieldType
@@ -967,25 +1000,37 @@ func (s *Semantic) analyzeFieldAccess(binaryOperation *ast.BinaryOperation) ctyp
 		return s.analyzeModuleAccess(module, binaryOperation)
 	}
 
+	identifier, ok := binaryOperation.Right.(*ast.Identifier)
+	if !ok {
+		s.errorWithStatement("expected identifier for struct access, got "+binaryOperation.Right.String(), binaryOperation.Token)
+		return ctypes.TODO()
+	}
+
 	if ptr, isPointer := left.(*ctypes.Pointer); isPointer {
 		fieldAccessor, isFieldAccessor = s.UnwrapAnonymous(ptr.Inner).(ctypes.FieldType)
 		if !isFieldAccessor {
-			s.errorWithStatement("expected a struct or union on access, got "+ptr.Inner.String(), binaryOperation.Token)
-			return ctypes.TODO()
+			fn := s.findFunctionInAllModules(left, identifier.Name)
+			if fn == nil {
+				s.errorWithStatement("expected a struct or union on access, got "+ptr.Inner.String(), binaryOperation.Token)
+				return ctypes.TODO()
+			}
+
+			s.additionalExpression = binaryOperation.Left
+			return fn
 		}
 		ptr.Inner = fieldAccessor
 	} else {
 		fieldAccessor, isFieldAccessor = s.UnwrapAnonymous(left).(ctypes.FieldType)
 		if !isFieldAccessor {
-			s.errorWithStatement("expected a struct or union on access, got "+left.String(), binaryOperation.Token)
-			return ctypes.TODO()
-		}
-	}
+			fn := s.findFunctionInAllModules(left, identifier.Name)
+			if fn == nil {
+				s.errorWithStatement("expected a struct or union on access, got "+left.String(), binaryOperation.Token)
+				return ctypes.TODO()
+			}
 
-	identifier, ok := binaryOperation.Right.(*ast.Identifier)
-	if !ok {
-		s.errorWithStatement("expected identifier for struct access, got "+binaryOperation.Right.String(), binaryOperation.Token)
-		return ctypes.TODO()
+			s.additionalExpression = binaryOperation.Left
+			return fn
+		}
 	}
 
 	// Just in case that the identifier.Name is poisoned by ID generation, extract original name
@@ -1002,7 +1047,7 @@ func (s *Semantic) analyzeFieldAccess(binaryOperation *ast.BinaryOperation) ctyp
 		// Maybe the user wanted to access a member function, on this module or another
 		variable := m.variables.Get(m.TranslateName(namePlusId))
 		if variable == nil || !ctypes.IsFunction(variable.Type) {
-			s.errorWithStatement("unknown struct field "+binaryOperation.String(), binaryOperation.Token)
+			s.errorWithStatement("unknown field "+binaryOperation.String(), binaryOperation.Token)
 			return ctypes.TODO()
 		}
 

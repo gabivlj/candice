@@ -1,0 +1,124 @@
+// this file tests if compilation in a deep way
+func t(e i32) i32 {
+    if e == 3 {
+        return 0;
+    } else if e == 4 {
+        return 1;
+    } else {
+        return 2;
+    }
+}
+
+func tt(e i32) i32 {
+    if e == 3 {
+        return 0;
+    } else if e == 4 {     
+    } else {
+        return 2;
+    }
+    return 1;
+}
+
+func ttt(e i32, j i32) i32 {
+    if e == 3 {
+        return 0;
+    } else if e == 4 {     
+        if tt(j) == 0 {
+            return 5;
+        } else if tt(j) == 1 {
+            return 6;
+        } else {
+            return 7;
+        }
+    } else {
+        return 2;
+    }
+}
+
+func tttt(e i32, j i32) i32 {
+    if e == 3 {
+        return 0;
+    } else if e == 4 {     
+        if tt(j) == 0 {
+            return 5;
+        } else if tt(j) == 1 {
+            return 6;
+        } else {
+            a := 3 + 3;
+            if a > 322 {
+                return -1;
+            } else if a > 333 {
+                return -1;
+            } else if a > 334 {
+                return -1;
+            }
+            else if a > 334 {
+                return -1;
+            }
+            else if a > 334 {
+                return -1;
+            }
+            else if a > 334 {
+                return -1;
+            }
+            else if a > 334 {
+                return -1;
+            } else {
+
+            }
+        }
+    } else {
+        return 2;
+    }
+    return 7;
+}
+
+func main() {
+    if t(3) != 0 {
+        @print("bad")
+    }
+
+    if t(4) != 1 {
+        @print("bad2")
+    }
+
+    if t(5) != 2 {
+        @print("bad3")
+    }
+
+    if tt(3) != 0 {
+        @print("bad4")
+    }
+
+    if tt(4) != 1 {
+        @print("bad5")
+    }
+
+    if tt(5) != 2 {
+        @print("bad6")
+    }
+
+    if ttt(4, 3) != 5 {
+        @print("bad7")
+    }
+
+    if ttt(4, 4) != 6 {
+        @print("bad8")
+    }
+
+    if ttt(4, 5) != 7 {
+        @print("bad9")
+    }
+
+    if tttt(4, 3) != 5 {
+        @print("bad7")
+    }
+
+    if tttt(4, 4) != 6 {
+        @print("bad8")
+    }
+
+    if tttt(4, 5) != 7 {
+        @print("bad9")
+    }
+}

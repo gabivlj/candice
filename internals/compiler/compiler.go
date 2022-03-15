@@ -593,7 +593,8 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 
 	for _, elseIf := range ifStatement.ElseIfs {
 		currentBlock := c.currentFunction.NewBlock("elseif.then." + random.RandomString(10))
-		currentBlock = c.compileBlock(elseIf.Block, currentBlock)
+		// Append to stranded blocks that are either unreachable or need to keep going with their execution
+		strandedBlocks = append(strandedBlocks, c.compileBlock(elseIf.Block, currentBlock))
 		blocks = append(blocks, currentBlock)
 		conditions = append(conditions, elseIf.Condition)
 	}
@@ -620,7 +621,10 @@ func (c *Compiler) compileIf(ifStatement *ast.IfStatement) {
 	}
 
 	leaveBlock := c.currentFunction.NewBlock("lastLeave." + random.RandomString(10))
-	lastJumpToCondition.NewBr(leaveBlock)
+
+	if lastJumpToCondition.Term == nil {
+		lastJumpToCondition.NewBr(leaveBlock)
+	}
 
 	// override initial block
 	c.blocks[len(c.blocks)-1] = leaveBlock

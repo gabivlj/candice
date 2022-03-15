@@ -1,5 +1,9 @@
 func main() {
 
+    integer : i32 = 32;
+    integer := 32;
+    integer64 := 32 as i64;
+
     element : i16 = @cast(i16, 32)
     @print(element)
     floatToIntegeri8 : i8 = @cast(i8, -1.2);

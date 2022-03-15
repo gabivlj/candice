@@ -286,10 +286,11 @@ func (l *Lexer) readNumber() (string, token.TypeToken) {
 		l.readChar()
 	}
 
-	if l.ch == '.' {
+	if l.ch == '.' && l.peekChar() >= '0' && l.peekChar() <= '9' {
 		l.readChar()
 		tokenType = token.FLOAT
 	}
+
 	for isDigit(l.ch) {
 		l.readChar()
 	}
