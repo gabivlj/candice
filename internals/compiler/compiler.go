@@ -904,7 +904,7 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 	}
 
 	if prefix.Operation == ops.Multiply {
-		prefixValue = c.block().NewLoad(prefixValue.Type().(*types.PointerType).ElemType, prefixValue)
+		prefixValue = c.loadIfPointer(prefixValue)
 		return prefixValue
 	}
 
@@ -999,7 +999,6 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 		loadedValue := c.loadIfPointer(compiledValue)
 		arguments = append(arguments, loadedValue)
 	}
-
 	thing := c.block().NewCall(funk, arguments...)
 	c.doNotLoadIntoMemory = true
 	return thing

@@ -6,22 +6,24 @@ import (
 )
 
 var precedences = map[token.TypeToken]int{
-	token.ASSIGN:   1,
-	token.AND:      2,
-	token.OR:       2,
-	token.EQ:       3,
-	token.NOTEQ:    3,
-	token.GTE:      3,
-	token.GT:       3,
-	token.LT:       3,
-	token.LTE:      3,
-	token.PLUS:     4,
-	token.MINUS:    4,
-	token.XORBIN:   5,
-	token.ANDBIN:   5,
-	token.LS:       5,
-	token.RS:       5,
-	token.ORBIN:    5,
+	token.ASSIGN: 1,
+	token.AND:    2,
+	token.OR:     2,
+	token.EQ:     3,
+	token.NOTEQ:  3,
+	token.GTE:    3,
+	token.GT:     3,
+	token.LT:     3,
+	token.LTE:    3,
+	token.PLUS:   4,
+	token.MINUS:  4,
+	token.XORBIN: 5,
+	token.ANDBIN: 5,
+	token.LS:     5,
+	token.RS:     5,
+	token.ORBIN:  5,
+
+	// Used for prefix operators, not only for '!'
 	token.BANG:     8,
 	token.SLASH:    6,
 	token.ASTERISK: 6,
@@ -30,13 +32,13 @@ var precedences = map[token.TypeToken]int{
 	token.LBRACKET: 11,
 	token.DOT:      12,
 	token.AS:       7,
+
 	// This is only for showcasing errors.
 	token.DOUBLE_MINUS: 20,
 	token.DOUBLE_PLUS:  20,
 }
 
 func (p *Parser) precedencePrefix() int {
-
 	return precedences[token.BANG]
 }
 

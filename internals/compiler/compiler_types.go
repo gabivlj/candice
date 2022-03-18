@@ -137,6 +137,9 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 	case *ctypes.Anonymous:
 		{
 			t := c.types[el.Name]
+
+			// If type doesn't exist and the anonymous type references
+			// other modules, let's find it on already compiled modules.
 			if t == nil && el.Modules != nil && len(el.Modules) > 0 {
 				l := c.modules[el.Modules[0]].ToLLVMType(el)
 				return l

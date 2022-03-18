@@ -280,7 +280,7 @@ func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
 	s.analyzeStatement(forStatement.InitializerStatement)
 
 	if forStatement.Condition == nil {
-		forStatement.Condition = &ast.Integer{Value: 1, Node: &node.Node{Type: ctypes.I32}}
+		forStatement.Condition = &ast.Integer{Value: 1, Node: &node.Node{Type: ctypes.I1}}
 	}
 
 	condition := s.analyzeExpression(forStatement.Condition)

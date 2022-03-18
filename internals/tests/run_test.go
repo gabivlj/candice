@@ -36,6 +36,7 @@ func TestSrcs(t *testing.T) {
 		"print.cd":              "Thing",
 		"macro_if.cd":           fmt.Sprintf("%s %s", runtime.GOOS, runtime.GOARCH),
 		"1variadic.cd":          "formatting a number: 3",
+		"0arr.cd":               "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1",
 	}
 
 	elems, err := os.ReadDir("./src")

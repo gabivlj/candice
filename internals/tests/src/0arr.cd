@@ -1,0 +1,18 @@
+import arr, i32, "./libs/arr.cd";
+
+func main() {
+    elements_ptr := @alloc(i32, 100);    
+    elements_ptr
+        .take(100)
+        .for_each_ref(func (element *i32) {
+            *element = 1;
+            if *element != 1 {
+                @print("bad");
+            } else {
+                @print(*element);
+            }
+        });
+    // e : *i32 = ;
+    *(elements_ptr.take(1).get_ref(0)) = 3;
+    
+}

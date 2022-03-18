@@ -827,6 +827,76 @@ func main() {
 
 Be careful with accessing unions that you don't know the type of!
 
+## Calling functions related to a type (EXPERIMENTAL)
+
+This functionality is still really experimental and not efficient but cool nonetheless.
+
+Consider the following code:
+
+```go
+func min(i i32, j i32) i32 {
+	if i <= j {
+		return i;
+	}
+
+	return j;
+}
+
+func max(i i32, j i32) i32 {
+	if i >= j {
+		return i;
+	}
+
+	return j;
+}
+
+func main() {
+	element := 100;
+	element2 := 150;
+	minMax := min(max(element2, element), 130);
+}
+```
+
+It would be really cool to chain that min max thing in a better way right? Now you can simplify that to the following:
+
+```go
+    minMax := element.max(element2).min(130);
+```
+
+How it works is that Candice will look up a function called 'max' that matches the type with your element on the left!
+This also can work on any type as well.
+
+```go
+// arr.cd
+struct Array {
+    ptr *T
+    length i32
+    capacity i32
+}
+
+func get(arr Array, i i32) *T {
+    return &arr.ptr[i];
+}
+
+func with_capacity(capacity i32) Array {
+    ptr := @alloc(T, capacity);
+    return @Array {
+        ptr: ptr,
+        length: 0,
+        capacity: capacity,
+    };
+}
+
+// main.cd
+import arr, i32, "./arr.cd";
+func main() {
+    // init array and whatever
+    array := arr.with_capacity(10)
+    *array.get(0) = 3;
+}
+
+```
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!

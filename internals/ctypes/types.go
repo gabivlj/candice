@@ -162,8 +162,8 @@ func (f *Float) String() string {
 	return fmt.Sprintf("f%d", f.BitSize)
 }
 
-func (_ *Float) Alignment() int64 {
-	return 8
+func (f *Float) Alignment() int64 {
+	return int64(f.BitSize / 8)
 }
 
 type Array struct {
@@ -399,8 +399,7 @@ func (s *Struct) SizeOf() int64 {
 	for _, t := range s.Fields {
 		typeSize := t.SizeOf()
 		alignment := t.Alignment()
-		offset := (currentAddress - (currentAddress % alignment)) % alignment
-		currentAddress += offset
+		currentAddress += (currentAddress - (currentAddress % alignment)) % alignment
 		currentAddress += (alignment - (currentAddress % alignment)) % alignment
 		currentAddress += typeSize
 	}
