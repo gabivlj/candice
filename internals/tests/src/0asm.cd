@@ -1,0 +1,7 @@
+func main() {
+    src := 3;
+    dst := 4;
+    // $0 is the register assigned to the output, src is $1 and dst is $2.    
+    output := @asm(i32, "mov $0, $1\n mov $0, $2", src, dst);
+    // @print(output, src, dst) // 4 3 4
+}

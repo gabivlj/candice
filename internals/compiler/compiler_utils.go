@@ -133,3 +133,38 @@ func (c *Compiler) concatenateMemoryI8(left value.Value, right value.Value) valu
 func (c *Compiler) compareMemoryI8(left value.Value, right value.Value, pred enum.IPred) value.Value {
 	return c.block().NewICmp(pred, c.block().NewCall(c.strcmp(), left, right), zero)
 }
+
+func outputTypeToAsmConstraint(t types.Type) string {
+	if types.IsVoid(t) {
+		return ""
+	}
+
+	return "=r,"
+}
+
+func typeToAsmConstraint(t types.Type) string {
+	if types.IsVoid(t) {
+		return ""
+	}
+
+	return "r,"
+}
+
+func parametersToAsmConstraint(types []types.Type) string {
+	s := ""
+	for _, ty := range types {
+		s += typeToAsmConstraint(ty)
+	}
+	return s
+}
+
+func (c *Compiler) asm(outputType types.Type, inlineAsm string, params ...value.Value) value.Value {
+	paramTypes := make([]types.Type, len(params))
+	for i := range params {
+		paramTypes[i] = params[i].Type()
+	}
+	constraintOutput := outputTypeToAsmConstraint(outputType) + parametersToAsmConstraint(paramTypes)
+
+	inlineAsmCall := ir.NewInlineAsm(types.NewPointer(types.NewFunc(outputType, paramTypes...)), inlineAsm, constraintOutput+"~{dirflag},~{fpsr},~{flags}")
+	return c.block().NewCall(inlineAsmCall, params...)
+}

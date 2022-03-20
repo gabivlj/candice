@@ -84,3 +84,18 @@ func (s *Semantic) analyzeSizeOf(sizeOfCall *ast.BuiltinCall) ctypes.Type {
 	sizeOfCall.Type = sizeOfCall.TypeParameters[0]
 	return ctypes.I32
 }
+
+func (s *Semantic) analyzeAsm(asmCall *ast.BuiltinCall) ctypes.Type {
+	if len(asmCall.Parameters) == 0 {
+		s.error("expected a constant string literal on asm builtin call", asmCall.Token)
+		return ctypes.TODO()
+	}
+
+	_, isString := asmCall.Parameters[0].(*ast.StringLiteral)
+	if !isString {
+		s.error("expected a constant string literal on asm builtin call, got: "+asmCall.Parameters[0].String(), asmCall.Token)
+		return ctypes.TODO()
+	}
+
+	return s.UnwrapAnonymous(asmCall.TypeParameters[0])
+}

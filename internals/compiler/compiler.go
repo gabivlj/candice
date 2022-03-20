@@ -157,6 +157,14 @@ func (c *Compiler) initializeBuiltinLib() {
 		return returnedValue
 	}
 
+	c.builtins["asm"] = func(c *Compiler, bc *ast.BuiltinCall) value.Value {
+		expressions := make([]value.Value, 0, len(bc.Parameters)-1)
+		for _, parameter := range bc.Parameters[1:] {
+			expressions = append(expressions, c.loadIfPointer(c.compileExpression(parameter)))
+		}
+		return c.asm(c.ToLLVMType(bc.TypeParameters[0]), bc.Parameters[0].(*ast.StringLiteral).Value, expressions...)
+	}
+
 	c.builtins["realloc"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
 		typeParameter := call.GetType()
 		toReturnType := c.ToLLVMType(typeParameter)

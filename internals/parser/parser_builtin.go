@@ -29,4 +29,5 @@ func (p *Parser) initBuiltinFunctions() {
 	p.addBuiltinFunction("free", 0, 1)
 	p.addBuiltinFunction("sizeof", 1, 0)
 	p.addBuiltinFunction("unreachable", 0, 0)
+	p.addBuiltinFunction("asm", 1, UndefinedNumberOfParameters)
 }

@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -918,7 +919,9 @@ func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseR
 	}
 
 	for i := 0; i < builtinRequirements.Types; i++ {
+		log.Println(types)
 		types = append(types, p.parseType())
+
 		if i+1 < builtinRequirements.Types || builtinRequirements.Parameters > 0 {
 			if p.currentToken.Type == token.RPAREN {
 				p.addErrorMessage(fmt.Sprintf("expected %d types, got=%d", builtinRequirements.Types, i))
@@ -928,11 +931,9 @@ func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseR
 			p.expect(token.COMMA)
 			p.nextToken()
 
-		} else {
-			if builtinRequirements.Types > 1 {
-				p.expect(token.COMMA)
-				p.nextToken()
-			}
+		} else if builtinRequirements.Types > 1 || builtinRequirements.Parameters == UndefinedNumberOfParameters {
+			p.expect(token.COMMA)
+			p.nextToken()
 		}
 	}
 
@@ -964,6 +965,10 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 	}
 
 	if builtinRequirements.Parameters == UndefinedNumberOfParameters {
+		if p.currentToken.Type == token.RPAREN {
+			return expressions
+		}
+
 		for {
 			expressions = append(expressions, p.parseExpression(0))
 			if p.currentToken.Type == token.RPAREN {

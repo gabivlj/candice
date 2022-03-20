@@ -95,6 +95,7 @@ func New() *Semantic {
 	s.builtinHandlers["print"] = s.analyzePrintln
 	s.builtinHandlers["free"] = s.analyzeFree
 	s.builtinHandlers["unreachable"] = s.analyzeUnreachable
+	s.builtinHandlers["asm"] = s.analyzeAsm
 
 	return s
 }
