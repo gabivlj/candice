@@ -1,0 +1,13 @@
+func main() {
+    elements := @alloc(i32, 100);
+    elements[0] = 1;
+    elements[1] = 2;
+    if *(elements + 1 as i64) != 2 {
+        @print("bad");
+    }
+    *(elements + 1) = 3;
+    // showcasing that it can work with i64
+    if *(elements + 1 as i64) != 3 {
+        @print("bad2");
+    }
+}

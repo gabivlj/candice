@@ -1021,18 +1021,27 @@ func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 
 func (c *Compiler) compileIndexAccess(access *ast.IndexAccess) value.Value {
 	leftArray := c.compileExpression(access.Left)
+	// keep do not load into memory before compiling expression
 	doNotLoadLeftArray := c.doNotLoadIntoMemory
 	index := c.loadIfPointer(c.compileExpression(access.Access))
 
+	// If it's an array do not load into memory, just calculate offset
 	if types.IsPointer(leftArray.Type()) && types.IsArray(leftArray.Type().(*types.PointerType).ElemType) {
-		return c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, zero, index)
+		// zero as first offset because we are calculating first pointer, then index
+		element := c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, zero, index)
+		element.InBounds = true
+		return element
 	}
 
 	c.doNotLoadIntoMemory = doNotLoadLeftArray
-
 	leftArray = c.loadIfPointer(leftArray)
-	pointer := c.block().NewGetElementPtr(leftArray.Type().(*types.PointerType).ElemType, leftArray, index)
-	return pointer
+	return c.calculatePointerOffset(leftArray, index)
+}
+
+func (c *Compiler) calculatePointerOffset(pointer value.Value, offset value.Value) value.Value {
+	calculatedPointer := c.block().NewGetElementPtr(pointer.Type().(*types.PointerType).ElemType, pointer, offset)
+	calculatedPointer.InBounds = true
+	return calculatedPointer
 }
 
 func unwrapArrayGepType(arr *types.ArrayType) types.Type {
@@ -1292,16 +1301,32 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 	return leftStruct
 }
 
+// compileAdd can handle *i8 sums, memory offset accessing and numeric operations
+// numeric operations should have the same type, else it will fail
 func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+
+	// String concatenation
 	if types.IsPointer(rightValue.Type()) {
 		c.doNotLoadIntoMemory = true
 		return c.concatenateMemoryI8(leftValue, rightValue)
 	}
+
+	// Memory access via '+'
+	if types.IsPointer(leftValue.Type()) {
+		newPointer := c.calculatePointerOffset(leftValue, rightValue)
+		// return this pointer on another stack register because it's probably going to get used
+		toReturnPointer := c.block().NewAlloca(newPointer.Type())
+		c.block().NewStore(newPointer, toReturnPointer)
+		return toReturnPointer
+	}
+
+	// numeric operations
 	if types.IsFloat(leftValue.Type()) {
 		return c.block().NewFAdd(leftValue, rightValue)
 	}
+
 	return c.block().NewAdd(leftValue, rightValue)
 }
 

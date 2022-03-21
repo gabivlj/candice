@@ -464,3 +464,11 @@ func UnwrapPossiblePointerAndDepth(t Type) (Type, int) {
 
 	return t, 0
 }
+
+func IsInteger(t Type) bool {
+	_, ok := t.(*Integer)
+	if !ok {
+		_, ok = t.(*UInteger)
+	}
+	return ok
+}

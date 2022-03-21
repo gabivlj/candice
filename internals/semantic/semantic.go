@@ -1166,6 +1166,12 @@ func (s *Semantic) analyzeShiftOperation(binaryOperation *ast.BinaryOperation, l
 func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctypes.Type {
 	left := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Left))
 	right := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Right))
+
+	if ctypes.IsPointer(left) && ctypes.IsInteger(right) {
+		binaryOperation.Type = left
+		return left
+	}
+
 	if binaryOperation.Operation == ops.LeftShift || binaryOperation.Operation == ops.RightShift {
 		return s.analyzeShiftOperation(binaryOperation, left, right)
 	}
