@@ -847,7 +847,9 @@ func (c *Compiler) compileStringLiteral(stringLiteral *ast.StringLiteral) value.
 		return charArray
 	}
 	c.doNotLoadIntoMemory = true
-	return c.block().NewGetElementPtr(types.NewArray(uint64(len(stringLiteral.Value)+1), types.I8), globalDef, zero, zero)
+	ptr := c.block().NewGetElementPtr(types.NewArray(uint64(len(stringLiteral.Value)+1), types.I8), globalDef, zero, zero)
+	ptr.InBounds = true
+	return ptr
 }
 
 func (c *Compiler) compileArrayLiteral(arrayLiteral *ast.ArrayLiteral) value.Value {
@@ -857,6 +859,7 @@ func (c *Compiler) compileArrayLiteral(arrayLiteral *ast.ArrayLiteral) value.Val
 		loadedValue := c.loadIfPointer(c.compileExpression(value))
 		integerIndex := constant.NewInt(types.I32, int64(index))
 		address := c.block().NewGetElementPtr(arrayType, allocaInstance, zero, integerIndex)
+		address.InBounds = true
 		c.block().NewStore(loadedValue, address)
 	}
 	c.doNotAllocate = true
@@ -1088,7 +1091,8 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 		compiledValue := c.compileExpression(decl.Expression)
 
 		// Get the pointer pointing to the memory where we need to store in
-		var ptr value.Value = c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
+		ptr := c.block().NewGetElementPtr(possibleStruct.llvmType, struktValue, zero, constant.NewInt(types.I32, int64(i)))
+		ptr.InBounds = true
 
 		// Unwrap value pointer
 		compiledValue = c.loadIfPointer(c.bitcastIfUnion(field, compiledValue, ptr.Type()))
@@ -1282,6 +1286,7 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		if _, isStruct := candiceType.(*ctypes.Struct); isStruct {
 			inner := leftStruct.Type().(*types.PointerType).ElemType
 			ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
+			ptr.InBounds = true
 			leftStruct = ptr
 		} else {
 			// we know this is a union

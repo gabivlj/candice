@@ -3,7 +3,6 @@ package parser
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -919,7 +918,6 @@ func (p *Parser) parseBuiltinCallTypes(builtinRequirements BuiltinFunctionParseR
 	}
 
 	for i := 0; i < builtinRequirements.Types; i++ {
-		log.Println(types)
 		types = append(types, p.parseType())
 
 		if i+1 < builtinRequirements.Types || builtinRequirements.Parameters > 0 {

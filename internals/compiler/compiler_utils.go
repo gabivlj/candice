@@ -19,12 +19,14 @@ func (c *Compiler) createString(s string) value.Value {
 	}
 
 	i8sType := c.block().NewGetElementPtr(
-		// we are casting [i8 x len] to *i8
+		// we are "casting" *[i8 x len] to *i8
 		types.NewArray(uint64(len(s)), types.I8),
 		globalDef,
 		zero,
 		zero,
 	)
+
+	i8sType.InBounds = true
 
 	return i8sType
 }
