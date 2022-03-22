@@ -1284,7 +1284,9 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		rightName, last := getName(expr.Right)
 		i, field := candiceType.GetField(ast.RetrieveID(rightName))
 		if _, isStruct := candiceType.(*ctypes.Struct); isStruct {
+			// This is always a pointer
 			inner := leftStruct.Type().(*types.PointerType).ElemType
+			// Zero to calculate address of pointer and then calculate the address for the field
 			ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
 			ptr.InBounds = true
 			leftStruct = ptr
