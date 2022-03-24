@@ -402,7 +402,6 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		t := p.parseType()
 		names = append(names, ast.CreateIdentifier(ident.Literal, p.ID))
 		types = append(types, t)
-
 	}
 
 	p.expect(token.RPAREN)
@@ -410,8 +409,8 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	var returnType ctypes.Type
 	if p.currentToken.Type != token.LBRACE {
 		returnType = p.parseType()
-
 	}
+
 	block := p.parseBlock()
 	return &ast.FunctionDeclarationStatement{
 		Token: fun,

@@ -933,7 +933,7 @@ func (s *Semantic) analyzeBinaryOperation(binaryOperation *ast.BinaryOperation) 
 		binaryOperation.Type = t
 		return t
 	}
-
+	log.Println(binaryOperation.Token)
 	s.errorWithStatement("can't analyze operator", binaryOperation.Token)
 	return ctypes.TODO()
 }

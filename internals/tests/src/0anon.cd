@@ -1,0 +1,4 @@
+func main() {
+    numberer := func() i32 return 1;
+    if numberer() != 1 @print("bad2");
+}

@@ -900,7 +900,8 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 	if prefix.Operation == ops.BinaryAND {
 		// This means that we are referencing a variable that either:
 		// * Has just been returned by a function, (func whatever() i32; whatever(); << we are on i32 instead of *i32)
-		// * Or is just a literal, like: variable := &3 << i32 instead of *i32
+		// * Or is just a literal, like: variable := &3 (i32 instead of *i32)
+		//
 		if !types.IsPointer(prefixValue.Type()) || c.doNotLoadIntoMemory {
 			prefixValueTmp := c.block().NewAlloca(prefixValue.Type())
 			c.block().NewStore(prefixValue, prefixValueTmp)
@@ -1016,6 +1017,7 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 }
 
 func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
+	// TODO: Maybe this is a naive approach? Shouldn't we do something with doNotAllocate?
 	l := c.compileExpression(assignment.Left)
 	rightElement := c.compileExpression(assignment.Expression)
 	r := c.loadIfPointer(rightElement)
@@ -1100,6 +1102,9 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 		// Store in the pointer the compiler value
 		c.block().NewStore(compiledValue, ptr)
 	}
+
+	// Do not allocate on declaration/assignments because we are already allocating above.
+	c.doNotAllocate = true
 
 	return struktValue
 }
@@ -1258,6 +1263,7 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 	currentCandiceType := expr.Left.GetType()
 	var candiceType ctypes.FieldType
 	if s, ok := leftStruct.Type().(*types.PointerType); ok {
+		// Load if it's a pointer
 		if types.IsPointer(s.ElemType) {
 			leftStruct = c.loadIfPointer(leftStruct)
 			s, ok = leftStruct.Type().(*types.PointerType)
@@ -1265,9 +1271,11 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 				c.exit("not a struct " + leftStruct.Type().String() + " " + expr.String())
 			}
 		}
+
 		if ctypes.IsPointer(currentCandiceType) {
 			currentCandiceType = currentCandiceType.(*ctypes.Pointer).Inner
 		}
+
 		if anonymous, ok := currentCandiceType.(*ctypes.Anonymous); ok {
 			if anonymous.Modules != nil && len(anonymous.Modules) != 0 {
 				module := anonymous.Modules[0]
@@ -1280,29 +1288,18 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		}
 	}
 
-	for {
-		rightName, last := getName(expr.Right)
-		i, field := candiceType.GetField(ast.RetrieveID(rightName))
-		if _, isStruct := candiceType.(*ctypes.Struct); isStruct {
-			// This is always a pointer
-			inner := leftStruct.Type().(*types.PointerType).ElemType
-			// Zero to calculate address of pointer and then calculate the address for the field
-			ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
-			ptr.InBounds = true
-			leftStruct = ptr
-		} else {
-			// we know this is a union
-			leftStruct = c.block().NewBitCast(leftStruct, types.NewPointer(c.ToLLVMType(field)))
-		}
-
-		// We knwo that there ain't more dot accesses to the right, break
-		if last {
-			break
-		}
-
-		// Go to the next dot access
-		expr = expr.Right.(*ast.BinaryOperation)
-		candiceType = c.UnwrapFieldAccessor(field)
+	rightName, _ := getName(expr.Right)
+	i, field := candiceType.GetField(ast.RetrieveID(rightName))
+	if _, isStruct := candiceType.(*ctypes.Struct); isStruct {
+		// This is always a pointer
+		inner := leftStruct.Type().(*types.PointerType).ElemType
+		// Zero to calculate address of pointer and then calculate the address for the field
+		ptr := c.block().NewGetElementPtr(inner, leftStruct, zero, constant.NewInt(types.I32, int64(i)))
+		ptr.InBounds = true
+		leftStruct = ptr
+	} else {
+		// we know this is a union
+		leftStruct = c.block().NewBitCast(leftStruct, types.NewPointer(c.ToLLVMType(field)))
 	}
 
 	return leftStruct

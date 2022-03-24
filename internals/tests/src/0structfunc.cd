@@ -1,0 +1,17 @@
+struct S {
+    e i32
+}
+
+func s(c S) {
+    if c.e != 4 @print("badS")
+}
+
+func ss(c *S) {
+    if c.e != 3 @print("badSS")
+}
+
+func main() {
+    s(@S{e:4});
+    ss(&@S{e:3});
+    @S{e:4}.s();
+}

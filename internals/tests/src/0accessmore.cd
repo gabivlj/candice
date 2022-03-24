@@ -1,0 +1,29 @@
+struct B {
+    el i32
+}
+
+struct C {
+    b B
+}
+
+struct S {
+    c *C
+    e i32
+}
+
+
+func main() {
+    s := @S{
+        c: @alloc(C, 1),
+    }
+    // s.c.b = @alloc(B, 1);
+    s.c.b.el = 3;
+    if s.c.b.el != 3 {
+        @print("bad")
+    }
+    // @print("=")
+    e := @S{e: 2}.e;
+    if e != 2 {
+        @print("bad")
+    }
+}
