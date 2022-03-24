@@ -44,6 +44,7 @@ func TestSrcs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, elem := range elems {
 		if elem.IsDir() {
 			continue
@@ -56,7 +57,7 @@ func TestSrcs(t *testing.T) {
 		s := semantic.New()
 		p := parser.New(lexer.New(string(txt)))
 		root := p.Parse()
-		logger.Warning("Running " + elem.Name())
+		logger.WarningNoTag("Running " + elem.Name())
 		if len(p.Errors) > 0 {
 			t.Fatal(p.Errors)
 		}
