@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/termenv"
 )
@@ -23,6 +24,11 @@ func Warning(text string) {
 		Foreground(white)
 	t := termenv.String(" " + text + " ").Foreground(orangeFg)
 	fmt.Println(s.String() + " " + t.String())
+}
+
+func WarningNoTag(text string) {
+	t := termenv.String(text).Foreground(orangeFg)
+	fmt.Println(t.String())
 }
 
 func Error(kind, text string, paragraph ...interface{}) {
