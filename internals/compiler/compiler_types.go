@@ -164,6 +164,6 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 		}
 	}
 
-	c.exit("can't convert to LLVM type: " + t.String())
+	c.exitInternalError("can't convert to LLVM type: " + t.String())
 	panic("")
 }

@@ -303,3 +303,54 @@ func (g *TypeDefinition) statementNode() {}
 func (g *TypeDefinition) String() string { return fmt.Sprintf("type %s = %s", g.Name, g.Type.String()) }
 
 func (g *TypeDefinition) GetToken() token.Token { return g.Token }
+
+type CaseStatement struct {
+	Token token.Token
+	Case  Expression
+	Block *Block
+}
+
+func (c *CaseStatement) statementNode() {}
+
+func (c *CaseStatement) String() string {
+	str := strings.Builder{}
+	str.WriteString(c.Token.Literal)
+	str.WriteByte(' ')
+	str.WriteString(c.Case.String())
+	str.WriteString(" {\n")
+	str.WriteString(c.Block.String())
+	str.WriteString("\n}")
+	return str.String()
+}
+
+type SwitchStatement struct {
+	Token     token.Token
+	Condition Expression
+	Cases     []*CaseStatement
+	Default   *Block
+}
+
+func (s *SwitchStatement) statementNode() {}
+func (s *SwitchStatement) String() string {
+	str := strings.Builder{}
+	str.WriteString(s.Token.Literal)
+	str.WriteByte(' ')
+	str.WriteString(s.Condition.String())
+	str.WriteString(" {\n")
+	for _, caseStatement := range s.Cases {
+		str.WriteString(caseStatement.String())
+		str.WriteByte('\n')
+	}
+
+	if s.Default != nil {
+		str.WriteString("default {\n")
+		str.WriteString(s.Default.String())
+		str.WriteString("\n}")
+	}
+
+	str.WriteString("\n}")
+
+	return str.String()
+}
+
+func (s *SwitchStatement) GetToken() token.Token { return s.Token }

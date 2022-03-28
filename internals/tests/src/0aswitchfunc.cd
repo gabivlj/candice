@@ -1,0 +1,57 @@
+func doSomething(variable i64) i32 {
+    switch variable {
+        case 3 as i64 {            
+            return 0;
+        }
+
+        case 6 as i64 {            
+            return 1;
+        }
+
+        default {
+            return -1;
+        }
+    }
+
+    @unreachable();
+}
+
+func doSomethingPog(variable i64) i32 {
+    switch variable {
+        case 3 as i64 {            
+            return 0;
+        }
+
+        case 6 as i64 {            
+            return 1;
+        }
+    }
+
+    return -1;
+}
+
+func main() {
+    if doSomething(3 as i64) != 0 {
+        @print("bad");
+    }
+
+    if doSomething(6 as i64) != 1 {
+        @print("bad2");
+    } 
+
+    if doSomething(2399203 as i64) != -1 {
+        @print("bad3");
+    }
+
+    if doSomethingPog(3 as i64) != 0 {
+        @print("bad");
+    }
+
+    if doSomethingPog(6 as i64) != 1 {
+        @print("bad2");
+    } 
+
+    if doSomethingPog(2399203 as i64) != -1 {
+        @print("bad3");
+    }
+}

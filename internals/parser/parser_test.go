@@ -308,6 +308,35 @@ break
 			expected: `extern func thing(i32, i32, i32) i32;
 `,
 		},
+		{
+			expression: `switch 3 {
+				case 3 {
+					@print("it's three");
+				}
+
+				case 4 {
+					@print("it's four");
+					@print("it's four!!!!");
+				}
+
+				default {
+					@print("whatever");
+				}
+			}`,
+			expected: `switch 3 {
+case 3 {
+@print("it's three");
+}
+case 4 {
+@print("it's four");
+@print("it's four!!!!");
+}
+default {
+@print("whatever");
+}
+}
+`,
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)

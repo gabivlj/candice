@@ -52,7 +52,7 @@ func (c *Compiler) getFPredComparison(op ops.Operation, t ctypes.Type) enum.FPre
 		}
 	}
 
-	c.exit("cant handle this type of float " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
+	c.exitInternalError("cant handle this type of float " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
 	panic("")
 }
 
@@ -107,7 +107,7 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 			return enum.IPredNE
 		}
 	}
-	//
+
 	// if _, ok := t.(*ctypes.Array); ok {
 	// 	switch op {
 	// 	case ops.GreaterThanEqual:
@@ -125,6 +125,6 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 	// 	}
 	// }
 
-	c.exit("cant handle this type of integer " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
+	c.exitInternalError("cant handle this type of integer " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
 	panic("")
 }

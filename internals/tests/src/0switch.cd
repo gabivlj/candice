@@ -1,0 +1,24 @@
+func main() {
+    switch 3 {
+        case 3 {            
+        }
+
+        case 4 {
+            @print("4...");
+        }
+
+        default {
+            @print("none...");
+        }
+    }
+
+    switch 3 + 1 {
+        case 3
+            @print("3...");        
+
+        case 4 {}
+
+        default
+            @print("none...");        
+    }
+}

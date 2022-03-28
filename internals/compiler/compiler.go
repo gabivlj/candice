@@ -307,6 +307,11 @@ func (c *Compiler) Compile(tree ast.Node) {
 
 	switch t := tree.(type) {
 
+	case *ast.SwitchStatement:
+		{
+			c.compileSwitchStatement(t)
+		}
+
 	case *ast.MacroBlock:
 		{
 			for _, statement := range t.Block.Statements {
@@ -928,8 +933,13 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 	return nil
 }
 
-func (c *Compiler) exit(message string) {
+func (c *Compiler) exitInternalError(message string) {
 	logger.Error("Internal error", "Unknown internal error has happened, check below for more details", "\n"+message)
+	os.Exit(1)
+}
+
+func (c *Compiler) exit(message string) {
+	logger.Error("Compiler error", "Unknown internal error has happened, check below for more details", "\n"+message)
 	os.Exit(1)
 }
 
@@ -984,7 +994,7 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 		return fn.Value
 	}
 
-	c.exit(fmt.Sprintf("Variable %s doesn't exist.", name))
+	c.exitInternalError(fmt.Sprintf("Variable %s doesn't exist.", name))
 	panic("")
 }
 
@@ -998,7 +1008,7 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 		return fun(c, ast)
 	}
 
-	c.exit("undefined builtin function @" + ast.Name)
+	c.exitInternalError("undefined builtin function @" + ast.Name)
 	panic("")
 }
 
@@ -1074,7 +1084,7 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 	struktType, ok := possibleStruct.candiceType.(*ctypes.Struct)
 
 	if !ok {
-		c.exit(fmt.Sprintf("expected struct but got a %s", possibleStruct.candiceType))
+		c.exitInternalError(fmt.Sprintf("expected struct but got a %s", possibleStruct.candiceType))
 		panic("")
 	}
 
@@ -1275,7 +1285,7 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 			leftStruct = c.loadIfPointer(leftStruct)
 			s, ok = leftStruct.Type().(*types.PointerType)
 			if !ok {
-				c.exit("not a struct " + leftStruct.Type().String() + " " + expr.String())
+				c.exitInternalError("not a struct " + leftStruct.Type().String() + " " + expr.String())
 			}
 		}
 
@@ -1497,6 +1507,47 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		return c.block().NewBitCast(variable, toReturnType)
 	}
 
-	c.exit("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
+	c.exitInternalError("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
 	panic("")
+}
+
+func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) {
+	condition := c.loadIfPointer(c.compileExpression(switchStatement.Condition))
+	var strandedBlocks []*ir.Block
+	leaveBlock := ir.NewBlock("leaveSwitchBlock." + random.RandomString(10))
+	var defaultBlock *ir.Block
+	if switchStatement.Default != nil {
+		defaultBlock = c.currentFunction.NewBlock("default." + random.RandomString(10))
+		strandedBlocks = append(strandedBlocks, c.compileBlock(switchStatement.Default, defaultBlock))
+	} else {
+		defaultBlock = leaveBlock
+	}
+
+	var cases []*ir.Case
+
+	casesId := random.RandomString(10)
+	for i, caseStatement := range switchStatement.Cases {
+		possibleNonConstantExpression := c.compileExpression(caseStatement.Case)
+		if constant, isConstant := possibleNonConstantExpression.(constant.Constant); isConstant {
+			caseBlock := c.currentFunction.NewBlock(fmt.Sprintf("case-%d-%s", i, casesId))
+			irCase := ir.NewCase(constant, caseBlock)
+			cases = append(cases, irCase)
+			strandedBlocks = append(strandedBlocks, c.compileBlock(caseStatement.Block, caseBlock))
+		} else {
+			// todo error message should be better
+			logger.Warning("You are using an experimental part of Candice, you can't use non-constant expressions right now on switch cases\n")
+			c.exit("Exiting compiler because of non-constant expression")
+		}
+	}
+
+	c.block().Term = c.block().NewSwitch(condition, defaultBlock, cases...)
+
+	for _, strandedBlock := range strandedBlocks {
+		if strandedBlock.Term == nil {
+			strandedBlock.NewBr(leaveBlock)
+		}
+	}
+
+	c.blocks[len(c.blocks)-1] = leaveBlock
+	c.currentFunction.Blocks = append(c.currentFunction.Blocks, leaveBlock)
 }

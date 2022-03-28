@@ -165,6 +165,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	}()
 
 	switch p.currentToken.Type {
+	case token.SWITCH:
+		return p.parseSwitchStatement()
 	case token.MACRO_IF:
 		return p.parseMacroIf()
 	case token.EXTERN:
@@ -1116,4 +1118,46 @@ func (p *Parser) afterFixDoubleErrorStatement(statement ast.Statement) {
 		p.afterFixDoubleError(nil)
 	}
 
+}
+
+func (p *Parser) parseCaseStatement() *ast.CaseStatement {
+	p.expect(token.CASE)
+	caseKeyword := p.nextToken()
+	condition := eval.SimplifyExpression(p.parseExpression(0))
+	block := p.parseBlock()
+	return &ast.CaseStatement{
+		Case:  condition,
+		Block: block,
+		Token: caseKeyword,
+	}
+}
+
+//
+func (p *Parser) parseSwitchStatement() ast.Statement {
+	// switch token
+	switchKeyword := p.nextToken()
+	// condition
+	condition := p.parseExpression(0)
+	p.expect(token.LBRACE)
+	_ = p.nextToken()
+	cases := make([]*ast.CaseStatement, 0)
+	for p.currentToken.Type != token.RBRACE && p.currentToken.Type != token.DEFAULT && p.currentToken.Type != token.EOF {
+		cases = append(cases, p.parseCaseStatement())
+	}
+
+	var defaultBlock *ast.Block
+	if p.currentToken.Type == token.DEFAULT {
+		p.nextToken()
+		defaultBlock = p.parseBlock()
+	}
+
+	p.expect(token.RBRACE)
+	p.nextToken()
+
+	return &ast.SwitchStatement{
+		Token:     switchKeyword,
+		Condition: condition,
+		Default:   defaultBlock,
+		Cases:     cases,
+	}
 }

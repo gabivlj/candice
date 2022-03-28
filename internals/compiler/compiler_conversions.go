@@ -18,7 +18,7 @@ func (c *Compiler) toBool(value value.Value) value.Value {
 	if _, ok := value.Type().(*types.PointerType); ok {
 		return c.block().NewICmp(enum.IPredNE, c.block().NewPtrToInt(value, types.I64), zero)
 	}
-	c.exit("can't pass to a boolean the value: " + value.String())
+	c.exitInternalError("can't pass to a boolean the value: " + value.String())
 	panic("")
 }
 
@@ -65,7 +65,7 @@ func (c *Compiler) handleFloatIntCast(typeParameter ctypes.Type, parameter ctype
 		return c.intToFloat(toReturn.(*types.FloatType), variable, ctypes.IsUnsignedInteger(parameter))
 	}
 
-	c.exit("atleast one parameter need to be a float")
+	c.exitInternalError("atleast one parameter need to be a float")
 	panic("")
 }
 

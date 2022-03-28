@@ -170,6 +170,11 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	s.currentStatementBeingAnalyzed = statement
 
 	switch statementType := statement.(type) {
+	case *ast.SwitchStatement:
+		{
+			s.analyzeSwitchStatement(statementType)
+			return
+		}
 	case *ast.MacroBlock:
 		for _, stmt := range statementType.Block.Statements {
 			if s.returns {
@@ -1274,4 +1279,34 @@ func (s *Semantic) analyzeFloat(float *ast.Float) ctypes.Type {
 // Keep in mind that it mutates `t`.
 func (s *Semantic) replaceAnonymous(t ctypes.Type) ctypes.Type {
 	return s.swapTypes(t, ctypes.TODO())
+}
+
+func (s *Semantic) analyzeSwitchStatement(switchStatement *ast.SwitchStatement) {
+	condition := s.UnwrapAnonymous(s.analyzeExpression(switchStatement.Condition))
+
+	allCasesReturn := true
+
+	for _, caseStatement := range switchStatement.Cases {
+		caseExpression := s.UnwrapAnonymous(s.analyzeExpression(caseStatement.Case))
+		if !s.areTypesEqual(condition, caseExpression) {
+			s.typeMismatchError(caseExpression.String(), caseStatement.Case, caseStatement.Token, condition, caseExpression)
+			return
+		}
+
+		tempReturn := s.returns
+		s.analyzeBlock(caseStatement.Block)
+		if !s.returns {
+			allCasesReturn = false
+		}
+		s.returns = tempReturn
+	}
+
+	if switchStatement.Default != nil {
+		s.analyzeBlock(switchStatement.Default)
+		allCasesReturn = allCasesReturn && s.returns
+	} else {
+		s.returns = false
+	}
+
+	s.returns = allCasesReturn
 }

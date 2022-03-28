@@ -153,6 +153,105 @@ func TestSemantic_Analyze(t *testing.T) {
 			`struct Point { p Point }`,
 			false,
 		},
+		{
+			`switch 1 { case 1 {} case 2 {} default {} }`,
+			true,
+		},
+		{
+			`switch 1 as i64 { case 1 {} case 2 {} default {} }`,
+			false,
+		},
+		{
+			`func returnsI32() i32 {
+				switch 1 {
+					case 1 {
+						return 1;
+					}
+
+					case 2 {
+						return 2;
+					}
+
+					default {
+						return 0;
+					}
+				}		
+			}`,
+			true,
+		},
+		{
+			`func returnsI32() i32 {
+				switch 1 {
+					case 1 {
+						return 1;
+					}
+
+					case 2 {
+						return 2;
+					}
+
+					default {
+						// return 0;
+					}
+				}		
+			}`,
+			false,
+		},
+		{
+			`func returnsI32() i32 {
+				switch 1 {
+					case 1 {
+						return 1;
+					}
+
+					case 2 {
+						return 2;
+					}
+
+					default {
+						// return 0;
+					}
+				}
+				return 0;		
+			}`,
+			true,
+		},
+		{
+			`func returnsI32() i32 {
+				switch 1 {
+					case 1 {
+						return 1;
+					}
+
+					case 2 {
+						// return 2;
+					}
+
+					default {
+						return 0;
+					}
+				}				
+			}`,
+			false,
+		},
+		{
+			`func returnsI32() i32 {
+				switch 1 {
+					case 1 {
+						// return 1;
+					}
+
+					case 2 {
+						return 2;
+					}
+
+					default {
+						return 0;
+					}
+				}				
+			}`,
+			false,
+		},
 		// This still doesn't work...
 		// {
 		// 	`struct C { p Point } struct Point { p C }`,
