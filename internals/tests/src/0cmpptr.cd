@@ -16,4 +16,7 @@ func main() {
     } else {
         @print("bad2");
     }
+
+    elements := [1]i32{}
+    elements2 := [1]i32{}
 }

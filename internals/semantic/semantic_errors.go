@@ -8,6 +8,7 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/token"
+	"github.com/gabivlj/candice/pkg/format"
 	"github.com/gabivlj/candice/pkg/logger"
 )
 
@@ -123,8 +124,9 @@ func (s *Semantic) getCurrentStatementLineFormatted() string {
 
 	if s.currentStatementBeingAnalyzed != nil {
 		s := s.currentStatementBeingAnalyzed.String()
-		currentStatementLen := len(s)
-		return fmt.Sprintf("\n\t>> %s\n\t   %s", s, strings.Repeat("^", currentStatementLen))
+		elements := strings.Split(format.StringWithTabs(s, 1), "\n")
+		currentStatementLen := len(elements[0])
+		return fmt.Sprintf("\n\t>> %s\n\t   %s\n%s", elements[0], strings.Repeat("^", currentStatementLen), strings.Join(elements[1:], "\n"))
 	}
 
 	return ""

@@ -107,6 +107,23 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 			return enum.IPredNE
 		}
 	}
+	//
+	// if _, ok := t.(*ctypes.Array); ok {
+	// 	switch op {
+	// 	case ops.GreaterThanEqual:
+	// 		return enum.IPredSGE
+	// 	case ops.GreaterThan:
+	// 		return enum.IPredSGT
+	// 	case ops.LessThan:
+	// 		return enum.IPredSLT
+	// 	case ops.LessThanEqual:
+	// 		return enum.IPredSLE
+	// 	case ops.Equals:
+	// 		return enum.IPredEQ
+	// 	case ops.NotEquals:
+	// 		return enum.IPredNE
+	// 	}
+	// }
 
 	c.exit("cant handle this type of integer " + t.String() + " op: " + op.String() + fmt.Sprintf("%d", op))
 	panic("")

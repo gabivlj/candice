@@ -1239,6 +1239,9 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 	}
 
 	if binaryOperation.Operation.IsComparison() {
+		if ctypes.IsArray(left) {
+			s.errorWithStatement("Candice can't compare arrays for you, you should try to cast them to a pointer and then compare again if you want a pointer comparison", binaryOperation.Token)
+		}
 		return ctypes.I1
 	}
 
