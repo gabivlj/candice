@@ -1371,6 +1371,15 @@ func (c *Compiler) compileMultiply(expr *ast.BinaryOperation) value.Value {
 func (c *Compiler) compileSubtract(expr *ast.BinaryOperation) value.Value {
 	leftValue := c.loadIfPointer(c.compileExpression(expr.Left))
 	rightValue := c.loadIfPointer(c.compileExpression(expr.Right))
+	if types.IsPointer(leftValue.Type()) {
+		rightValue = c.block().NewMul(rightValue, constant.NewInt(rightValue.Type().(*types.IntType), -1))
+		newPointer := c.calculatePointerOffset(leftValue, rightValue)
+		// return this pointer on another stack register because it's probably going to get used
+		toReturnPointer := c.block().NewAlloca(newPointer.Type())
+		c.block().NewStore(newPointer, toReturnPointer)
+		return toReturnPointer
+	}
+
 	if types.IsFloat(leftValue.Type()) {
 		return c.block().NewFSub(leftValue, rightValue)
 	}

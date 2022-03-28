@@ -1,0 +1,8 @@
+func main() {
+    t := &3;
+    tt := t + 1;
+    tt := tt - 1;
+    if *tt != *t {
+        @print("bad", tt as i64, t as i64);
+    }
+}

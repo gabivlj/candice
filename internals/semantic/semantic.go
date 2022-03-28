@@ -1225,7 +1225,7 @@ func (s *Semantic) analyzeArithmetic(binaryOperation *ast.BinaryOperation) ctype
 	left := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Left))
 	right := s.UnwrapAnonymous(s.analyzeExpression(binaryOperation.Right))
 
-	if ctypes.IsPointer(left) && ctypes.IsInteger(right) {
+	if ctypes.IsPointer(left) && ctypes.IsInteger(right) && (binaryOperation.Operation == ops.Add || binaryOperation.Operation == ops.Subtract) {
 		binaryOperation.Type = left
 		return left
 	}
