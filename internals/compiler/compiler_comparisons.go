@@ -11,11 +11,13 @@ import (
 )
 
 func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.Value {
-	if ctypes.IsPointer(expr.Left.GetType()) {
-		return c.compareMemoryI8(c.loadIfPointer(c.compileExpression(expr.Left)),
-			c.loadIfPointer(c.compileExpression(expr.Right)),
-			c.getIPredComparison(expr.Operation, ctypes.I32),
-		)
+	if left, isPointer := expr.Left.GetType().(*ctypes.Pointer); isPointer {
+		if left.Inner == ctypes.I8 {
+			return c.compareMemoryI8(c.loadIfPointer(c.compileExpression(expr.Left)),
+				c.loadIfPointer(c.compileExpression(expr.Right)),
+				c.getIPredComparison(expr.Operation, ctypes.I32),
+			)
+		}
 	}
 
 	if _, isFloat := expr.Left.GetType().(*ctypes.Float); isFloat {
@@ -27,7 +29,7 @@ func (c *Compiler) handleComparisonOperations(expr *ast.BinaryOperation) value.V
 	}
 
 	return c.block().NewICmp(c.getIPredComparison(expr.Operation, expr.Left.GetType()),
-		c.loadIfPointer(c.loadIfPointer(c.compileExpression(expr.Left))),
+		c.loadIfPointer(c.compileExpression(expr.Left)),
 		c.loadIfPointer(c.compileExpression(expr.Right)),
 	)
 }
@@ -82,6 +84,23 @@ func (c *Compiler) getIPredComparison(op ops.Operation, t ctypes.Type) enum.IPre
 			return enum.IPredULT
 		case ops.LessThanEqual:
 			return enum.IPredULE
+		case ops.Equals:
+			return enum.IPredEQ
+		case ops.NotEquals:
+			return enum.IPredNE
+		}
+	}
+
+	if _, ok := t.(*ctypes.Pointer); ok {
+		switch op {
+		case ops.GreaterThanEqual:
+			return enum.IPredSGE
+		case ops.GreaterThan:
+			return enum.IPredSGT
+		case ops.LessThan:
+			return enum.IPredSLT
+		case ops.LessThanEqual:
+			return enum.IPredSLE
 		case ops.Equals:
 			return enum.IPredEQ
 		case ops.NotEquals:

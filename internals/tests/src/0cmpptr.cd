@@ -1,0 +1,19 @@
+func main() {
+    e := &3;
+
+    if e != e @print("bad");
+    if e == e {
+        eee := e;
+        if eee >= e {
+            if eee <= e {
+                
+            } else {
+                @print("bad4");
+            }
+        } else {
+            @print("bad3")
+        }
+    } else {
+        @print("bad2");
+    }
+}
