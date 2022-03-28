@@ -1003,19 +1003,11 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
-	candiceFunkType := ast.Left.GetType().(*ctypes.Function)
 	left := c.compileExpression(ast.Left)
 	funk := c.loadIfPointer(left)
-	funcType := funk.Type().(*types.PointerType).ElemType.(*types.FuncType)
 	arguments := make([]value.Value, 0, len(ast.Parameters))
-	for i, argument := range ast.Parameters {
+	for _, argument := range ast.Parameters {
 		compiledValue := c.compileExpression(argument)
-		// If there is a possible union cast do it now
-		if i < len(funcType.Params) {
-			paramType := funcType.Params[i]
-			compiledValue = c.bitcastIfUnion(candiceFunkType.Parameters[i], compiledValue, types.NewPointer(paramType))
-		}
-
 		loadedValue := c.loadIfPointer(compiledValue)
 		arguments = append(arguments, loadedValue)
 	}
