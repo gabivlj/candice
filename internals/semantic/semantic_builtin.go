@@ -14,6 +14,15 @@ func (s *Semantic) analyzeCast(castCall *ast.BuiltinCall) ctypes.Type {
 		castCall.Type = toType
 		return toType
 	}
+
+	// This handles types that are equal, even unions
+	if s.areTypesEqual(currentType, toType) {
+		if ctypes.IsUnion(toType) || ctypes.IsUnion(currentType) {
+			s.errorWithStatement("it seems you are trying to cast into a union or cast a union,\nat the moment that is not supported in Candice.\nYou can find a workaround by setting in a variable declaration the selected expression.", castCall.Token)
+			return ctypes.TODO()
+		}
+	}
+
 	s.error("can't cast "+currentType.String()+" to "+toType.String(), castCall.Token)
 	return ctypes.TODO()
 }

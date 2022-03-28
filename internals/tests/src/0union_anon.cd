@@ -1,0 +1,24 @@
+// The purpose of this file is finding bugs of replaceAnonymous
+// on unions
+
+union Thing {
+    i i32
+}
+
+func handleThing(t *Thing) *Thing {
+    el := t.i;
+    el : *Thing = &el;
+    return t;
+}
+
+func main() {
+    t : *Thing = &3;
+    tt := handleThing(t);
+    element : *i32 = &t.i
+    element := *element;
+    if element != 3 {
+        @print("bad")
+    }
+    element : *i32 = &tt.i
+    element := *element;    
+}

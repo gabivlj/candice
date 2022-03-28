@@ -1,0 +1,14 @@
+func m() i32 {
+    a := 3;
+    return f().i + a;
+}
+struct s {
+    i i32
+}
+func f() s {
+    return @s{i:3}
+}
+
+func main() {
+    m();
+}

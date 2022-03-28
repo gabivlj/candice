@@ -472,3 +472,8 @@ func IsInteger(t Type) bool {
 	}
 	return ok
 }
+
+func IsUnion(t Type) bool {
+	_, ok := t.(*Union)
+	return ok
+}

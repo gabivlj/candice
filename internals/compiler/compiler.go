@@ -491,7 +491,6 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 		c.block().NewRet(nil)
 		return
 	}
-
 	toReturn := c.compileExpression(ret.Expression)
 	c.block().NewRet(c.loadIfPointer(toReturn))
 }
@@ -737,8 +736,9 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 }
 
 func (c *Compiler) bitcastIfUnion(t ctypes.Type, toBeBitcasted value.Value, unionType types.Type) value.Value {
+	possibleUnion := c.retrieveInnerAnonymousAndUnwrap(t)
 
-	if _, isUnion := t.(*ctypes.Union); isUnion {
+	if _, isUnion := possibleUnion.(*ctypes.Union); isUnion {
 		return c.block().NewBitCast(toBeBitcasted, unionType)
 	}
 
@@ -1003,11 +1003,19 @@ func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value 
 }
 
 func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
+	candiceFunkType := ast.Left.GetType().(*ctypes.Function)
 	left := c.compileExpression(ast.Left)
 	funk := c.loadIfPointer(left)
+	funcType := funk.Type().(*types.PointerType).ElemType.(*types.FuncType)
 	arguments := make([]value.Value, 0, len(ast.Parameters))
-	for _, argument := range ast.Parameters {
+	for i, argument := range ast.Parameters {
 		compiledValue := c.compileExpression(argument)
+		// If there is a possible union cast do it now
+		if i < len(funcType.Params) {
+			paramType := funcType.Params[i]
+			compiledValue = c.bitcastIfUnion(candiceFunkType.Parameters[i], compiledValue, types.NewPointer(paramType))
+		}
+
 		loadedValue := c.loadIfPointer(compiledValue)
 		arguments = append(arguments, loadedValue)
 	}
@@ -1259,9 +1267,16 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		return c.compileModuleAccess(expr)
 	}
 
-	leftStruct := c.compileExpression(expr.Left)
+	leftStructPossibleNonPtr := c.compileExpression(expr.Left)
 	currentCandiceType := expr.Left.GetType()
 	var candiceType ctypes.FieldType
+	leftStruct := leftStructPossibleNonPtr
+
+	if !types.IsPointer(leftStructPossibleNonPtr.Type()) {
+		leftStruct = c.block().NewAlloca(leftStructPossibleNonPtr.Type())
+		c.block().NewStore(leftStructPossibleNonPtr, leftStruct)
+	}
+
 	if s, ok := leftStruct.Type().(*types.PointerType); ok {
 		// Load if it's a pointer
 		if types.IsPointer(s.ElemType) {
@@ -1275,7 +1290,6 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		if ctypes.IsPointer(currentCandiceType) {
 			currentCandiceType = currentCandiceType.(*ctypes.Pointer).Inner
 		}
-
 		if anonymous, ok := currentCandiceType.(*ctypes.Anonymous); ok {
 			if anonymous.Modules != nil && len(anonymous.Modules) != 0 {
 				module := anonymous.Modules[0]
@@ -1301,6 +1315,11 @@ func (c *Compiler) compileStructAccess(expr *ast.BinaryOperation) value.Value {
 		// we know this is a union
 		leftStruct = c.block().NewBitCast(leftStruct, types.NewPointer(c.ToLLVMType(field)))
 	}
+
+	// We are possibly not doing c.loadIfPointer calls on this function.
+	// But we still need to reset these flags.
+	c.doNotAllocate = false
+	c.doNotLoadIntoMemory = false
 
 	return leftStruct
 }
@@ -1476,6 +1495,7 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		c.doNotLoadIntoMemory = true
 		return c.block().NewBitCast(variable, toReturnType)
 	}
+
 	c.exit("cant convert yet to this " + call.String() + "\n" + call.Parameters[0].GetType().String() + " " + variable.Type().String())
 	panic("")
 }

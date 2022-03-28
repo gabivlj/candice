@@ -73,6 +73,11 @@ func ExecuteProject() {
 	}
 	s := semantic.New()
 	s.Analyze(tree)
+
+	for _, err := range s.Warnings {
+		logger.Warning(err.Error())
+	}
+
 	if len(s.Errors) > 0 {
 		for _, err := range s.Errors {
 			logger.Error("Analyzing", err.Error())

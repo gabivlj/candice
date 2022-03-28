@@ -1,0 +1,17 @@
+union ImportedThing {
+    i i32
+}
+
+func cb(something func(ImportedThing) ImportedThing) i32 {
+    imported :ImportedThing = 3;
+    return something(imported).i;
+}
+
+struct w {
+    i i32
+}
+
+func some() i32 {
+    ww := @w{}
+    return ww.i;
+}

@@ -57,6 +57,11 @@ func (c *Compiler) UnwrapFieldAccessor(field ctypes.Type) ctypes.FieldType {
 	return candiceType
 }
 
+func (c *Compiler) retrieveInnerAnonymousAndUnwrap(field ctypes.Type) ctypes.Type {
+	field, _ = ctypes.UnwrapPossiblePointerAndDepth(field)
+	return c.context.UnwrapAnonymous(field)
+}
+
 // GetPureStruct tries to check if the type is a struct or an anonymous type that in the
 // type repository is a struct. Doesn't try to unwrap the underlying type.
 func (c *Compiler) GetPureStruct(t ctypes.Type) *ctypes.Struct {

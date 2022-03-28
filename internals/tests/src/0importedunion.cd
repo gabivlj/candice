@@ -1,0 +1,22 @@
+import unionImport, "./libs/union.cd";
+
+func imported(a *unionImport.ImportedThing) *unionImport.ImportedThing {
+    element : *i32 = &a.i; 
+    return a;
+}
+
+func importedNoPtr(a unionImport.ImportedThing) i32 {
+    return a.i;
+}
+
+func main() {
+    element : unionImport.ImportedThing = 3; 
+    element : i32 = element.i;
+    element : *unionImport.ImportedThing = &element
+    if imported(element).i != 3 @print("bad")
+    if importedNoPtr(*element) != 3 @print("bad2");
+    unionImport.cb(func(i unionImport.ImportedThing) unionImport.ImportedThing {
+        a : unionImport.ImportedThing = i.i;
+        return a;
+    });
+}
