@@ -1,0 +1,44 @@
+const THING := 3;
+const GLOBAL_HELLO := "HELL";
+
+func str(i *i8, j *i8) {
+    if i != j { @print("bad", i, j); }
+}
+
+func number(i i32, j i32) {
+    if i != j { @print("bad", i, j); }
+}
+func numberr(i *i32, j *i32) {
+    number(*i, *j);
+}
+
+func main() {
+    str(GLOBAL_HELLO, GLOBAL_HELLO);
+    if THING != 3 { @print(THING); }
+    const HELLO := "HELL";
+    str(GLOBAL_HELLO, HELLO);
+    str(HELLO, HELLO);
+    const SOMETHING := THING as i64 + 3 as i64;
+    if HELLO != HELLO || GLOBAL_HELLO != HELLO @print(":|");
+    if HELLO == HELLO && GLOBAL_HELLO == HELLO {} else { @print(":||"); }
+    const THING2 := 3;
+    number(THING, THING2);
+    number(THING2, THING2);
+    number(THING, THING);
+    numberr(&THING, &THING2);
+    numberr(&THING2, &THING2);
+    numberr(&THING, &THING);
+    switch 3 + 3 {
+        case THING {
+            @print("///")
+        }
+        case SOMETHING as i32 as f32 as f64 as i16 as i32 {
+            
+        }
+
+        default {
+            @print(SOMETHING as i32 as f32 as f64 as i16 as i1 as i32)
+        }
+    }
+    
+}

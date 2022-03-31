@@ -199,7 +199,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseBlock()
 	case token.PUBLIC:
 		return p.parsePublicFunction()
-
+	case token.CONST:
+		return p.parseDeclaration()
 	default:
 		{
 			return p.parseExpressionStatement()
@@ -527,6 +528,12 @@ func (p *Parser) parseIdentifierStatement() ast.Statement {
 }
 
 func (p *Parser) parseDeclaration() ast.Statement {
+	isConstant := false
+	if p.currentToken.Type == token.CONST {
+		p.nextToken()
+		isConstant = true
+	}
+
 	id := p.currentToken
 	// pass id
 	p.nextToken()
@@ -549,6 +556,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 		Name:       ast.CreateIdentifier(id.Literal, p.ID),
 		Type:       t,
 		Expression: p.parseExpression(0),
+		Constant:   isConstant,
 	}
 }
 
@@ -1123,7 +1131,7 @@ func (p *Parser) afterFixDoubleErrorStatement(statement ast.Statement) {
 func (p *Parser) parseCaseStatement() *ast.CaseStatement {
 	p.expect(token.CASE)
 	caseKeyword := p.nextToken()
-	condition := eval.SimplifyExpression(p.parseExpression(0))
+	condition := p.parseExpression(0)
 	block := p.parseBlock()
 	return &ast.CaseStatement{
 		Case:  condition,

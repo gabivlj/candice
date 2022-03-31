@@ -85,6 +85,7 @@ const (
 	SWITCH  = TypeToken("SWITCH")
 	CASE    = TypeToken("CASE")
 	DEFAULT = TypeToken("DEFAULT")
+	CONST   = TypeToken("CONSTANT")
 )
 
 var keywords = map[string]TypeToken{
@@ -107,6 +108,7 @@ var keywords = map[string]TypeToken{
 	"switch":   SWITCH,
 	"case":     CASE,
 	"default":  DEFAULT,
+	"const":    CONST,
 }
 
 // LookupIdent Looks up in the keywords table if its a keyword, if its not it will return IDENT as a TypeToken

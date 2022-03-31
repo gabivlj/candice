@@ -6,6 +6,7 @@ import (
 )
 
 func (s *Semantic) analyzeCast(castCall *ast.BuiltinCall) ctypes.Type {
+
 	currentType := s.UnwrapAnonymous(s.analyzeExpression(castCall.Parameters[0]))
 	toType := s.UnwrapAnonymous(castCall.TypeParameters[0])
 	castCall.TypeParameters[0] = toType
@@ -28,6 +29,7 @@ func (s *Semantic) analyzeCast(castCall *ast.BuiltinCall) ctypes.Type {
 }
 
 func (s *Semantic) analyzeAlloc(allocCall *ast.BuiltinCall) ctypes.Type {
+	s.throwInvalidOperationForConstant("you can't allocate on constants", allocCall)
 	t := allocCall.TypeParameters[0]
 	s.replaceAnonymous(t)
 	expr := s.analyzeExpression(allocCall.Parameters[0])
@@ -44,6 +46,7 @@ func (s *Semantic) analyzeUnreachable(_ *ast.BuiltinCall) ctypes.Type {
 }
 
 func (s *Semantic) analyzePrintln(printCall *ast.BuiltinCall) ctypes.Type {
+	s.throwInvalidOperationForConstant("you can't print on constants", printCall)
 	for _, param := range printCall.Parameters {
 		s.analyzeExpression(param)
 	}
@@ -51,6 +54,7 @@ func (s *Semantic) analyzePrintln(printCall *ast.BuiltinCall) ctypes.Type {
 }
 
 func (s *Semantic) analyzeFree(freeCall *ast.BuiltinCall) ctypes.Type {
+	s.throwInvalidOperationForConstant("you can't free on constants", freeCall)
 	if len(freeCall.Parameters) != 1 {
 		s.error("expected one parameter for free builtin call", freeCall.Token)
 		return ctypes.TODO()
@@ -62,6 +66,7 @@ func (s *Semantic) analyzeFree(freeCall *ast.BuiltinCall) ctypes.Type {
 }
 
 func (s *Semantic) analyzeRealloc(reallocCall *ast.BuiltinCall) ctypes.Type {
+	s.throwInvalidOperationForConstant("you can't allocate on constants", reallocCall)
 	if len(reallocCall.Parameters) != 2 {
 		s.error("expected two parameters for realloc builtin call", reallocCall.Token)
 		return ctypes.TODO()
@@ -95,6 +100,7 @@ func (s *Semantic) analyzeSizeOf(sizeOfCall *ast.BuiltinCall) ctypes.Type {
 }
 
 func (s *Semantic) analyzeAsm(asmCall *ast.BuiltinCall) ctypes.Type {
+	s.throwInvalidOperationForConstant("you can't execute assembly on constant variables", asmCall)
 	if len(asmCall.Parameters) == 0 {
 		s.error("expected a constant string literal on asm builtin call", asmCall.Token)
 		return ctypes.TODO()

@@ -120,21 +120,23 @@ func (s *Semantic) checkDereferenceErrors(line string, left, right ctypes.Type, 
 	s.error(message, leftExpr.GetToken())
 }
 
-func (s *Semantic) getCurrentStatementLineFormatted() string {
-
-	if s.currentStatementBeingAnalyzed != nil {
-		s := s.currentStatementBeingAnalyzed.String()
-		elements := strings.Split(format.StringWithTabs(s, 1), "\n")
-		currentStatementLen := len(elements[0])
-		return fmt.Sprintf("\n\t>> %s\n\t   %s\n%s", elements[0], strings.Repeat("^", currentStatementLen), strings.Join(elements[1:], "\n"))
+func (semantic *Semantic) getCurrentStatementLineFormatted() string {
+	if semantic.currentStatementBeingAnalyzed != nil {
+		s := semantic.currentStatementBeingAnalyzed.String()
+		return semantic.formatLine(s)
 	}
 
 	return ""
 }
 
+func (semantic *Semantic) formatLine(s string) string {
+	elements := strings.Split(format.StringWithTabs(s, 1), "\n")
+	currentStatementLen := len(elements[0])
+	return fmt.Sprintf("\n\t>> %s\n\t   %s\n%s", elements[0], strings.Repeat("^", currentStatementLen), strings.Join(elements[1:], "\n"))
+}
+
 func (s *Semantic) typeMismatchError(node string, wrongPart ast.Expression, tok token.Token, expected, got ctypes.Type) {
 	var message string
-
 	s.checkDereferenceErrors(node, got, expected, wrongPart)
 
 	if len(s.Errors) == 0 {
@@ -190,4 +192,12 @@ func (s *Semantic) typeMismatchBlameBinaryExpressionError(node string, binary *a
 	}
 
 	s.error(message, tok)
+}
+
+func (s *Semantic) throwInvalidOperationForConstant(message string, node ast.Node) {
+	if !s.expectConstantExpression {
+		return
+	}
+
+	s.error(fmt.Sprintf("%sthis is an invalid operation for a constant expression\n\t%s", message, s.formatLine(node.String())), node.GetToken())
 }

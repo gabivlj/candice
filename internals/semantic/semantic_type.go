@@ -10,6 +10,7 @@ import (
 type SemanticType struct {
 	parentFunction *ctypes.Function
 	Type           ctypes.Type
+	IsConstant     bool
 }
 
 func (s *Semantic) newType(t ctypes.Type) *SemanticType {

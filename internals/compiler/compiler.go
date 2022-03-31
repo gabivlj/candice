@@ -546,9 +546,6 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 	// Create a main block to the function
 	c.pushBlock(llvmFunction.NewBlock(funk.FunctionType.Name))
 
-	// Create a variable stack isolated from the rest of variable definitions
-	// c.stacks = append(c.stacks, map[string]value.Value{})
-
 	// Declare parameters IR
 	for _, param := range llvmFunction.Params {
 		allocatedParameter := c.block().NewAlloca(param.Type())
@@ -715,18 +712,28 @@ func (c *Compiler) compileBlock(block *ast.Block, blockIR *ir.Block) *ir.Block {
 
 func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	t := c.ToLLVMType(decl.Type)
-	valueCompiled := c.compileExpression(decl.Expression)
-	if c.currentFunction == nil {
-		if _, isConstant := valueCompiled.(constant.Constant); isConstant {
-			c.globalVariables[decl.Name] = &Value{Value: valueCompiled, Type: decl.Type}
-			// c.globalVariables[decl.Name+".global"] = &Value{Value: c.m.NewGlobalDef(decl.Name, constant.NewNull(types.NewPointer(valueCompiled.Type()))), Type: decl.Type}
-		} else {
-			fmt.Println("Candice does not support constant expressions and operations yet.")
-			os.Exit(1)
-		}
+	var valueCompiled value.Value
+	if decl.Constant {
+		// If the declaration was a constant we don't need to allocate later on
+		c.doNotAllocate = true
+		valueCompiled = c.compileConstantExpression(decl.Expression)
+		// If it is a global just compile it as a constant
+	} else if c.currentFunction == nil {
+		valueCompiled = c.compileConstantExpression(decl.Expression)
+	} else {
+		valueCompiled = c.compileExpression(decl.Expression)
+	}
 
+	if c.currentFunction == nil {
+		c.doNotAllocate = false
+		if _, isConstant := valueCompiled.(constant.Constant); isConstant {
+			c.globalVariables[decl.Name] = &Value{Value: valueCompiled, Type: decl.Type, Constant: decl.Constant}
+		} else {
+			c.exitErrorExpression("Candice does not support non-constant global expressions and operations yet.", decl.Expression)
+		}
 		return
 	}
+
 	var val value.Value
 	if !c.doNotAllocate {
 		val = c.block().NewAlloca(t)
@@ -847,10 +854,10 @@ func (c *Compiler) compileAnonymousFunction(anonymousFunction *ast.AnonymousFunc
 
 func (c *Compiler) compileStringLiteral(stringLiteral *ast.StringLiteral) value.Value {
 	charArray := constant.NewCharArrayFromString(stringLiteral.Value + string(byte(0)))
-	globalDef := c.m.NewGlobalDef("string.literal."+random.RandomString(10), charArray)
 	if c.currentFunction == nil {
 		return charArray
 	}
+	globalDef := c.m.NewGlobalDef("string.literal."+random.RandomString(10), charArray)
 	c.doNotLoadIntoMemory = true
 	ptr := c.block().NewGetElementPtr(types.NewArray(uint64(len(stringLiteral.Value)+1), types.I8), globalDef, zero, zero)
 	ptr.InBounds = true
@@ -961,6 +968,20 @@ func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
 func (c *Compiler) retrieveVariable(name string) value.Value {
 	identifier := c.retrieveLocalVariable(name)
 	if identifier != nil {
+		if !types.IsPointer(identifier.Type()) {
+			c.doNotLoadIntoMemory = true
+			if types.IsArray(identifier.Type()) {
+				global := identifier.(constant.Constant)
+				array := c.block().NewAlloca(global.Type())
+				c.block().NewStore(global, array)
+				pointer := c.block().NewBitCast(array, types.NewPointer(global.Type().(*types.ArrayType).ElemType))
+				lastAlloca := c.block().NewAlloca(pointer.Type())
+				c.variables.Add(name, lastAlloca)
+				c.block().NewStore(pointer, lastAlloca)
+				c.doNotLoadIntoMemory = false
+				return lastAlloca
+			}
+		}
 		return identifier
 	}
 
@@ -973,7 +994,7 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 			global := fn.Value.(constant.Constant)
 
 			// If it is an array we must allocate it as a global and then cast it as a pointer
-			// so we can mutate the address
+			// and allocate it again so we can use it normally, we cache that result into globalVariables + .global
 			if types.IsArray(global.Type()) {
 				array := c.m.NewGlobalDef(name+".global_alloca", global)
 				pointer := c.block().NewBitCast(array, types.NewPointer(global.Type().(*types.ArrayType).ElemType))
@@ -981,6 +1002,11 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 				c.globalVariables[name+".global"] = &Value{Value: globalDefinition, Type: fn.Type}
 				c.block().NewStore(pointer, globalDefinition)
 				return globalDefinition
+			}
+
+			if fn.Constant {
+				c.doNotLoadIntoMemory = true
+				return global
 			}
 
 			globalDefPointer := c.m.NewGlobalDef(name+".global", global)
@@ -1527,14 +1553,13 @@ func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) 
 
 	casesId := random.RandomString(10)
 	for i, caseStatement := range switchStatement.Cases {
-		possibleNonConstantExpression := c.compileExpression(caseStatement.Case)
+		possibleNonConstantExpression := c.compileConstantExpression(caseStatement.Case)
 		if constant, isConstant := possibleNonConstantExpression.(constant.Constant); isConstant {
 			caseBlock := c.currentFunction.NewBlock(fmt.Sprintf("case-%d-%s", i, casesId))
 			irCase := ir.NewCase(constant, caseBlock)
 			cases = append(cases, irCase)
 			strandedBlocks = append(strandedBlocks, c.compileBlock(caseStatement.Block, caseBlock))
 		} else {
-			// todo error message should be better
 			logger.Warning("You are using an experimental part of Candice, you can't use non-constant expressions right now on switch cases\n")
 			c.exit("Exiting compiler because of non-constant expression")
 		}

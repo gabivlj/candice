@@ -12,8 +12,9 @@ type Type struct {
 }
 
 type Value struct {
-	Value value.Value
-	Type  ctypes.Type
+	Value    value.Value
+	Type     ctypes.Type
+	Constant bool
 }
 
 func (c *Compiler) searchForType(name string) types.Type {

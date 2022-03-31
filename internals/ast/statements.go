@@ -89,6 +89,7 @@ type DeclarationStatement struct {
 	Name       string
 	Type       ctypes.Type
 	Expression Expression
+	Constant   bool
 }
 
 func (d *DeclarationStatement) GetToken() token.Token {
