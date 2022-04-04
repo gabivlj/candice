@@ -934,6 +934,17 @@ switch element {
 }
 ```
 
+## Conditional compile time flags
+
+```go
+
+    #if WINDOWS {
+        // instead of putting it on the .json config file, put it here!
+        @add_compiler_flag("-m64");
+    }
+
+```
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
