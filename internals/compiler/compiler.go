@@ -1494,6 +1494,8 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		// We don't want people to take this pointer and load it into memory
 		// Test this because I'm not sure if this works!
 		c.doNotLoadIntoMemory = true
+		// We are not running c.loadIfPointer so put this to false to reset it
+		c.doNotAllocate = false
 		return c.block().NewGetElementPtr(variable.Type().(*types.PointerType).ElemType, variable, zero, zero)
 	}
 	variable = c.loadIfPointer(variable)
@@ -1518,7 +1520,6 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		// for example we should target to return i32** instead of i32* (if our pointer type was i32*)
 		// if we had this to false
 		c.doNotLoadIntoMemory = true
-
 		if fl, isFloat := call.Parameters[0].GetType().(*ctypes.Float); isFloat {
 			variable = c.block().NewFPToSI(variable, types.NewInt(uint64(fl.BitSize)))
 		}

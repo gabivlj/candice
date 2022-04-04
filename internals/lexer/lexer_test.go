@@ -1,9 +1,10 @@
 package lexer
 
 import (
+	"testing"
+
 	"github.com/gabivlj/candice/internals/token"
 	"github.com/gabivlj/candice/pkg/a"
-	"testing"
 )
 
 func TestLexer_NextToken(t *testing.T) {
@@ -18,4 +19,11 @@ func TestLexer_Float(t *testing.T) {
 	floatToken := l.NextToken()
 	a.Assert(floatToken.Type == token.FLOAT)
 	a.Assert(floatToken.Literal == "3.3333333")
+}
+
+func TestLexer_CharLiteral(t *testing.T) {
+	l := New("'h'")
+	ch := l.NextToken()
+	a.Assert(ch.Type == token.CHAR)
+	a.Assert(ch.Literal == "h")
 }

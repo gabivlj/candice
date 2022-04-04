@@ -85,6 +85,37 @@ func (l *Lexer) readTwoBytesToken(t token.TypeToken, peek byte) token.Token {
 	return token.Token{Type: t, Literal: string(ch) + string(peek), Line: l.line, Position: l.column - 2, OverallPosition: l.position}
 }
 
+func (l *Lexer) readCharLiteral() token.Token {
+	l.readChar()
+	var literal byte
+	if l.peekChar() == '\\' {
+		// it's a \n or \t
+		l.readChar()
+		c := l.ch
+		l.readChar()
+		if c == 'n' {
+			c = '\n'
+		} else if c == 't' {
+			c = '\t'
+		} else if c == 'r' {
+			c = '\r'
+		}
+		literal = c
+	} else {
+		literal = l.ch
+		l.readChar()
+	}
+
+	if l.ch != '\'' {
+		return l.newToken(token.ILLEGAL, l.ch)
+	}
+
+	// Skip '
+	l.readChar()
+
+	return l.newToken(token.CHAR, literal)
+}
+
 func (l *Lexer) getMacroToken() token.Token {
 	macro := l.ch
 	l.readChar()
@@ -108,6 +139,9 @@ func (l *Lexer) NextToken() token.Token {
 	}
 	l.skipWhiteSpace()
 	switch l.ch {
+	case '\'':
+		tok = l.readCharLiteral()
+		return tok
 	case '#':
 		tok = l.getMacroToken()
 		return tok

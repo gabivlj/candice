@@ -1,0 +1,19 @@
+func p(a *i8) {
+    if a[0] != 0 as i8 { @print("bad") }
+    *a = 3 as i8;
+}
+
+const GLOBAL_CHAR := 'a';
+
+func main() {    
+    chars := [10]i8{GLOBAL_CHAR, 'b', 'c', 'd', 'e', 0 as i8} as *i8;
+    charsStr := "abcde";
+    if chars != charsStr @print("bad...", chars, charsStr);
+
+    p([1]i8{0 as i8} as *i8);
+    el :=[1]i8{0 as i8};
+    p(el as *i8);
+    if el[0] != 3 as i8 {
+        @print("badm,,,,")
+    }
+}

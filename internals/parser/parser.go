@@ -129,6 +129,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfixHandler(token.AS, p.parseAs)
 	p.registerInfixHandler(token.MODULO, p.parseInfix)
 
+	p.registerPrefixHandler(token.CHAR, p.parseCharLiteral)
 	p.registerPrefixHandler(token.FUNCTION, p.parseAnonymousFunction)
 	p.registerPrefixHandler(token.STRING, p.parseString)
 	p.registerPrefixHandler(token.BANG, p.parsePrefixExpression)
@@ -1167,5 +1168,16 @@ func (p *Parser) parseSwitchStatement() ast.Statement {
 		Condition: condition,
 		Default:   defaultBlock,
 		Cases:     cases,
+	}
+}
+
+func (p *Parser) parseCharLiteral() ast.Expression {
+	c := p.nextToken()
+	return &ast.Integer{
+		Node: &node.Node{
+			Token: c,
+			Type:  ctypes.I8,
+		},
+		Value: int64(c.Literal[0]),
 	}
 }

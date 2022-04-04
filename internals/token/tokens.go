@@ -86,6 +86,7 @@ const (
 	CASE    = TypeToken("CASE")
 	DEFAULT = TypeToken("DEFAULT")
 	CONST   = TypeToken("CONSTANT")
+	CHAR    = TypeToken("CHAR")
 )
 
 var keywords = map[string]TypeToken{

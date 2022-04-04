@@ -189,6 +189,14 @@ func (i *Integer) GetToken() token.Token {
 }
 
 func (i *Integer) String() string {
+	if i.Node == nil {
+		return strconv.FormatInt(i.Value, 10)
+	}
+
+	if i.Token.Type == token.CHAR {
+		return fmt.Sprintf("'%c'", i.Value)
+	}
+
 	return strconv.FormatInt(i.Value, 10)
 }
 
