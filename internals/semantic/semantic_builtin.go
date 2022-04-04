@@ -5,6 +5,20 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 )
 
+func (s *Semantic) analyzeAddCompilerFlag(addCompilerFlag *ast.BuiltinCall) ctypes.Type {
+	prevExpectConstantExpression := s.expectConstantExpression
+	for _, param := range addCompilerFlag.Parameters {
+		s.expectConstantExpression = true
+		ty := s.analyzeExpression(param)
+		if !s.areTypesEqual(ty, ctypes.NewPointer(ctypes.I8)) {
+			s.errorWithStatement("expected constant string literal on `add_compiler_flag`", addCompilerFlag.Token)
+		}
+	}
+	s.expectConstantExpression = prevExpectConstantExpression
+
+	return ctypes.VoidType
+}
+
 func (s *Semantic) analyzeCast(castCall *ast.BuiltinCall) ctypes.Type {
 
 	currentType := s.UnwrapAnonymous(s.analyzeExpression(castCall.Parameters[0]))

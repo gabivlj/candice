@@ -55,6 +55,8 @@ type Compiler struct {
 	context                    *semantic.Semantic
 	modules                    map[string]*Compiler
 	compiledModules            map[string]*Compiler
+
+	eventHandler func(Event)
 }
 
 func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
@@ -100,6 +102,7 @@ func New(context *semantic.Semantic, parent ...*Compiler) *Compiler {
 		context:                  context,
 		modules:                  map[string]*Compiler{},
 		compiledModules:          compiledModules,
+		eventHandler:             func(e Event) {},
 	}
 
 	c.variables.Add("<>", nil)
@@ -149,6 +152,18 @@ func (c *Compiler) popBlock() *ir.Block {
 func (c *Compiler) initializeBuiltinLib() {
 	if _, ok := c.builtins["print"]; ok {
 		return
+	}
+
+	c.builtins["add_compiler_flag"] = func(c *Compiler, addCompilerFlag *ast.BuiltinCall) value.Value {
+		for _, param := range addCompilerFlag.Parameters {
+			str := c.compileConstantExpression(param).(*constant.CharArray)
+			c.eventHandler(Event{
+				Kind: AddFlags,
+				Data: string(str.X[:len(str.X)-1]),
+			})
+		}
+
+		return constant.NewUndef(types.Void)
 	}
 
 	c.builtins["free"] = func(c *Compiler, call *ast.BuiltinCall) value.Value {
@@ -246,7 +261,7 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	cmd.Stderr = stdout
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("error compiling with clang:\n" + stdout.String())
+		return errors.New("error compiling with clang:\n" + stdout.String() + "\n status: " + err.Error())
 	}
 
 	return nil
@@ -288,6 +303,11 @@ func (c *Compiler) Execute() ([]byte, error) {
 	cmd.Stdout = &b
 	e := cmd.Run()
 	return bytes.Trim(b.Bytes(), " "), e
+}
+
+func (c *Compiler) CompileWithEventHandler(tree ast.Node, eventHandler func(Event)) {
+	c.eventHandler = eventHandler
+	c.Compile(tree)
 }
 
 // Compile compiles the entire ast
@@ -343,7 +363,7 @@ func (c *Compiler) Compile(tree ast.Node) {
 			}
 
 			localCompiler := New(module, c)
-			localCompiler.Compile(module.Root)
+			localCompiler.CompileWithEventHandler(module.Root, c.eventHandler)
 			c.compiledModules[module.Root.ID] = localCompiler
 			c.modules[moduleName] = localCompiler
 			return

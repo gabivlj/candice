@@ -21,12 +21,12 @@ type Project struct {
 }
 
 func ExecuteProject() {
-	defer func() {
-		output := recover()
-		if output != nil {
-			logger.Error("Internal Compiler Panic", "There has been an internal panic on the compiler", "\n", output)
-		}
-	}()
+	// defer func() {
+	// 	output := recover()
+	// 	if output != nil {
+	// 		logger.Error("Internal Compiler Panic", "There has been an internal panic on the compiler", "\n", output)
+	// 	}
+	// }()
 
 	current := time.Now()
 	flags, err := retrieveFlags()
@@ -86,7 +86,12 @@ func ExecuteProject() {
 	}
 
 	c := compiler.New(s)
-	c.Compile(tree)
+	c.CompileWithEventHandler(tree, func(e compiler.Event) {
+		if e.Kind == compiler.AddFlags {
+			config.CompilerFlags = append(config.CompilerFlags, e.Data)
+		}
+	})
+
 	if flags.Release {
 		config.CompilerFlags = append(config.CompilerFlags, "-O3")
 	}

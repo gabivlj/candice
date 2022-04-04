@@ -99,6 +99,7 @@ func New() *Semantic {
 	s.builtinHandlers["free"] = s.analyzeFree
 	s.builtinHandlers["unreachable"] = s.analyzeUnreachable
 	s.builtinHandlers["asm"] = s.analyzeAsm
+	s.builtinHandlers["add_compiler_flag"] = s.analyzeAddCompilerFlag
 
 	return s
 }

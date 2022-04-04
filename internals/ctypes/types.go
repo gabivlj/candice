@@ -477,3 +477,7 @@ func IsUnion(t Type) bool {
 	_, ok := t.(*Union)
 	return ok
 }
+
+func NewPointer(t Type) *Pointer {
+	return &Pointer{Inner: t}
+}
