@@ -537,7 +537,9 @@ func (s *Semantic) UnwrapAnonymous(t ctypes.Type) ctypes.Type {
 		}
 		var semantic *Semantic
 		// Sometimes when there is an empty module on the type access, there still might be
-		// a module defined
+		// a module defined, see 0accessothermod.cd in tests/src, where we try to unwrap anonymous on the function call
+		// and basically we encounter 'Mod' as an anonymous type inside the function type, and it doesn't have a module
+		// because it's on another file
 		if module == "" {
 			id := ast.RetrieveRightID(anonymous.Name)
 			semantic = s.modules[id]

@@ -141,6 +141,16 @@ func (c *Compiler) compileOperation(op ops.Operation, expr *ast.BinaryOperation,
 		if types.IsFloat(first.Type()) {
 			return constant.NewFDiv(first, second)
 		}
+	case ops.Modulo:
+		if types.IsInt(first.Type()) {
+			if _, isUnsigned := expr.Type.(*ctypes.UInteger); isUnsigned {
+				return constant.NewURem(first, second)
+			}
+			return constant.NewSRem(first, second)
+		}
+		if types.IsFloat(first.Type()) {
+			return constant.NewFRem(first, second)
+		}
 	}
 
 	c.exitInternalError("can't handle operation " + op.String() + " on " + first.String() + " and " + second.String())

@@ -895,6 +895,43 @@ func main() {
     *array.get(0) = 3;
 }
 
+
+```
+
+## Constants
+
+This feature is a really useful one! Declaring constant variables is a key feature of a language.
+Usually you can make all the normal integer operations and declare string literals on constants, but you can't
+call functions or do things that you aren't able todo on compile time.
+
+```go
+const SOMETHING := 3;
+func main() {
+    const SOMETHING2 := 3 + SOMETHING;
+    @print(SOMETHING2);
+}
+
+```
+
+## Switch statements
+
+Switch statements in Candice are like other languages, keep in mind that case expressions need to be constant.
+
+```go
+element := 3;
+switch element {
+    case 4 {
+        @print("badly implemented!");
+    }
+
+    case 3 {
+        @print("ok!");
+    }
+
+    default {
+        @print("this won't run for sure...");
+    }
+}
 ```
 
 ## Problems?
