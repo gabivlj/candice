@@ -21,12 +21,12 @@ type Project struct {
 }
 
 func ExecuteProject() {
-	// defer func() {
-	// output := recover()
-	// if output != nil {
-	// 	logger.Error("Internal Compiler Panic", "There has been an internal panic on the compiler", "\n", output)
-	// }
-	// }()
+	defer func() {
+		output := recover()
+		if output != nil {
+			logger.Error("Internal Compiler Panic", "There has been an internal panic on the compiler", "\n", output)
+		}
+	}()
 
 	current := time.Now()
 	flags, err := retrieveFlags()
