@@ -31,6 +31,14 @@ func (c *Compiler) handleIntegerCast(toReturnType *types.IntType, variable value
 	if variableType.BitSize == toReturnType.BitSize {
 		return variable
 	}
+
+	if variable.Type() == types.I1 {
+		// SExt extends the bit sign of the variable, i1 can be considered as a sign, so
+		// it will be extended accross all the bits, for example if you cast
+		// i1 '1' to i8, you will get 111...1110, which is -1.
+		return c.block().NewZExt(variable, toReturnType)
+	}
+
 	return c.block().NewSExt(variable, toReturnType)
 }
 

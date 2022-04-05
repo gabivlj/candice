@@ -1,0 +1,9 @@
+func main() {
+    fff := -(1.200 as f64) as f64 as f32;
+    f := &(fff);
+    ff := (f as *i8);
+    ff := *ff
+    if ff != 0b10011010 as i8 && ff != 0b10011001 as i8 {
+        @print("bad", *f, *(&ff as *i32), 0b10011010 as i8, 0b10011001 as i8);
+    }
+}

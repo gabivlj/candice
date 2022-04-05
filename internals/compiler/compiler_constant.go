@@ -22,6 +22,13 @@ func (c *Compiler) handleConstantCast(val constant.Constant, originalType ctypes
 			}
 
 			if integerType.BitSize < to.BitSize {
+				if val.Type() == types.I1 {
+					// SExt extends the bit sign of the val, i1 can be considered as a sign, so
+					// it will be extended accross all the bits, for example if you cast
+					// i1 '1' to i8, you will get 111...1110, which is -1.
+					return constant.NewZExt(val, to)
+				}
+
 				return constant.NewSExt(val, to)
 			}
 

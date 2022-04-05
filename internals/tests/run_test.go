@@ -16,7 +16,7 @@ import (
 func TestSrcs(t *testing.T) {
 	expectedOutputs := map[string]string{
 		"struct.cd":             "-3 0 -3 43",
-		"cast.cd":               "32 255 65535 -1 -1 1 1 1 1 -10.000 1.000",
+		"cast.cd":               "32 -1 -1 -1 -1 0 0 0 0 -10.000 1.000",
 		"functions.cd":          "3 4 5 5",
 		"ifstmt.cd":             "1 2 3 1 2 3 1 2 3",
 		"if_statements2.cd":     "4 4 4",
@@ -86,7 +86,7 @@ func TestSrcs(t *testing.T) {
 func BenchmarkSrcs(t *testing.B) {
 	expectedOutputs := map[string]string{
 		"struct.cd":             "-3 0 -3 43",
-		"cast.cd":               "32 255 65535 -1 -1 1 1 1 1 -10.000 1.000",
+		"cast.cd":               "32 -1 -1 -1 -1 0 0 0 0 -10.000 1.000",
 		"functions.cd":          "3 4 5 5",
 		"ifstmt.cd":             "1 2 3 1 2 3 1 2 3",
 		"if_statements2.cd":     "4 4 4",

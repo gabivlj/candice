@@ -756,9 +756,12 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 
 	var val value.Value
 	if !c.doNotAllocate {
-		val = c.block().NewAlloca(t)
+		alloca := c.block().NewAlloca(t)
+		val = alloca
+		// alloca.Align = ir.Align(decl.Expression.GetType().Alignment())
 		valueCompiled = c.loadIfPointer(valueCompiled)
 		c.block().NewStore(valueCompiled, c.bitcastIfUnion(decl.Type, val, types.NewPointer(valueCompiled.Type())))
+		// s.Align = ir.Align(decl.Expression.GetType().Alignment())
 	} else {
 		c.doNotAllocate = false
 		val = valueCompiled
@@ -1116,7 +1119,31 @@ func (c *Compiler) loadIfPointer(val value.Value) value.Value {
 		return val
 	}
 	if types.IsPointer(val.Type()) {
-		return c.block().NewLoad(val.Type().(*types.PointerType).ElemType, val)
+		load := c.block().NewLoad(val.Type().(*types.PointerType).ElemType, val)
+		// if fl, ok := val.Type().(*types.PointerType).ElemType.(*types.FloatType); ok {
+		// 	if fl.Kind == types.FloatKindFloat {
+		// 		load.Align = 4
+		// 	} else {
+		// 		load.Align = 8
+		// 	}
+		// } else if number, ok := val.Type().(*types.PointerType).ElemType.(*types.IntType); ok {
+		// 	load.Align = ir.Align(number.BitSize / 8)
+		// }
+		return load
+	}
+	return val
+}
+
+func (c *Compiler) loadIfPointerWithAlignment(val value.Value, alignment int) value.Value {
+	if c.doNotLoadIntoMemory {
+		c.doNotLoadIntoMemory = false
+		c.doNotAllocate = false
+		return val
+	}
+	if types.IsPointer(val.Type()) {
+		l := c.block().NewLoad(val.Type().(*types.PointerType).ElemType, val)
+		l.Align = ir.Align(alignment)
+		return l
 	}
 	return val
 }
