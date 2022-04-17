@@ -9,6 +9,7 @@ import (
 	"github.com/gabivlj/candice/internals/node"
 	"github.com/gabivlj/candice/internals/ops"
 	"github.com/gabivlj/candice/internals/token"
+	"github.com/gabivlj/candice/pkg/split"
 )
 
 type Identifier struct {
@@ -323,3 +324,17 @@ func (f *AnonymousFunction) String() string {
 }
 
 func (f *AnonymousFunction) GetToken() token.Token { return f.Token }
+
+// CommaExpressions are expressions separated by commas
+type CommaExpressions struct {
+	*node.Node
+	Token       token.Token
+	Expressions []Expression
+}
+
+func (c *CommaExpressions) expressionNode() {}
+func (c *CommaExpressions) String() string {
+	return split.Split(c.Expressions, ", ")
+}
+func (c *CommaExpressions) GetType() ctypes.Type  { return c.Node.Type }
+func (c *CommaExpressions) GetToken() token.Token { return c.GetToken() }

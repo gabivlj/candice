@@ -337,6 +337,11 @@ default {
 }
 `,
 		},
+		{
+			expression: `express, express2 := thing(), ole;`,
+			expected: `express, express2 : = thing(), ole;
+`,
+		},
 	}
 	for _, test := range tests {
 		evaluate(t, test.expression, test.expected)

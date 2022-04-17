@@ -172,6 +172,11 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 	s.currentStatementBeingAnalyzed = statement
 
 	switch statementType := statement.(type) {
+	case *ast.MultipleDeclarationStatement:
+		{
+			s.analyzeMultipleDeclarationStatement(statementType)
+			return
+		}
 	case *ast.SwitchStatement:
 		{
 			s.analyzeSwitchStatement(statementType)
@@ -492,7 +497,14 @@ func (s *Semantic) analyzeBuiltinCall(call *ast.BuiltinCall) ctypes.Type {
 
 func (s *Semantic) analyzeDeclarationStatement(declaration *ast.DeclarationStatement) {
 	s.expectConstantExpression = declaration.Constant
+
 	ctype := s.analyzeExpression(declaration.Expression)
+
+	if list, ok := ctype.(*ctypes.TypeList); ok {
+		s.errorWithStatement(fmt.Sprintf("the expression returns %d values, but you only declared 1", len(list.Types)), declaration.Token)
+		return
+	}
+
 	s.expectConstantExpression = false
 
 	if ctypes.VoidType == ctype {
@@ -639,6 +651,21 @@ func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
 		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
 	}
 
+	if firstTypeList, isList := first.(*ctypes.TypeList); isList {
+		secondTypeList, ok := second.(*ctypes.TypeList)
+		if !ok {
+			return false
+		}
+
+		for i := range firstTypeList.Types {
+			if !s.areTypesEqual(firstTypeList.Types[i], secondTypeList.Types[i]) {
+				return false
+			}
+		}
+
+		return true
+	}
+
 	if firstFunc, ok := first.(*ctypes.Function); ok {
 		secondFunc, ok := second.(*ctypes.Function)
 		if !ok {
@@ -722,6 +749,8 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 	}
 
 	switch expressionType := expression.(type) {
+	case *ast.CommaExpressions:
+		return s.analyzeCommaExpressions(expressionType)
 	case *ast.AnonymousFunction:
 		return s.analyzeAnonymousFunction(expressionType)
 	case *ast.Integer:
@@ -808,6 +837,19 @@ func (s *Semantic) retrieveTypeFromStruct(structLiteral *ast.StructLiteral) (cty
 	}
 
 	return structType, nil
+}
+
+func (s *Semantic) analyzeCommaExpressions(commaExpressions *ast.CommaExpressions) ctypes.Type {
+	commaExpressionsType := ctypes.TypeList{}
+
+	for _, expression := range commaExpressions.Expressions {
+		t := s.analyzeExpression(expression)
+		t = s.UnwrapAnonymous(s.replaceAnonymous(t))
+		commaExpressionsType.Types = append(commaExpressionsType.Types, t)
+	}
+
+	commaExpressions.Type = &commaExpressionsType
+	return &commaExpressionsType
 }
 
 func (s *Semantic) analyzeStructLiteral(structLiteral *ast.StructLiteral) ctypes.Type {
@@ -1343,4 +1385,32 @@ func (s *Semantic) analyzeSwitchStatement(switchStatement *ast.SwitchStatement) 
 	}
 
 	s.returns = allCasesReturn
+}
+
+func (s *Semantic) analyzeMultipleDeclarationStatement(m *ast.MultipleDeclarationStatement) {
+	possibleTypeList := s.analyzeExpression(m.Expression)
+	var typeList *ctypes.TypeList
+	if typeListInstance, isList := possibleTypeList.(*ctypes.TypeList); isList {
+		typeList = typeListInstance
+	} else {
+		s.errorWithStatement("you can't declare multiple variables with this expression, got the following type: "+possibleTypeList.String(), m.Token)
+		return
+	}
+
+	if len(typeList.Types) != len(m.Names) {
+		s.errorWithStatement(fmt.Sprintf("the expression returns %d values, but you only declared %d", len(typeList.Types), len(m.Names)), m.Token)
+		return
+	}
+
+	for i := range typeList.Types {
+		typeList.Types[i] = s.replaceAnonymous(typeList.Types[i])
+		typeList.Types[i] = s.UnwrapAnonymous(typeList.Types[i])
+	}
+
+	for i, name := range m.Names {
+		declaredType := s.newType(typeList.Types[i])
+		declaredType.IsConstant = m.Constant
+		s.variables.Add(name, declaredType)
+	}
+
 }

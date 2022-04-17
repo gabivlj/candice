@@ -6,6 +6,7 @@ import (
 )
 
 var precedences = map[token.TypeToken]int{
+	token.COMMA:  1,
 	token.ASSIGN: 1,
 	token.AND:    2,
 	token.OR:     2,

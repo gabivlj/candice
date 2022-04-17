@@ -102,6 +102,28 @@ func (d *DeclarationStatement) String() string {
 	return fmt.Sprintf("%s :%s = %s;", RetrieveID(d.Name), d.Type.String(), d.Expression.String())
 }
 
+type MultipleDeclarationStatement struct {
+	Token      token.Token
+	Names      []string
+	Type       ctypes.Type
+	Expression Expression
+	Constant   bool
+}
+
+func (m *MultipleDeclarationStatement) GetToken() token.Token {
+	return m.Token
+}
+
+func (_ *MultipleDeclarationStatement) statementNode() {}
+
+func (m *MultipleDeclarationStatement) String() string {
+	for i := range m.Names {
+		m.Names[i] = RetrieveID(m.Names[i])
+	}
+	names := strings.Join(m.Names, ", ")
+	return fmt.Sprintf("%s :%s = %s;", names, m.Type.String(), m.Expression.String())
+}
+
 type AssignmentStatement struct {
 	Token      token.Token
 	Left       Expression

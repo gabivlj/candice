@@ -80,6 +80,16 @@ func (c *Compiler) GetPureStruct(t ctypes.Type) *ctypes.Struct {
 
 func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 	switch el := t.(type) {
+	case *ctypes.TypeList:
+		{
+			var typeList []types.Type
+			for _, t := range el.Types {
+				typeList = append(typeList, c.ToLLVMType(t))
+			}
+
+			return types.NewPointer(types.NewStruct(typeList...))
+		}
+
 	case *ctypes.Integer:
 		{
 			return types.NewInt(uint64(el.BitSize))

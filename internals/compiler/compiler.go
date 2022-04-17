@@ -326,6 +326,10 @@ func (c *Compiler) Compile(tree ast.Node) {
 	}
 
 	switch t := tree.(type) {
+	case *ast.MultipleDeclarationStatement:
+		{
+			c.compileMultipleDeclarationStatement(t)
+		}
 
 	case *ast.SwitchStatement:
 		{
@@ -517,7 +521,8 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 		return
 	}
 	toReturn := c.compileExpression(ret.Expression)
-	c.block().NewRet(c.loadIfPointer(toReturn))
+	toReturnLoaded := c.loadIfPointer(toReturn)
+	c.block().NewRet(toReturnLoaded)
 }
 
 // defines function type without compiling its body
@@ -538,8 +543,9 @@ func (c *Compiler) compileFunctionType(name string, funk *ast.FunctionDeclaratio
 		funk.FunctionType.Return = ctypes.I32
 	}
 
+	toReturnType := c.ToLLVMType(funk.FunctionType.Return)
 	// Declare llvmFunction
-	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, c.ToLLVMType(funk.FunctionType.Return), params...)
+	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, toReturnType, params...)
 
 	if funk.FunctionType.RedefineWithOriginalName {
 		llvmFunctionExtern := c.m.NewFunc(funk.FunctionType.ExternalName, c.ToLLVMType(funk.FunctionType.Return), params...)
@@ -758,10 +764,8 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 	if !c.doNotAllocate {
 		alloca := c.block().NewAlloca(t)
 		val = alloca
-		// alloca.Align = ir.Align(decl.Expression.GetType().Alignment())
 		valueCompiled = c.loadIfPointer(valueCompiled)
 		c.block().NewStore(valueCompiled, c.bitcastIfUnion(decl.Type, val, types.NewPointer(valueCompiled.Type())))
-		// s.Align = ir.Align(decl.Expression.GetType().Alignment())
 	} else {
 		c.doNotAllocate = false
 		val = valueCompiled
@@ -803,6 +807,8 @@ func (c *Compiler) compileType(name string, ct ctypes.Type) {
 func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 
 	switch e := expression.(type) {
+	case *ast.CommaExpressions:
+		return c.compileCommaExpression(e)
 	case *ast.PrefixOperation:
 		return c.compilePrefixExpression(e)
 
@@ -1623,4 +1629,31 @@ func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) 
 
 	c.blocks[len(c.blocks)-1] = leaveBlock
 	c.currentFunction.Blocks = append(c.currentFunction.Blocks, leaveBlock)
+}
+
+func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions) value.Value {
+	var values []value.Value
+	for _, expression := range commaExpression.Expressions {
+		v := c.loadIfPointer(c.compileExpression(expression))
+		values = append(values, v)
+	}
+	ptr := c.ToLLVMType(commaExpression.Type).(*types.PointerType)
+	strukt := c.block().NewAlloca(ptr.ElemType)
+	for i := range commaExpression.Expressions {
+		address := c.block().NewGetElementPtr(strukt.ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
+		c.block().NewStore(values[i], address)
+	}
+	c.doNotLoadIntoMemory = true
+	return strukt
+}
+
+func (c *Compiler) compileMultipleDeclarationStatement(m *ast.MultipleDeclarationStatement) {
+	strukt := c.compileExpression(m.Expression)
+	c.doNotLoadIntoMemory = false
+	c.doNotAllocate = false
+	for i := range m.Names {
+		address :=
+			c.block().NewGetElementPtr(strukt.Type().(*types.PointerType).ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
+		c.declare(m.Names[i], address)
+	}
 }

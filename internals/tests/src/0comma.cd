@@ -1,0 +1,38 @@
+func pp() i32, i32 
+    return 0, 0;
+
+func main() {
+    pairGenerator := func(a i32, b i32) i32, i32 return a, b;    
+    a, b := 1, 1;
+    if a != b {
+        @print(a, "!=", b);
+    }
+    a, b := pairGenerator(a, b);
+    if a != b {
+        @print(a, "!=", b);
+    }   
+
+
+    i, j := pp();
+    destructuringFeature();
+}
+
+struct s {
+    a i32
+    b i32
+}
+
+func returnCrap() s, s, *s, [10]s {
+    return @s{}, @s{}, @alloc(s, 1), [10]s{}
+} 
+
+func destructuringFeature() {
+    first, second, sPointer, array := returnCrap();
+    first.a = 1;
+    second.a = 2;
+    *sPointer = @s{};
+    array[0].a = 1;
+    if first.a != 1 || second.a != 2 || array[0].a != 1 {
+        @print("this doesn't work! >:(");
+    }
+}

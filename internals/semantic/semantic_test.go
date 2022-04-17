@@ -252,6 +252,19 @@ func TestSemantic_Analyze(t *testing.T) {
 			}`,
 			false,
 		},
+		{
+			`func something() i32, i32 { return 1, 1; } a, b := something(); if a != b { @print(a,b); }`,
+			true,
+		},
+		{
+			`func something() i32 { return 1, 1; }`,
+			false,
+		},
+		{
+			`func something() i32, i32 { return 1, 1; } a := something()`,
+			false,
+		},
+
 		// This still doesn't work...
 		// {
 		// 	`struct C { p Point } struct Point { p C }`,

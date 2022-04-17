@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gabivlj/candice/internals/helper"
+	"github.com/gabivlj/candice/pkg/split"
 )
 
 /// Candice types
@@ -418,6 +419,17 @@ func (s *Struct) Alignment() int64 {
 		}
 	}
 	return maximumAlignment
+}
+
+type TypeList struct {
+	Types []Type
+}
+
+func (t *TypeList) CandiceType()     {}
+func (t *TypeList) SizeOf() int64    { return 0 }
+func (t *TypeList) Alignment() int64 { return 0 }
+func (t *TypeList) String() string {
+	return split.Split(t.Types, ", ")
 }
 
 func IsNumeric(t Type) bool {
