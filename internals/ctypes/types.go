@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gabivlj/candice/internals/helper"
-	"github.com/gabivlj/candice/pkg/split"
+	"github.com/gabivlj/candice/pkg/join"
 )
 
 /// Candice types
@@ -429,7 +429,7 @@ func (t *TypeList) CandiceType()     {}
 func (t *TypeList) SizeOf() int64    { return 0 }
 func (t *TypeList) Alignment() int64 { return 0 }
 func (t *TypeList) String() string {
-	return split.Split(t.Types, ", ")
+	return join.Join(t.Types, ", ")
 }
 
 func IsNumeric(t Type) bool {

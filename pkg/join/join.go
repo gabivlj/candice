@@ -1,4 +1,4 @@
-package split
+package join
 
 import "strings"
 
@@ -6,7 +6,7 @@ type Stringer interface {
 	String() string
 }
 
-func Split[T Stringer](stringers []T, separator string) string {
+func Join[T Stringer](stringers []T, separator string) string {
 	builder := strings.Builder{}
 
 	for i, t := range stringers {
