@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -1082,8 +1083,11 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 }
 
 func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
-	// TODO: Maybe this is a naive approach? Shouldn't we do something with doNotAllocate?
 	l := c.compileExpression(assignment.Left)
+	// Reset state of doNotAllocate and doNotLoadIntoMemory so it doesn't affect second
+	// compile expression
+	c.doNotAllocate = false
+	c.doNotLoadIntoMemory = false
 	rightElement := c.compileExpression(assignment.Expression)
 
 	if multipleValues, isMultipleValueAssignment := assignment.Left.(*ast.CommaExpressions); isMultipleValueAssignment {
@@ -1662,7 +1666,9 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 	for _, expression := range commaExpression.Expressions {
 		v := c.compileExpression(expression)
 		if !commaExpression.IsAssignment {
+			log.Println("LOAD.", c.doNotLoadIntoMemory, v)
 			v = c.loadIfPointer(v)
+			log.Println("LOAD.", c.doNotLoadIntoMemory, v)
 		} else {
 			c.doNotAllocate = false
 			c.doNotLoadIntoMemory = false
@@ -1684,6 +1690,7 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 
 	strukt := c.block().NewAlloca(ptr.ElemType)
 	for i := range commaExpression.Expressions {
+		log.Println(values[i], commaExpression.IsAssignment)
 		address := c.block().NewGetElementPtr(strukt.ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
 		c.block().NewStore(values[i], address)
 	}

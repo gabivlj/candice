@@ -945,6 +945,45 @@ switch element {
 
 ```
 
+## Multiple return values and declarations
+
+On Candice, this is totally valid code:
+
+```go
+    // a is 3, b is 4, c is 5
+    a, b, c := 3, 4, 5;
+    // Now a is 4 and b is 3!
+    a, b = b, a;
+    // You can do it with any kind of variables...
+    w, array, array2 := @Whatever{}, [1]i32{1}, [1]i32{1}
+    w.a, w.b, w.c, array[0], array2 = 1, 2, &3, 4, [1]i32{4};
+    w.a, w.b, w.c, array[0], array2 = 1, 2, &3, 4, [1]i32{4};
+```
+
+The only limitation is that you can't use the const keyword with
+multiple values.
+
+You also can make that a function returns multiple values...
+
+```go
+
+func multipleReturner() i32, i64 {
+    return 1, 2 as i64;
+}
+
+func main() {
+    value1, value2 := multipleReturner();
+}
+
+```
+
+But you can't do this.
+
+```go
+// 🚫
+value, value1, value2 := 1, multipleReturner();
+```
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!
