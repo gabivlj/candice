@@ -639,18 +639,7 @@ func (s *Semantic) existsTypeInUnion(union *ctypes.Union, other ctypes.Type) boo
 	return false
 }
 
-func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
-	first = s.UnwrapAnonymous(first)
-	second = s.UnwrapAnonymous(second)
-
-	if first == second {
-		return true
-	}
-
-	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {
-		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
-	}
-
+func (s *Semantic) checkPossibleCommaTypeEquality(first, second ctypes.Type) bool {
 	if firstTypeList, isList := first.(*ctypes.TypeList); isList {
 		secondTypeList, ok := second.(*ctypes.TypeList)
 		if !ok {
@@ -663,6 +652,24 @@ func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
 			}
 		}
 
+		return true
+	}
+	return false
+}
+
+func (s *Semantic) areTypesEqual(first, second ctypes.Type) bool {
+	first = s.UnwrapAnonymous(first)
+	second = s.UnwrapAnonymous(second)
+
+	if first == second {
+		return true
+	}
+
+	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {
+		return s.areTypesEqual(first.(*ctypes.Pointer).Inner, second.(*ctypes.Pointer).Inner)
+	}
+
+	if s.checkPossibleCommaTypeEquality(first, second) {
 		return true
 	}
 
@@ -711,6 +718,10 @@ func (s *Semantic) areTypesEqualIncludingUnions(first, second ctypes.Type) bool 
 
 	if union, isUnion := second.(*ctypes.Union); isUnion {
 		return s.existsTypeInUnion(union, first)
+	}
+
+	if s.checkPossibleCommaTypeEquality(first, second) {
+		return true
 	}
 
 	if ctypes.IsPointer(first) && ctypes.IsPointer(second) {

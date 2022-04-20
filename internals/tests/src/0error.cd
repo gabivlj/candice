@@ -1,0 +1,32 @@
+type SomeError = i32;
+const ERROR_ONE : SomeError = 1;
+const ERROR_TWO : SomeError = 2;
+const ERROR_THREE : SomeError = 3;
+const ERROR_FOUR : SomeError = 4;
+// ...
+
+struct Some {
+    // ...
+}
+
+// CreateSome creates Some, if there is an error it will be null
+func CreateSome() *Some, SomeError {
+    return 0 as *Some, ERROR_ONE;
+}
+
+func main() {
+    some, err := CreateSome()
+    switch err {
+    case ERROR_ONE {
+        
+    }
+
+    default {
+        @print("We can't handle this error!");
+    }
+    }
+
+    // ignore error as well!
+    some, _ := CreateSome()
+
+}

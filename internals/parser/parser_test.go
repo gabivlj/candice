@@ -8,6 +8,7 @@ import (
 	"github.com/gabivlj/candice/internals/ctypes"
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/pkg/a"
+	"github.com/gabivlj/candice/pkg/logger"
 )
 
 func TestParser_ParseType(t *testing.T) {
@@ -342,8 +343,14 @@ default {
 			expected: `express, express2 : = thing(), ole;
 `,
 		},
+		{
+			expression: `ole, ola, olop = 3, 3, 3`,
+			expected: `ole, ola, olop = 3, 3, 3;
+`,
+		},
 	}
 	for _, test := range tests {
+		logger.Warning("running " + test.expression)
 		evaluate(t, test.expression, test.expected)
 	}
 }

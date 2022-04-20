@@ -1085,6 +1085,23 @@ func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 	// TODO: Maybe this is a naive approach? Shouldn't we do something with doNotAllocate?
 	l := c.compileExpression(assignment.Left)
 	rightElement := c.compileExpression(assignment.Expression)
+
+	if multipleValues, isMultipleValueAssignment := assignment.Left.(*ast.CommaExpressions); isMultipleValueAssignment {
+		leftPointer := l.(*ir.InstAlloca)
+		rightPointer := rightElement.(*ir.InstAlloca)
+		c.doNotAllocate = false
+		c.doNotLoadIntoMemory = false
+		for i := range multipleValues.Expressions {
+			rightValue := c.getStructField(rightPointer, i)
+			leftAddress := c.getStructField(leftPointer, i)
+			c.block().NewStore(
+				rightValue,
+				c.bitcastIfUnion(multipleValues.Expressions[i].GetType(), leftAddress, types.NewPointer(rightValue.Type())),
+			)
+		}
+		return
+	}
+
 	r := c.loadIfPointer(rightElement)
 	c.block().NewStore(r, c.bitcastIfUnion(assignment.Left.GetType(), l, types.NewPointer(r.Type())))
 }
@@ -1112,6 +1129,15 @@ func (c *Compiler) calculatePointerOffset(pointer value.Value, offset value.Valu
 	calculatedPointer := c.block().NewGetElementPtr(pointer.Type().(*types.PointerType).ElemType, pointer, offset)
 	calculatedPointer.InBounds = true
 	return calculatedPointer
+}
+
+func (c *Compiler) getStructField(pointerStruct value.Value, fieldPosition int) value.Value {
+	pointerType := pointerStruct.Type().(*types.PointerType)
+	ptr := c.block().NewGetElementPtr(
+		pointerType.ElemType, pointerStruct, zero, constant.NewInt(types.I32, int64(fieldPosition)),
+	)
+	ptr.InBounds = true
+	return c.loadIfPointer(ptr)
 }
 
 func unwrapArrayGepType(arr *types.ArrayType) types.Type {
@@ -1634,10 +1660,28 @@ func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) 
 func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions) value.Value {
 	var values []value.Value
 	for _, expression := range commaExpression.Expressions {
-		v := c.loadIfPointer(c.compileExpression(expression))
+		v := c.compileExpression(expression)
+		if !commaExpression.IsAssignment {
+			v = c.loadIfPointer(v)
+		} else {
+			c.doNotAllocate = false
+			c.doNotLoadIntoMemory = false
+		}
+
 		values = append(values, v)
 	}
-	ptr := c.ToLLVMType(commaExpression.Type).(*types.PointerType)
+	var ptr *types.PointerType
+	if commaExpression.IsAssignment {
+		var typeList []types.Type
+		for _, value := range values {
+			typeList = append(typeList, value.Type())
+		}
+		strukt := types.NewStruct(typeList...)
+		ptr = types.NewPointer(strukt)
+	} else {
+		ptr = c.ToLLVMType(commaExpression.Type).(*types.PointerType)
+	}
+
 	strukt := c.block().NewAlloca(ptr.ElemType)
 	for i := range commaExpression.Expressions {
 		address := c.block().NewGetElementPtr(strukt.ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
@@ -1653,7 +1697,9 @@ func (c *Compiler) compileMultipleDeclarationStatement(m *ast.MultipleDeclaratio
 	c.doNotAllocate = false
 	for i := range m.Names {
 		address :=
-			c.block().NewGetElementPtr(strukt.Type().(*types.PointerType).ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
+			c.block().NewGetElementPtr(
+				strukt.Type().(*types.PointerType).ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)),
+			)
 		c.declare(m.Names[i], address)
 	}
 }

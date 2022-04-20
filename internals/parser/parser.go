@@ -259,7 +259,7 @@ func (p *Parser) parseStaticArray() ast.Expression {
 			p.expect(token.COMMA)
 			p.nextToken()
 		}
-		expressions = append(expressions, p.parseExpression(1))
+		expressions = append(expressions, p.parseExpression(2))
 	}
 	p.expect(token.RBRACE)
 	p.nextToken()
@@ -442,7 +442,7 @@ func (p *Parser) parseStructLiteral(module string) ast.Expression {
 		identifier := p.nextToken()
 		p.expect(token.COLON)
 		p.nextToken()
-		expr := p.parseExpression(1)
+		expr := p.parseExpression(2)
 		if len(structValues) >= 1 && p.currentToken.Type != token.RBRACE {
 			p.expect(token.COMMA)
 		}
@@ -522,7 +522,7 @@ func (p *Parser) parseUnion() ast.Statement {
 }
 
 func (p *Parser) parseIdentifierStatement() ast.Statement {
-	if p.peekToken.Type == token.COLON || p.peekToken.Type == token.COMMA {
+	if p.peekToken.Type == token.COLON {
 		return p.parseDeclaration()
 	}
 
@@ -783,7 +783,7 @@ func (p *Parser) parseCall(expression ast.Expression) ast.Expression {
 			p.expect(token.COMMA)
 			p.nextToken()
 		}
-		expressions = append(expressions, p.parseExpression(1))
+		expressions = append(expressions, p.parseExpression(2))
 	}
 	p.expect(token.RPAREN)
 	p.nextToken()
@@ -1025,7 +1025,7 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 		}
 
 		for {
-			expressions = append(expressions, p.parseExpression(1))
+			expressions = append(expressions, p.parseExpression(2))
 			if p.currentToken.Type == token.RPAREN {
 				return expressions
 			}
@@ -1037,7 +1037,7 @@ func (p *Parser) parseBuiltinCallParameters(builtinRequirements BuiltinFunctionP
 	}
 
 	for i := 0; i < builtinRequirements.Parameters; i++ {
-		expressions = append(expressions, p.parseExpression(1))
+		expressions = append(expressions, p.parseExpression(2))
 		if i+1 < builtinRequirements.Parameters {
 			if p.currentToken.Type == token.RPAREN {
 				p.addErrorMessage(fmt.Sprintf("expected %d expressions, got=%d", builtinRequirements.Types, i))
@@ -1242,7 +1242,7 @@ func (p *Parser) parseCommaInfix(previous ast.Expression) ast.Expression {
 	}
 	for p.currentToken.Type == token.COMMA {
 		p.nextToken()
-		expressionList.Expressions = append(expressionList.Expressions, p.parseExpression(1))
+		expressionList.Expressions = append(expressionList.Expressions, p.parseExpression(2))
 	}
 	return &expressionList
 }

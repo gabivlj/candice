@@ -1,0 +1,17 @@
+struct Whatever {
+    a i32
+    b i32
+    c *i32
+}
+
+func main() {
+    w := @Whatever{}
+    array := [1]i32{1}
+    array2 := [1]i32{3};
+    w.a, w.b, w.c, array[0], array2 = 1, 2, &3, 4, [1]i32{4};
+    if w.a != 1 @print("bad");
+    if w.b != 2 @print("bad2");
+    if *w.c != 3 @print("bad3");
+    if array[0] != 4 @print("bad4");
+    if array2[0] != 4 @print("bad5");
+}

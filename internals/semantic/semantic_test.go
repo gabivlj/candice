@@ -264,6 +264,14 @@ func TestSemantic_Analyze(t *testing.T) {
 			`func something() i32, i32 { return 1, 1; } a := something()`,
 			false,
 		},
+		{
+			`s, e := 3 as i64, 3; s, e = 4 as i64, 4;`,
+			true,
+		},
+		{
+			`s, e := 3 as i64, 3; s, e = 4, 4;`,
+			false,
+		},
 
 		// This still doesn't work...
 		// {

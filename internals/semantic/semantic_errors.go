@@ -137,6 +137,7 @@ func (semantic *Semantic) formatLine(s string) string {
 
 func (s *Semantic) typeMismatchError(node string, wrongPart ast.Expression, tok token.Token, expected, got ctypes.Type) {
 	var message string
+
 	s.checkDereferenceErrors(node, got, expected, wrongPart)
 
 	if len(s.Errors) == 0 {

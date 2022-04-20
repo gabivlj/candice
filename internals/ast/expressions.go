@@ -328,8 +328,9 @@ func (f *AnonymousFunction) GetToken() token.Token { return f.Token }
 // CommaExpressions are expressions separated by commas
 type CommaExpressions struct {
 	*node.Node
-	Token       token.Token
-	Expressions []Expression
+	Token        token.Token
+	Expressions  []Expression
+	IsAssignment bool
 }
 
 func (c *CommaExpressions) expressionNode() {}
@@ -337,4 +338,4 @@ func (c *CommaExpressions) String() string {
 	return join.Join(c.Expressions, ", ")
 }
 func (c *CommaExpressions) GetType() ctypes.Type  { return c.Node.Type }
-func (c *CommaExpressions) GetToken() token.Token { return c.GetToken() }
+func (c *CommaExpressions) GetToken() token.Token { return c.Token }
