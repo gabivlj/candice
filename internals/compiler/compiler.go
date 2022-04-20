@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -1666,9 +1665,7 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 	for _, expression := range commaExpression.Expressions {
 		v := c.compileExpression(expression)
 		if !commaExpression.IsAssignment {
-			log.Println("LOAD.", c.doNotLoadIntoMemory, v)
 			v = c.loadIfPointer(v)
-			log.Println("LOAD.", c.doNotLoadIntoMemory, v)
 		} else {
 			c.doNotAllocate = false
 			c.doNotLoadIntoMemory = false
@@ -1690,7 +1687,6 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 
 	strukt := c.block().NewAlloca(ptr.ElemType)
 	for i := range commaExpression.Expressions {
-		log.Println(values[i], commaExpression.IsAssignment)
 		address := c.block().NewGetElementPtr(strukt.ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
 		c.block().NewStore(values[i], address)
 	}

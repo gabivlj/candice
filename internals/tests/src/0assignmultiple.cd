@@ -20,4 +20,18 @@ func main() {
     if *w.c != 3 @print("bad3");
     if array[0] != 4 @print("bad4");
     if array2[0] != 4 @print("bad5");
+    swap := func (i *i32, j *i32) {
+        *i, *j = *j, *i;
+    };
+    a, b := 4, 5;
+    // b == 5, a == 4.
+    swap(&a, &b);
+    if a != 5 || b != 4 {
+        @print("bad6", a, b);
+    }
+
+}
+
+func swap(i *i32, j *i32) {
+    *i, *j = *j, *i;
 }
