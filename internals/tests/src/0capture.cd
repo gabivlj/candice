@@ -1,0 +1,21 @@
+
+
+func something(a i32) func() i32, i32 {    
+    z := 3;
+    return func() i32, i32 {        
+        return a, z
+    };
+}
+
+func main() {
+    ss := something(1);
+    a, z := ss();
+    if a != 1 || z != 3 @print("bad1");
+    b := something(20);
+    a, z := ss();
+    if a != 20 || z != 3 @print("bad2");    
+    a, z := b();
+    if a != 20 || z != 3 @print("bad3");        
+    a, z := ss();
+    if a != 20 || z != 3 @print("bad4");    
+}

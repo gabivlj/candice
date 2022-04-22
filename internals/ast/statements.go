@@ -222,6 +222,14 @@ type FunctionDeclarationStatement struct {
 	Block        *Block
 }
 
+func (f *FunctionDeclarationStatement) GetFunctionType() *ctypes.Function {
+	return f.FunctionType
+}
+
+func (f *FunctionDeclarationStatement) GetBlock() *Block {
+	return f.Block
+}
+
 func (f *FunctionDeclarationStatement) statementNode() {}
 
 func (f *FunctionDeclarationStatement) String() string {

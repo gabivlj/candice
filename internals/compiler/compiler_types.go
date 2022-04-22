@@ -17,6 +17,11 @@ type Value struct {
 	Constant bool
 }
 
+type NamedValue struct {
+	Value value.Value
+	Name  string
+}
+
 func (c *Compiler) searchForType(name string) types.Type {
 	if t, ok := c.types[name]; ok {
 		return t.llvmType

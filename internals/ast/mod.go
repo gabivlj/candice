@@ -73,3 +73,8 @@ func RetrieveID(name string) string {
 func RetrieveRightID(name string) string {
 	return strings.Split(name, "-")[1]
 }
+
+type Function interface {
+	GetBlock() *Block
+	GetFunctionType() *ctypes.Function
+}

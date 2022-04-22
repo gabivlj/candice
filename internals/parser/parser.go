@@ -417,7 +417,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	}
 
 	block := p.parseBlock()
-	return &ast.FunctionDeclarationStatement{
+	f := &ast.FunctionDeclarationStatement{
 		Token: fun,
 		FunctionType: &ctypes.Function{
 			Name:         ast.CreateIdentifier(name.Literal, p.ID),
@@ -428,6 +428,8 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		},
 		Block: block,
 	}
+
+	return f
 }
 
 func (p *Parser) parseStructLiteral(module string) ast.Expression {
@@ -673,11 +675,13 @@ func (p *Parser) parseType() ctypes.Type {
 		p.nextToken()
 		var returnType ctypes.Type
 		if p.currentToken.Type == token.IDENT {
-			returnType = p.parseType()
+			returnType = p.parseTypes()
 		} else if p.currentToken.Type == token.ASTERISK {
-			returnType = p.parseType()
+			returnType = p.parseTypes()
 		} else if p.currentToken.Type == token.LBRACKET {
-			returnType = p.parseType()
+			returnType = p.parseTypes()
+		} else if p.currentToken.Type == token.FUNCTION {
+			returnType = p.parseTypes()
 		} else {
 			returnType = ctypes.VoidType
 		}

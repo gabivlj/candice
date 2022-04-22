@@ -526,51 +526,52 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 }
 
 // defines function type without compiling its body
-func (c *Compiler) compileFunctionType(name string, funk *ast.FunctionDeclarationStatement) *ir.Func {
+func (c *Compiler) compileFunctionType(name string, funk ast.Function) *ir.Func {
 	if fn, ok := c.globalVariables[name]; ok {
 		return fn.Value.(*ir.Func)
 	}
 
+	functionType := funk.GetFunctionType()
 	// Declare params LLVM IR
-	params := make([]*ir.Param, 0, len(funk.FunctionType.Parameters))
-	for i, param := range funk.FunctionType.Parameters {
+	params := make([]*ir.Param, 0, len(functionType.Parameters))
+	for i, param := range functionType.Parameters {
 		t := c.ToLLVMType(param)
-		name := funk.FunctionType.Names[i]
+		name := functionType.Names[i]
 		params = append(params, ir.NewParam(name, t))
 	}
 
-	if funk.FunctionType.IsMainFunction() && funk.FunctionType.Return == ctypes.VoidType || funk.FunctionType.Return == nil {
-		funk.FunctionType.Return = ctypes.I32
+	if functionType.IsMainFunction() && functionType.Return == ctypes.VoidType || functionType.Return == nil {
+		functionType.Return = ctypes.I32
 	}
 
-	toReturnType := c.ToLLVMType(funk.FunctionType.Return)
+	toReturnType := c.ToLLVMType(functionType.Return)
 	// Declare llvmFunction
-	llvmFunction := c.m.NewFunc(funk.FunctionType.Name, toReturnType, params...)
+	llvmFunction := c.m.NewFunc(functionType.Name, toReturnType, params...)
 
-	if funk.FunctionType.RedefineWithOriginalName {
-		llvmFunctionExtern := c.m.NewFunc(funk.FunctionType.ExternalName, c.ToLLVMType(funk.FunctionType.Return), params...)
+	if functionType.RedefineWithOriginalName {
+		llvmFunctionExtern := c.m.NewFunc(functionType.ExternalName, c.ToLLVMType(functionType.Return), params...)
 		llvmFunctionExtern.CallingConv = enum.CallingConvC
-		c.globalVariables[funk.FunctionType.ExternalName] = &Value{
+		c.globalVariables[functionType.ExternalName] = &Value{
 			Value: llvmFunctionExtern,
-			Type:  funk.FunctionType,
+			Type:  functionType,
 		}
 	}
 
 	// Create function
 	c.globalVariables[name] = &Value{
 		Value: llvmFunction,
-		Type:  funk.FunctionType,
+		Type:  functionType,
 	}
 
 	return llvmFunction
 }
 
 // compiles entire function
-func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDeclarationStatement) {
+func (c *Compiler) compileFunctionDeclaration(name string, funk ast.Function, variablesToAdd ...NamedValue) {
 	llvmFunction := c.compileFunctionType(name, funk)
 
 	// Create a main block to the function
-	c.pushBlock(llvmFunction.NewBlock(funk.FunctionType.Name))
+	c.pushBlock(llvmFunction.NewBlock(funk.GetFunctionType().Name))
 
 	// Declare parameters IR
 	for _, param := range llvmFunction.Params {
@@ -579,28 +580,32 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 		c.declare(param.Name(), allocatedParameter)
 	}
 
+	for _, variable := range variablesToAdd {
+		c.declare(variable.Name, variable.Value)
+	}
+
 	// Set it as current function
 	prevFunction := c.currentFunction
 	c.currentFunction = llvmFunction
 
 	// Compile block
-	for _, statement := range funk.Block.Statements {
+	for _, statement := range funk.GetBlock().Statements {
 		c.Compile(statement)
 	}
 
 	lastBlock := c.currentFunction.Blocks[len(c.currentFunction.Blocks)-1]
 	// If return hasn't been declared, declare a void return
 	if lastBlock.Term == nil {
-		if funk.FunctionType.IsMainFunction() {
+		if funk.GetFunctionType().IsMainFunction() {
 			lastBlock.NewRet(zero)
-		} else if funk.FunctionType.Return == ctypes.VoidType {
+		} else if funk.GetFunctionType().Return == ctypes.VoidType {
 			lastBlock.NewRet(nil)
 		} else {
 			lastBlock.NewUnreachable()
 		}
 	}
 
-	if funk.FunctionType.RedefineWithOriginalName {
+	if funk.GetFunctionType().RedefineWithOriginalName {
 		c.compileFunctionRedeclaration(c.currentFunction.Blocks, funk)
 	}
 
@@ -609,8 +614,8 @@ func (c *Compiler) compileFunctionDeclaration(name string, funk *ast.FunctionDec
 	c.currentFunction = prevFunction
 }
 
-func (c *Compiler) compileFunctionRedeclaration(otherFunctionBlocks []*ir.Block, funk *ast.FunctionDeclarationStatement) {
-	llvmFunction := c.retrieveVariable(funk.FunctionType.ExternalName).(*ir.Func)
+func (c *Compiler) compileFunctionRedeclaration(otherFunctionBlocks []*ir.Block, funk ast.Function) {
+	llvmFunction := c.retrieveVariable(funk.GetFunctionType().ExternalName).(*ir.Func)
 	llvmFunction.Blocks = otherFunctionBlocks
 }
 
@@ -873,10 +878,18 @@ func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 
 func (c *Compiler) compileAnonymousFunction(anonymousFunction *ast.AnonymousFunction) value.Value {
 	name := "func." + random.RandomString(10)
+	var namedValues []NamedValue
+	for _, capturedVariableName := range anonymousFunction.CapturedVariables {
+		variable := c.loadIfPointer(c.retrieveVariable(capturedVariableName))
+		global := c.m.NewGlobalDef("func.captured."+capturedVariableName+random.RandomString(5), constant.NewUndef(variable.Type()))
+		c.block().NewStore(variable, global)
+		namedValues = append(namedValues, NamedValue{Name: capturedVariableName, Value: global})
+	}
+
 	anonymousFunction.FunctionType.ExternalName = name
 	anonymousFunction.FunctionType.Name = name
-	function := (*ast.FunctionDeclarationStatement)(anonymousFunction)
-	c.compileFunctionDeclaration(name, function)
+	function := anonymousFunction
+	c.compileFunctionDeclaration(name, function, namedValues...)
 	funk := c.retrieveVariable(name)
 	return funk
 }

@@ -984,6 +984,55 @@ But you can't do this.
 value, value1, value2 := 1, multipleReturner();
 ```
 
+## Variable capturing on Anonymous functions
+
+You can capture variables with an anonymous function. But they work differently
+compared to other languages.
+
+- The reason is that to support passing functions to external C functions, we can't do fancy stuff with anonymous ones. As they don't differ with functions declared globally.
+
+```go
+
+a := 3;
+lambda := func() {
+    // captures by value
+    @print(a);
+};
+
+aRef := &a;
+lambdaRefCapture := func() {
+    // Captures by reference
+    @print(*aRef);
+};
+
+lambda(); // 3
+lambdaRefCapture() // 3
+a = 4;
+lambda(); // 3
+lambdaRefCapture() // 4
+
+```
+
+Once you create an anonymous function in Candice, it will be the same across its lifetime even though it captures
+a local variable, internally it creates a global variable that it accesses once it runs the function, and when
+you capture multiple times in a for loop for example it will ovewrite that value.
+
+```go
+
+lambdas := [100]func(){}
+
+for i := 0; i < 100; i++ {
+    lambdas[i] = func() { // internally creates a global private value that will access to read 'i', 'i' is copied everytime to it
+        @print(i);
+    };
+}
+
+for i := 0; i < 100; i++ {
+    lambdas[i](); // '99' being printed always
+}
+
+```
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!

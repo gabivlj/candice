@@ -303,9 +303,18 @@ func (a *ArrayLiteral) String() string {
 }
 
 type AnonymousFunction struct {
-	Token        token.Token
-	FunctionType *ctypes.Function
-	Block        *Block
+	Token             token.Token
+	FunctionType      *ctypes.Function
+	Block             *Block
+	CapturedVariables []string
+}
+
+func (f *AnonymousFunction) GetFunctionType() *ctypes.Function {
+	return f.FunctionType
+}
+
+func (f *AnonymousFunction) GetBlock() *Block {
+	return f.Block
 }
 
 func (f *AnonymousFunction) GetType() ctypes.Type {
