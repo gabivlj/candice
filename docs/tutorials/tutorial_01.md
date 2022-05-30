@@ -1033,6 +1033,9 @@ for i := 0; i < 100; i++ {
 
 ```
 
+If you want different instances on each lambda you should consider doing another thing like
+creating your custom struct with a function attribute that accepts it the struct as a parameter.
+
 ## Problems?
 
 If you encounter any kind of bug or problem while following this tutorial, feel free to open a issue on this repository!

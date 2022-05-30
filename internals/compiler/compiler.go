@@ -261,7 +261,7 @@ func (c *Compiler) GenerateExecutableCXX(output string, cxx string, flags []stri
 	cmd.Stderr = stdout
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("error compiling with clang:\n" + stdout.String() + "\n status: " + err.Error())
+		return fmt.Errorf("error compiling with %s:\n"+stdout.String()+"\n status: "+err.Error(), cxx)
 	}
 
 	return nil
@@ -767,8 +767,7 @@ func (c *Compiler) compileDeclaration(decl *ast.DeclarationStatement) {
 
 	var val value.Value
 	if !c.doNotAllocate {
-		alloca := c.block().NewAlloca(t)
-		val = alloca
+		val = c.block().NewAlloca(t)
 		valueCompiled = c.loadIfPointer(valueCompiled)
 		c.block().NewStore(valueCompiled, c.bitcastIfUnion(decl.Type, val, types.NewPointer(valueCompiled.Type())))
 	} else {
@@ -1001,10 +1000,6 @@ func (c *Compiler) exitErrorExpression(message string, node ast.Expression) {
 // load it there
 func (c *Compiler) compileIdentifier(id *ast.Identifier) value.Value {
 	return c.retrieveVariable(id.Name)
-}
-
-func (c *Compiler) compileIdentifierReference(id *ast.Identifier) value.Value {
-	return c.retrieveLocalVariable(id.Name)
 }
 
 func (c *Compiler) retrieveVariable(name string) value.Value {
@@ -1350,12 +1345,12 @@ func (c *Compiler) compileAnd(and *ast.BinaryOperation) value.Value {
 	leftExpression := c.loadIfPointer(c.compileExpression(and.Left))
 	boolean := c.toBool(leftExpression)
 	c.block().NewCondBr(boolean, truthBlock, leaveBlock)
-	andBlock = c.popBlock()
+	c.popBlock()
 	c.pushBlock(truthBlock)
 	value := c.toBool(c.loadIfPointer(c.compileExpression(and.Right)))
 	c.block().NewStore(value, allocatedValue)
 	c.block().NewBr(leaveBlock)
-	truthBlock = c.popBlock()
+	c.popBlock()
 	c.blocks[len(c.blocks)-1] = leaveBlock
 	return allocatedValue
 }
@@ -1462,7 +1457,7 @@ func (c *Compiler) compileAdd(expr *ast.BinaryOperation) value.Value {
 	// Memory access via '+'
 	if types.IsPointer(leftValue.Type()) {
 		newPointer := c.calculatePointerOffset(leftValue, rightValue)
-		// return this pointer on another stack register because it's probably going to get used
+		// return this pointer on another stack register because it's going to get used
 		toReturnPointer := c.block().NewAlloca(newPointer.Type())
 		c.block().NewStore(newPointer, toReturnPointer)
 		return toReturnPointer

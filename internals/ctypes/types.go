@@ -226,6 +226,10 @@ func (f *Function) FullString() string {
 		builder.WriteString(f.Parameters[i].String())
 	}
 	builder.WriteString(") ")
+	if f.Return == nil {
+		return builder.String()
+	}
+
 	builder.WriteString(f.Return.String())
 	return builder.String()
 }
