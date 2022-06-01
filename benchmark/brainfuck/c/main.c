@@ -1,5 +1,5 @@
 #include <stdio.h>
-// exiting..../program fskdljsdfjkl  2.51s user 0.02s system 94% cpu 2.687 total
+// 1.92s user 0.02s system 89% cpu 2.180 total
 #define OP_END 0
 #define OP_INC_DP 1
 #define OP_DEC_DP 2
@@ -98,7 +98,7 @@ int execute_bf()
     {
         data[ptr] = 0;
     }
-    while (PROGRAM[pc].operator!= OP_END && ptr<DATA_SIZE)
+    while (PROGRAM[pc].operator!= OP_END)
     {
         switch (PROGRAM[pc].operator)
         {

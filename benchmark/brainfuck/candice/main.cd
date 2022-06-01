@@ -1,8 +1,8 @@
+//./program  2.18s user 0.01s system 89% cpu 2.446 total
 struct Instruction {
 	operator u16
 	operand  u16
 }
-//./program  2.52s user 0.02s system 88% cpu 2.874 total
 
 const SUCCESS := 0;
 const FAILURE := 1;
@@ -23,7 +23,7 @@ type FILE = i32;
 
 extern func fopen(*i8, *i8) *FILE;
 extern func fclose(*FILE);
-extern func getc(*FILE) i8;
+extern func fgetc(*FILE) i8;
 extern func getchar() i32;
 extern func putchar(i32) i32;
 
@@ -33,12 +33,11 @@ func compile_bf(PROGRAM *Instruction, fd *FILE) i32 {
 	pc := 0 as u16;
 	jmp_pc := 0 as u16;
 	c := 0 as i8;
-	c = getc(fd);
+	c = fgetc(fd);
 	SP := 0;
 
 	STACK := [512]u16{}
-	for c != EOF && pc < PROGRAM_SIZE as u16 {
-		
+	for c != EOF && pc < PROGRAM_SIZE as u16 {		
 		switch c {
 			case '>' {
 				PROGRAM[pc].operator= OP_INC_DP;
@@ -83,7 +82,7 @@ func compile_bf(PROGRAM *Instruction, fd *FILE) i32 {
 			}			
         }
 		++pc;
-		c = getc(fd);
+		c = fgetc(fd);
 	}
 
 	if SP != 0 || pc == PROGRAM_SIZE as u16 {
@@ -97,13 +96,12 @@ func execute_bf(PROGRAM *Instruction) i32 {
 	data := [65535]u16{};
 	pc := 0 as u16;
 	ptr := 65535;
-	for ptr != 0 {
+	for ptr != 1 {
 		--ptr;
 		data[ptr] = 0 as u16;			
 	}
-	ptr = 0;
 
-	for PROGRAM[pc].operator != OP_END && ptr < 65535 {		
+	for PROGRAM[pc].operator != OP_END {		
 		switch PROGRAM[pc].operator {			
 			case OP_INC_DP {				
 				++ptr;
@@ -158,7 +156,6 @@ func main() i32 {
 		for i := 0; i < 10000; ++i {
 			status = execute_bf(PROGRAM  as *Instruction);			
 		}
-		@print("exiting\n", status)
 		return status;
 	}	
 	@print("exiting because failure\n")
