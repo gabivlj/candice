@@ -12,21 +12,23 @@ const FAILURE := 1;
 const PROGRAM_SIZE := 4096;
 const STACK_SIZE := 4096;
 const DATA_SIZE := 65535;
-const OP_END := 0;
-const OP_IND_DP := 1;
-const OP_DEC_DP := 2;
-const OP_INC_VAL := 3;
-const OP_DEC_VAL := 4;
-const OP_OUT := 5;
-const OP_IN := 6;
-const OP_JMP_FWD := 7;
-const OP_JMP_BCK := 8;
+const OP_END := 0 as u16;
+const OP_INC_DP := 1 as u16;
+const OP_DEC_DP := 2 as u16;
+const OP_INC_VAL := 3 as u16;
+const OP_DEC_VAL := 4 as u16;
+const OP_OUT := 5 as u16;
+const OP_IN := 6 as u16;
+const OP_JMP_FWD := 7 as u16;
+const OP_JMP_BCK := 8 as u16;
 
 type FILE = i32;
 
 extern func fopen(*i8) *FILE;
 extern func fclose(*FILE);
 extern func getc(*FILE) i8;
+extern func getchar() i32;
+extern func putchar(i32) i32;
 
 
 func compile_bf(fd *FILE) i32 {
@@ -35,8 +37,108 @@ func compile_bf(fd *FILE) i32 {
 	jmp_pc := 0 as u16;
 	c := 0 as i8;
 	c = getc(fd);
+	SP := 0;
+	PROGRAM := [4096]Instruction{}
+	STACK := [512]u16{}
 	for c != EOF && pc < PROGRAM_SIZE as u16 {
+		switch c {
+			case '>' {
+				PROGRAM[pc].operator= OP_INC_DP;
+			}
+			case '<' {
+				PROGRAM[pc].operator= OP_DEC_DP;
+			}
+			case '+' {
+				PROGRAM[pc].operator= OP_INC_VAL;
+			}
+			case '-' {
+				PROGRAM[pc].operator= OP_DEC_VAL;
+			}
+			case '.' {
+				PROGRAM[pc].operator= OP_OUT;
+			}
+			case ',' {
+				PROGRAM[pc].operator= OP_IN;
+			}
+			case '[' {
+				PROGRAM[pc].operator= OP_JMP_FWD;
+				if SP == STACK_SIZE {
+					return FAILURE;
+				}
+				
+				STACK[SP] = pc;
+				++SP;
+			}
+			case ']' {
+				if SP == 0 {
+					return FAILURE;
+				}
 
+				jmp_pc = STACK[SP];
+				--SP; 
+				PROGRAM[pc].operator= OP_JMP_BCK;
+				PROGRAM[pc].operand = jmp_pc;
+				PROGRAM[jmp_pc].operand = pc;
+			}
+			default {
+				--pc;
+			}
+        }
 	}
-	return 0;
+
+	if SP != 0 || pc == PROGRAM_SIZE as u16 {
+		return FAILURE;
+	}
+	PROGRAM[pc].operator = OP_END;
+
+	return SUCCESS;
+}
+
+func execute_bf(PROGRAM *Instruction) i32 {
+	data := [65535]u16{};
+	pc := 0 as u16;
+	ptr := 65535;
+	for ptr != 0 {
+		--ptr;
+		data[ptr] = 0 as u16;		
+	}
+
+	for PROGRAM[pc].operator != OP_END && ptr < 65535 {
+		switch PROGRAM[pc].operator {
+			case OP_INC_DP {
+				++ptr;
+			}
+			case OP_DEC_DP {
+				--ptr;
+			}
+			case OP_INC_VAL {
+				data[ptr] = data[ptr] + 1 as u16;
+			}
+			case OP_DEC_VAL {
+				data[ptr] = data[ptr] - 1 as u16;
+			}
+			case OP_OUT {
+				putchar(data[ptr] as i32);
+			}
+			case OP_IN {
+				data[ptr] = getchar() as u16;
+			}
+			case OP_JMP_FWD {
+				if data[ptr] == 0 as u16 {
+					pc = PROGRAM[pc].operand;
+				}
+			}
+			case OP_JMP_BCK {
+				if data[ptr] != 0 as u16 {
+					pc = PROGRAM[pc].operand;
+				}
+			}
+			default {
+				return FAILURE;
+			}
+		}
+		++pc;
+	}
+
+	return SUCCESS;
 }

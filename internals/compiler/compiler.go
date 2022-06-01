@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -941,6 +942,7 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 
 		var newValue value.Value
 		if prefix.Operation == ops.AddOne {
+			log.Println(c.doNotAllocate, c.doNotLoadIntoMemory, prefixValue, prefix)
 			newValue = c.addOne(c.loadIfPointer(prefixValue))
 		} else if prefix.Operation == ops.SubtractOne {
 			newValue = c.subtractOne(c.loadIfPointer(prefixValue))
@@ -1042,7 +1044,6 @@ func (c *Compiler) retrieveVariable(name string) value.Value {
 			}
 
 			if fn.Constant {
-				c.doNotLoadIntoMemory = true
 				return global
 			}
 
@@ -1475,6 +1476,7 @@ func (c *Compiler) addOne(v value.Value) value.Value {
 	if types.IsFloat(v.Type()) {
 		return c.block().NewFAdd(v, constant.NewFloat(v.Type().(*types.FloatType), 1.0))
 	}
+
 	return c.block().NewAdd(v, constant.NewInt(v.Type().(*types.IntType), 1))
 }
 
