@@ -1,11 +1,8 @@
-func main() {
-	@print("Hello world!");
-}
-
 struct Instruction {
 	operator u16
 	operand  u16
 }
+//./program  2.52s user 0.02s system 88% cpu 2.874 total
 
 const SUCCESS := 0;
 const FAILURE := 1;
@@ -24,23 +21,24 @@ const OP_JMP_BCK := 8 as u16;
 
 type FILE = i32;
 
-extern func fopen(*i8) *FILE;
+extern func fopen(*i8, *i8) *FILE;
 extern func fclose(*FILE);
 extern func getc(*FILE) i8;
 extern func getchar() i32;
 extern func putchar(i32) i32;
 
 
-func compile_bf(fd *FILE) i32 {
+func compile_bf(PROGRAM *Instruction, fd *FILE) i32 {
 	EOF := -1 as i8;
 	pc := 0 as u16;
 	jmp_pc := 0 as u16;
 	c := 0 as i8;
 	c = getc(fd);
 	SP := 0;
-	PROGRAM := [4096]Instruction{}
+
 	STACK := [512]u16{}
 	for c != EOF && pc < PROGRAM_SIZE as u16 {
+		
 		switch c {
 			case '>' {
 				PROGRAM[pc].operator= OP_INC_DP;
@@ -54,7 +52,7 @@ func compile_bf(fd *FILE) i32 {
 			case '-' {
 				PROGRAM[pc].operator= OP_DEC_VAL;
 			}
-			case '.' {
+			case '.' {				
 				PROGRAM[pc].operator= OP_OUT;
 			}
 			case ',' {
@@ -74,23 +72,24 @@ func compile_bf(fd *FILE) i32 {
 					return FAILURE;
 				}
 
-				jmp_pc = STACK[SP];
 				--SP; 
+				jmp_pc = STACK[SP];				
 				PROGRAM[pc].operator= OP_JMP_BCK;
 				PROGRAM[pc].operand = jmp_pc;
 				PROGRAM[jmp_pc].operand = pc;
 			}
 			default {
 				--pc;
-			}
+			}			
         }
+		++pc;
+		c = getc(fd);
 	}
 
 	if SP != 0 || pc == PROGRAM_SIZE as u16 {
 		return FAILURE;
 	}
 	PROGRAM[pc].operator = OP_END;
-
 	return SUCCESS;
 }
 
@@ -100,25 +99,26 @@ func execute_bf(PROGRAM *Instruction) i32 {
 	ptr := 65535;
 	for ptr != 0 {
 		--ptr;
-		data[ptr] = 0 as u16;		
+		data[ptr] = 0 as u16;			
 	}
+	ptr = 0;
 
-	for PROGRAM[pc].operator != OP_END && ptr < 65535 {
-		switch PROGRAM[pc].operator {
-			case OP_INC_DP {
+	for PROGRAM[pc].operator != OP_END && ptr < 65535 {		
+		switch PROGRAM[pc].operator {			
+			case OP_INC_DP {				
 				++ptr;
 			}
 			case OP_DEC_DP {
 				--ptr;
 			}
 			case OP_INC_VAL {
-				data[ptr] = data[ptr] + 1 as u16;
+				++data[ptr];
 			}
 			case OP_DEC_VAL {
-				data[ptr] = data[ptr] - 1 as u16;
+				--data[ptr];
 			}
 			case OP_OUT {
-				putchar(data[ptr] as i32);
+				// putchar(data[ptr] as i32);
 			}
 			case OP_IN {
 				data[ptr] = getchar() as u16;
@@ -136,9 +136,31 @@ func execute_bf(PROGRAM *Instruction) i32 {
 			default {
 				return FAILURE;
 			}
-		}
-		++pc;
+		}		
+		
+		++pc;		
 	}
 
 	return SUCCESS;
+}
+
+func main() i32 {
+	status := 0;
+	fp := fopen("./program.b", "r");
+	if fp == 0 as *FILE {
+		@print("couldn't open file in ./program.bf\n");
+		return FAILURE;
+	}	
+	PROGRAM := [4096]Instruction{};
+	status := compile_bf(PROGRAM  as *Instruction, fp);	
+	fclose(fp);
+	if status == SUCCESS {
+		for i := 0; i < 10000; ++i {
+			status = execute_bf(PROGRAM  as *Instruction);			
+		}
+		@print("exiting\n", status)
+		return status;
+	}	
+	@print("exiting because failure\n")
+	return FAILURE;
 }

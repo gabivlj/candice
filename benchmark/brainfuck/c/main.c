@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+// exiting..../program fskdljsdfjkl  2.51s user 0.02s system 94% cpu 2.687 total
 #define OP_END 0
 #define OP_INC_DP 1
 #define OP_DEC_DP 2
@@ -115,7 +115,7 @@ int execute_bf()
             data[ptr]--;
             break;
         case OP_OUT:
-            putchar(data[ptr]);
+            // putchar(data[ptr]);
             break;
         case OP_IN:
             data[ptr] = (unsigned int)getchar();
@@ -144,7 +144,7 @@ int main(int argc, const char *argv[])
 {
     int status;
     FILE *fp;
-    if (argc != 2 || (fp = fopen(argv[1], "r")) == NULL)
+    if (argc != 2 || (fp = fopen("program.b", "r")) == NULL)
     {
         fprintf(stderr, "Usage: %s filename\n", argv[0]);
         return FAILURE;
@@ -153,7 +153,14 @@ int main(int argc, const char *argv[])
     fclose(fp);
     if (status == SUCCESS)
     {
-        status = execute_bf();
+        for (int i = 0; i < 10000; i++)
+        {
+            status = execute_bf();
+            if (status != 0)
+                return status;
+        }
+        printf("exiting...");
+        return 0;
     }
     if (status == FAILURE)
     {

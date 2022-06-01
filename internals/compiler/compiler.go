@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -942,7 +941,7 @@ func (c *Compiler) compilePrefixExpression(prefix *ast.PrefixOperation) value.Va
 
 		var newValue value.Value
 		if prefix.Operation == ops.AddOne {
-			log.Println(c.doNotAllocate, c.doNotLoadIntoMemory, prefixValue, prefix)
+			// log.Println(c.doNotAllocate, c.doNotLoadIntoMemory, prefixValue, prefix)
 			newValue = c.addOne(c.loadIfPointer(prefixValue))
 		} else if prefix.Operation == ops.SubtractOne {
 			newValue = c.subtractOne(c.loadIfPointer(prefixValue))
