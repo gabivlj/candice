@@ -722,8 +722,8 @@ func (c *Compiler) compileFor(forLoop *ast.ForStatement) {
 	// Compile condition block
 	c.pushBlock(condition)
 	valueCondition := c.toBool(c.loadIfPointer(c.compileExpression(forLoop.Condition)))
+	condition = c.popBlock()
 	condition.NewCondBr(valueCondition, mainLoop, leave)
-	c.popBlock()
 
 	// pop for loop block
 	c.popBlock()
@@ -1586,7 +1586,9 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 		c.doNotLoadIntoMemory = true
 		// We are not running c.loadIfPointer so put this to false to reset it
 		c.doNotAllocate = false
-		return c.block().NewGetElementPtr(variable.Type().(*types.PointerType).ElemType, variable, zero, zero)
+		ptr := c.block().NewGetElementPtr(variable.Type().(*types.PointerType).ElemType, variable, zero, zero)
+		bc := c.block().NewBitCast(ptr, toReturnType)
+		return bc
 	}
 	variable = c.loadIfPointer(variable)
 
@@ -1614,13 +1616,12 @@ func (c *Compiler) handleCast(call *ast.BuiltinCall) value.Value {
 			variable = c.block().NewFPToSI(variable, types.NewInt(uint64(fl.BitSize)))
 		}
 		value := c.block().NewIntToPtr(variable, toReturnType)
-		//storage := c.block().NewAlloca(toReturnType)
-		//c.block().NewStore(value, storage)
 		return value
 	}
 
 	if ctypes.IsPointer(call.TypeParameters[0]) && types.IsPointer(variable.Type()) {
 		c.doNotLoadIntoMemory = true
+		c.doNotAllocate = false
 		return c.block().NewBitCast(variable, toReturnType)
 	}
 

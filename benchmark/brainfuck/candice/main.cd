@@ -1,0 +1,42 @@
+func main() {
+	@print("Hello world!");
+}
+
+struct Instruction {
+	operator u16
+	operand  u16
+}
+
+const SUCCESS := 0;
+const FAILURE := 1;
+const PROGRAM_SIZE := 4096;
+const STACK_SIZE := 4096;
+const DATA_SIZE := 65535;
+const OP_END := 0;
+const OP_IND_DP := 1;
+const OP_DEC_DP := 2;
+const OP_INC_VAL := 3;
+const OP_DEC_VAL := 4;
+const OP_OUT := 5;
+const OP_IN := 6;
+const OP_JMP_FWD := 7;
+const OP_JMP_BCK := 8;
+
+type FILE = i32;
+
+extern func fopen(*i8) *FILE;
+extern func fclose(*FILE);
+extern func getc(*FILE) i8;
+
+
+func compile_bf(fd *FILE) i32 {
+	EOF := -1 as i8;
+	pc := 0 as u16;
+	jmp_pc := 0 as u16;
+	c := 0 as i8;
+	c = getc(fd);
+	for c != EOF && pc < PROGRAM_SIZE as u16 {
+
+	}
+	return 0;
+}
