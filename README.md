@@ -16,3 +16,12 @@ be fun to work with.
 ## Installation and tutorials
 
 Check docs/tutorials for an overview of the language!
+
+## Building
+
+- Go to cmd/build.
+- Run `go build .`, the go version should be >= 1.18.
+
+## Testing
+
+- Run `go test .`, the go version should be >= 1.18.
