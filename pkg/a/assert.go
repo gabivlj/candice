@@ -21,6 +21,6 @@ func UnwrapBytes(bytes []byte, err error) []byte {
 
 func AssertEqual(expected string, value string) {
 	if expected != value {
-		panic(expected + " != " + value)
+		panic("nor equal:\n" + expected + " != \n" + value)
 	}
 }
