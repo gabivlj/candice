@@ -27,6 +27,15 @@ func Process(statement ast.Statement) string {
 		{
 			return ConnectString("ast.DeclarationStatement", []string{ast.RetrieveID(t.Name), processExpression(t.Expression)})
 		}
+
+	case *ast.Block:
+		{
+			var statements []string
+			for _, statement := range t.Statements {
+				statements = append(statements, Process(statement))
+			}
+			return ConnectString("ast.Block", statements)
+		}
 	}
 
 	return ""
