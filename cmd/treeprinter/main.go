@@ -10,13 +10,14 @@ import (
 
 func main() {
 	l := lexer.New(`
-3 * 3 + a.a * 4 + 4;
-
+	hello(4).hell(3, 3);
+	struct Hell {
+		e i32
+		b i32
+	}
 
 
 	`)
 	tree := parser.New(l).Parse()
-	for _, statement := range tree.Statements {
-		fmt.Println(tree_printer.Process(statement))
-	}
+	fmt.Print(tree_printer.ProcessProgram(tree))
 }
