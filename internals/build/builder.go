@@ -14,6 +14,7 @@ import (
 	"github.com/gabivlj/candice/internals/lexer"
 	"github.com/gabivlj/candice/internals/parser"
 	"github.com/gabivlj/candice/internals/semantic"
+	"github.com/gabivlj/candice/internals/tree_printer"
 	"github.com/gabivlj/candice/pkg/logger"
 )
 
@@ -21,12 +22,12 @@ type Project struct {
 }
 
 func ExecuteProject() {
-	// defer func() {
-	// 	output := recover()
-	// 	if output != nil {
-	// 		logger.Error("Internal Compiler Panic", "There has been an internal panic on the compiler", "\n", output)
-	// 	}
-	// }()
+	defer func() {
+		output := recover()
+		if output != nil {
+			logger.Error("Internal Compiler Panic", "There has been an internal panic on the compiler", "\n", output)
+		}
+	}()
 
 	current := time.Now()
 	flags, err := retrieveFlags()
@@ -38,14 +39,28 @@ func ExecuteProject() {
 		run - Run the project in the desired path.
 		build - Creates an executable of the project in the desired path.
 		init - Creates a candice project
+		tree - Showcases an AST of the file in the terminal
 	Flags:
-		--release - Create or runs an optimized build of the project.
+		--release - Create or runs an optimized build of the project (run, build).
 		`)
 		return
 	}
 
 	if flags.Mode == "init" {
 		createSampleProject(flags.Path)
+		return
+	}
+
+	if flags.Mode == "tree" {
+		bytes, err := os.ReadFile(flags.Path)
+		if err != nil {
+			logger.Error("File", err.Error())
+			return
+		}
+
+		if err := tree_printer.WriteOutput(string(bytes), os.Stdout); err != nil {
+			logger.Error("Generating AST", err.Error())
+		}
 		return
 	}
 

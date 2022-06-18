@@ -1,10 +1,14 @@
 package tree_printer
 
 import (
+	"fmt"
+	"io"
 	"strings"
 
 	"github.com/gabivlj/candice/internals/ast"
 	"github.com/gabivlj/candice/internals/ctypes"
+	"github.com/gabivlj/candice/internals/lexer"
+	"github.com/gabivlj/candice/internals/parser"
 )
 
 const FirstConnectorMultiple = "╦"
@@ -12,6 +16,17 @@ const StraightLine = "═"
 const Wall = "║"
 const MiddleConnector = "╠"
 const LastConnector = "╚"
+
+func WriteOutput(input string, writer io.Writer) error {
+	p := parser.New(lexer.New(input))
+	tree := p.Parse()
+	if len(p.Errors) != 0 {
+		return p.Errors[0]
+	}
+
+	_, err := writer.Write([]byte(ProcessProgram(tree)))
+	return err
+}
 
 func ProcessProgram(program *ast.Program) string {
 	var s []string
@@ -111,7 +126,10 @@ func Process(statement ast.Statement) string {
 			var strings []string
 			strings = append(strings, ast.RetrieveID(t.FunctionType.Name))
 			parameterTypes, returnTypes := functionTypeToString(t.FunctionType)
-			strings = append(strings, parameterTypes)
+			if parameterTypes != "" {
+				strings = append(strings, parameterTypes)
+			}
+
 			strings = append(strings, returnTypes)
 			strings = append(strings, Process(t.Block))
 			return ConnectString("ast.FunctionDeclarationStatement", strings)
@@ -265,6 +283,11 @@ func processExpression(expression ast.Expression) string {
 			}
 
 			parametersTree := ConnectString("ast.Parameters", parameters)
+
+			if typesTree == "" {
+				return ConnectString("ast.BuiltinCall", []string{ast.RetrieveID(t.Name), parametersTree})
+			}
+
 			return ConnectString("ast.BuiltinCall", []string{ast.RetrieveID(t.Name), typesTree, parametersTree})
 		}
 
@@ -277,6 +300,41 @@ func processExpression(expression ast.Expression) string {
 
 			parametersTree := ConnectString("ast.Parameters", parameters)
 			return ConnectString("ast.Call", []string{processExpression(t.Left), parametersTree})
+		}
+
+	case *ast.StringLiteral:
+		{
+			return ConnectString("ast.StringLiteral", []string{fmt.Sprintf(`"%s"`, t.Value)})
+		}
+
+	case *ast.IndexAccess:
+		{
+			return ConnectString("ast.IndexAccess", []string{processExpression(t.Left), processExpression(t.Access)})
+		}
+
+	case *ast.PrefixOperation:
+		{
+			return ConnectString("ast.PrefixOperation", []string{fmt.Sprintf("'%s'", t.Operation.String()), processExpression(t.Right)})
+		}
+
+	case *ast.StructLiteral:
+		{
+			fields := []string{ast.RetrieveID(t.Name)}
+			for _, field := range t.Values {
+				fields = append(fields, ConnectString("ast.Field", []string{ast.RetrieveID(field.Name), processExpression(field.Expression)}))
+			}
+
+			return ConnectString("ast.StructLiteral", fields)
+		}
+
+	case *ast.CommaExpressions:
+		{
+			var expressions []string
+			for _, expression := range t.Expressions {
+				expressions = append(expressions, processExpression(expression))
+			}
+
+			return ConnectString("ast.CommaExpressions", expressions)
 		}
 	}
 	return ""
