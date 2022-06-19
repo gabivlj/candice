@@ -92,7 +92,7 @@ func (c *Compiler) ToLLVMType(t ctypes.Type) types.Type {
 				typeList = append(typeList, c.ToLLVMType(t))
 			}
 
-			return types.NewPointer(types.NewStruct(typeList...))
+			return (types.NewStruct(typeList...))
 		}
 
 	case *ctypes.Integer:

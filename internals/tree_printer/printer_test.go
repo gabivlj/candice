@@ -29,11 +29,11 @@ func TestParsing(t *testing.T) {
 	ast := p.Parse()
 	s := Process(ast.Statements[0])
 	a.AssertEqual(s, `ast.ExpressionStatement═ast.BinaryOperation╦ast.BinaryOperation╦3 (i32)
-                                           ║                   ╠+
+                                           ║                   ╠'+'
                                            ║                   ╚3 (i32)
-                                           ╠-
+                                           ╠'-'
                                            ╚ast.BinaryOperation╦3 (i32)
-                                                               ╠*
+                                                               ╠'*'
                                                                ╚3 (i32)`)
 }
 
@@ -45,6 +45,6 @@ func TestAnonymousFunction(t *testing.T) {
 	a.AssertEqual(s, `ast.DeclarationStatement╦a
                         ╚ast.AnonymousFunction╦types.Parameters╦a i32
                                               ║                ╚b i64
-                                              ╠
-                                              ╚types.Return═i32`)
+                                              ╠types.Return═i32
+                                              ╚`)
 }

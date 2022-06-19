@@ -1,0 +1,11 @@
+func fib() i32, i32, i32 {
+	a, b, c := 3, 3, 3
+	return a, b, c
+}
+
+func main() {
+	a, b, c := fib();
+	if a != 3 || b != 3 || c != 3 @print("bad -- ", a, b, c, "are not equal to 3");
+	a, b, c = fib();	
+	if a != 3 || b != 3 || c != 3 @print("bad 2 -- ", a, b, c, "are not equal to 3")
+}

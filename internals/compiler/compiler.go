@@ -1089,6 +1089,17 @@ func (c *Compiler) compileFunctionCall(ast *ast.Call) value.Value {
 	return thing
 }
 
+func (c *Compiler) allocateIfNotPointer(v value.Value) value.Value {
+	t := v.Type()
+	if _, isPtr := v.Type().(*types.PointerType); isPtr {
+		return v
+	}
+
+	alloca := c.block().NewAlloca(t)
+	c.block().NewStore(v, alloca)
+	return alloca
+}
+
 func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 	l := c.compileExpression(assignment.Left)
 	// Reset state of doNotAllocate and doNotLoadIntoMemory so it doesn't affect second
@@ -1098,8 +1109,8 @@ func (c *Compiler) compileAssignment(assignment *ast.AssignmentStatement) {
 	rightElement := c.compileExpression(assignment.Expression)
 
 	if multipleValues, isMultipleValueAssignment := assignment.Left.(*ast.CommaExpressions); isMultipleValueAssignment {
-		leftPointer := l.(*ir.InstAlloca)
-		rightPointer := rightElement.(*ir.InstAlloca)
+		leftPointer := c.allocateIfNotPointer(l)
+		rightPointer := c.allocateIfNotPointer(rightElement)
 		c.doNotAllocate = false
 		c.doNotLoadIntoMemory = false
 		for i := range multipleValues.Expressions {
@@ -1683,6 +1694,7 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 
 		values = append(values, v)
 	}
+
 	var ptr *types.PointerType
 	if commaExpression.IsAssignment {
 		var typeList []types.Type
@@ -1692,7 +1704,7 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 		strukt := types.NewStruct(typeList...)
 		ptr = types.NewPointer(strukt)
 	} else {
-		ptr = c.ToLLVMType(commaExpression.Type).(*types.PointerType)
+		ptr = types.NewPointer(c.ToLLVMType(commaExpression.Type))
 	}
 
 	strukt := c.block().NewAlloca(ptr.ElemType)
@@ -1700,7 +1712,7 @@ func (c *Compiler) compileCommaExpression(commaExpression *ast.CommaExpressions)
 		address := c.block().NewGetElementPtr(strukt.ElemType, strukt, zero, constant.NewInt(types.I32, int64(i)))
 		c.block().NewStore(values[i], address)
 	}
-	c.doNotLoadIntoMemory = true
+	// c.doNotLoadIntoMemory = true
 	return strukt
 }
 
@@ -1708,6 +1720,12 @@ func (c *Compiler) compileMultipleDeclarationStatement(m *ast.MultipleDeclaratio
 	strukt := c.compileExpression(m.Expression)
 	c.doNotLoadIntoMemory = false
 	c.doNotAllocate = false
+	if !types.IsPointer(strukt.Type()) {
+		struktPtr := c.block().NewAlloca(strukt.Type())
+		c.block().NewStore(strukt, struktPtr)
+		strukt = struktPtr
+	}
+
 	for i := range m.Names {
 		address :=
 			c.block().NewGetElementPtr(
