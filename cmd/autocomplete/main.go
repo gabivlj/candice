@@ -36,6 +36,13 @@ func main() {
 	server.InitializeHandlers()
 
 	conn.Go(ctx, func(ctx context.Context, reply jsonrpc2.Replier, req jsonrpc2.Request) error {
+		defer func() {
+			e := recover()
+			if e != nil {
+				log.Println("recovered panic:", e)
+			}
+		}()
+
 		m := req.Method()
 		log.Println("method:", m, "-", "Handling...")
 		data := req.Params()

@@ -1,1 +1,1 @@
-mv lang ./lsp-sample/out/
+mv autocomplete lang && mv lang ./lsp-sample/out/

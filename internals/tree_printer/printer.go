@@ -20,11 +20,16 @@ const LastConnector = "╚"
 func WriteOutput(input string, writer io.Writer) error {
 	p := parser.New(lexer.New(input))
 	tree := p.Parse()
+	var err error
 	if len(p.Errors) != 0 {
-		return p.Errors[0]
+		err = p.Errors[0]
 	}
 
-	_, err := writer.Write([]byte(ProcessProgram(tree)))
+	_, errWriting := writer.Write([]byte(ProcessProgram(tree) + "\n"))
+	if errWriting != nil {
+		return errWriting
+	}
+
 	return err
 }
 
