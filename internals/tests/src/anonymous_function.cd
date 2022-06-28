@@ -9,7 +9,7 @@ func useFunction() i32 {
 func main() {
     
     hello := anonymous(func (something i32) i32 {
-        @print(something);
+        @print(something, "");
         return useFunction();
     });
 

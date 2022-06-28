@@ -31,5 +31,5 @@ head :*node = CreateNode(@cast(i64, 1))
 
 InsertNode(head, CreateNode(@cast(i64, 100)))
 
-@print(head.next.value) // prints '100'
+@print(head.next.value, "") // prints '100'
 }

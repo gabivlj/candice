@@ -16,8 +16,8 @@ integer := @cast(u32, 4294967100)
 integer = integer + @cast(u32, 100)
 
 if integer == integer {
-    @print(integer)
-    @print(@cast(i32, integer))
+    @print(integer, "")
+    @print(@cast(i32, integer), "")
 }
 returnValue := loadByPointer(&3)
 

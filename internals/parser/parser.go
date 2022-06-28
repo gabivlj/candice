@@ -34,7 +34,7 @@ type Parser struct {
 	currentProgram       *ast.Program
 
 	// Useful for error messages.
-	previousExpresion ast.Expression
+	previousExpression ast.Expression
 }
 
 func (p *Parser) registerPrefixHandler(tokenType token.TypeToken, prefixFunc prefixFunc) {
@@ -611,6 +611,13 @@ func (p *Parser) parseTypes() ctypes.Type {
 }
 
 func (p *Parser) parseType() ctypes.Type {
+	if p.currentToken.Type == token.LPAREN {
+		p.nextToken()
+		t := p.parseTypes()
+		p.nextToken()
+		return t
+	}
+
 	if p.currentToken.Type == token.ASTERISK {
 		p.nextToken()
 		return &ctypes.Pointer{Inner: p.parseType()}
@@ -675,13 +682,15 @@ func (p *Parser) parseType() ctypes.Type {
 		p.nextToken()
 		var returnType ctypes.Type
 		if p.currentToken.Type == token.IDENT {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
 		} else if p.currentToken.Type == token.ASTERISK {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
 		} else if p.currentToken.Type == token.LBRACKET {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
 		} else if p.currentToken.Type == token.FUNCTION {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
+		} else if p.currentToken.Type == token.LPAREN {
+			returnType = p.parseType()
 		} else {
 			returnType = ctypes.VoidType
 		}
@@ -713,7 +722,6 @@ func (p *Parser) parseType() ctypes.Type {
 
 func (p *Parser) parsePrefix() ast.Expression {
 	fn, ok := p.prefixFunc[p.currentToken.Type]
-
 	if !ok {
 		p.addErrorMessage("unknown token to parse on prefix")
 		p.nextToken()
@@ -721,16 +729,15 @@ func (p *Parser) parsePrefix() ast.Expression {
 	}
 
 	p.checkPrefixErrors()
-
-	p.previousExpresion = fn()
-	return p.previousExpresion
+	p.previousExpression = fn()
+	return p.previousExpression
 }
 
 func (p *Parser) checkPrefixErrors() {
 	// Handle error case of <expression>'++';
 	if p.peekToken.Type == token.SEMICOLON &&
 		(p.currentToken.Type == token.DOUBLE_PLUS || p.currentToken.Type == token.DOUBLE_MINUS) {
-		p.afterFixDoubleError(p.previousExpresion)
+		p.afterFixDoubleError(p.previousExpression)
 	}
 }
 
@@ -760,8 +767,8 @@ func (p *Parser) parseExpression(prec int) ast.Expression {
 		prefixExpr = infix(prefixExpr)
 	}
 
-	p.previousExpresion = prefixExpr
-	return p.previousExpresion
+	p.previousExpression = prefixExpr
+	return p.previousExpression
 }
 
 func (p *Parser) parseInfix(expression ast.Expression) ast.Expression {

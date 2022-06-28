@@ -1,6 +1,6 @@
 func resolve(arr *i32, index i32) {
     if index >= 3 return;
-    @print(arr[index])
+    @print(arr[index], "")
     resolve(arr, index + 1)
 }
 

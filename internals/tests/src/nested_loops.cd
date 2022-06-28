@@ -2,10 +2,10 @@ func main() {
 
     for i := 0; i <= 100; i = i + 1 {
 
-        @print(i);
+        @print(i, "");
         for j := 0; j <= 100; j = j + 1 {
             if i + j <= 10 {
-                @print(i + j);
+                @print(i + j, "");
             } else {
 
             }

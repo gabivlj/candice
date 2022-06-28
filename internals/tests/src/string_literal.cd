@@ -1,5 +1,5 @@
 func main() {
 value : *i8 = "Hello world!";
 
-@print(value)
+@print(value, "")
 }

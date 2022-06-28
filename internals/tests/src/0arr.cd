@@ -9,7 +9,7 @@ func main() {
             if *element != 1 {
                 @print("bad");
             } else {
-                @print(*element);
+                @print(*element, "");
             }
         });
     // e : *i32 = ;

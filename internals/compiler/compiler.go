@@ -206,6 +206,11 @@ func (c *Compiler) initializeBuiltinLib() {
 		constantString := strings.Builder{}
 		for i := range call.Parameters {
 			t := expressions[i+1].Type()
+			if i != 0 {
+				constantString.WriteString(" " + c.getFormatString(expressions, t, call, i))
+				continue
+			}
+
 			constantString.WriteString(c.getFormatString(expressions, t, call, i))
 		}
 		s := constantString.String()
