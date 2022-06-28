@@ -611,6 +611,13 @@ func (p *Parser) parseTypes() ctypes.Type {
 }
 
 func (p *Parser) parseType() ctypes.Type {
+	if p.currentToken.Type == token.LPAREN {
+		p.nextToken()
+		t := p.parseTypes()
+		p.nextToken()
+		return t
+	}
+
 	if p.currentToken.Type == token.ASTERISK {
 		p.nextToken()
 		return &ctypes.Pointer{Inner: p.parseType()}
@@ -675,13 +682,15 @@ func (p *Parser) parseType() ctypes.Type {
 		p.nextToken()
 		var returnType ctypes.Type
 		if p.currentToken.Type == token.IDENT {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
 		} else if p.currentToken.Type == token.ASTERISK {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
 		} else if p.currentToken.Type == token.LBRACKET {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
 		} else if p.currentToken.Type == token.FUNCTION {
-			returnType = p.parseTypes()
+			returnType = p.parseType()
+		} else if p.currentToken.Type == token.LPAREN {
+			returnType = p.parseType()
 		} else {
 			returnType = ctypes.VoidType
 		}

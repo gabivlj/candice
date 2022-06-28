@@ -6,7 +6,7 @@ func fillArray(array *i32, len i32, value i32) {
 
 func printArray(array *i32, len i32) {
     for i := 0; i < len; i = i + 1 {
-        @print(array[i]);
+        @print(array[i], "");
     }
 }
 func main() {

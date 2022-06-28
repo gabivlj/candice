@@ -70,3 +70,7 @@ func take(t *T, number i32) Array {
         capacity: number,
     };
 }
+
+func inner(a Array) *T {
+    return a.ptr;
+}

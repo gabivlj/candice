@@ -4,7 +4,7 @@ func main() {
 
 func element(t i32) {
     if t != 3 {
-        @print("hello")
+        @print("hello", "")
     }
     c := 4
     t := 3 as i64

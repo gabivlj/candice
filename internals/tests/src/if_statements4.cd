@@ -1,30 +1,30 @@
 func main() {
     if 1 {
         if 0 {
-            @print("2ok");
+            @print("2ok", "");
         } else if 0 {
-            @print("2ok");
+            @print("2ok", "");
         } else if 0 {
-            @print("2ok");
+            @print("2ok", "");
         } else if 1 {
-            @print("ok");
+            @print("ok", "");
         } else {
-            @print("2ok");
+            @print("2ok", "");
         }
-        @print("nice");
+        @print("nice", "");
     }
      if 1 {
             if 0 {
-                @print("2ok");
+                @print("2ok", "");
             } else if 0 {
-                @print("2ok");
+                @print("2ok", "");
             } else if 0 {
-                @print("2ok");
+                @print("2ok", "");
             } else if 0 {
-                @print("2ok");
+                @print("2ok", "");
             } else {
-                @print("ok");
+                @print("ok", "");
             }
-            @print("nice");
+            @print("nice", "");
         }
 }

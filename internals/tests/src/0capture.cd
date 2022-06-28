@@ -1,8 +1,6 @@
-
-
-func something(a i32) func() i32, i32 {    
+func something(a i32) func() (i32, i32) {    
     z := 3;
-    return func() i32, i32 {        
+    return func() (i32, i32) {        
         return a, z
     };
 }

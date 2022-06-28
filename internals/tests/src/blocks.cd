@@ -1,39 +1,39 @@
 func main() i32 {
     hello := 1
     {
-        if hello != 1 @print("wrong")
+        if hello != 1 @print("wrong", "")
         escapeVariable := 0
         
         {
-            if escapeVariable != 0 @print("f")
-            else @print("11")
+            if escapeVariable != 0 @print("f", "")
+            else @print("11", "")
             {
-                if escapeVariable != 0 @print("f")
-                else @print("10")
+                if escapeVariable != 0 @print("f", "")
+                else @print("10", "")
                 {                    
-                    if escapeVariable != 0 @print("f")
-                    else @print("9")
+                    if escapeVariable != 0 @print("f", "")
+                    else @print("9", "")
                     {
-                        if escapeVariable != 0 @print("f")
-                        else @print("8")
+                        if escapeVariable != 0 @print("f", "")
+                        else @print("8", "")
                         {
-                            if escapeVariable != 0 @print("f")
-                            else @print("7")
+                            if escapeVariable != 0 @print("f", "")
+                            else @print("7", "")
                             {
-                                if escapeVariable != 0 @print("f")
-                                else @print("6")
+                                if escapeVariable != 0 @print("f", "")
+                                else @print("6", "")
                             }
-                            if escapeVariable != 0 @print("f")
-                            else @print("5")
+                            if escapeVariable != 0 @print("f", "")
+                            else @print("5", "")
                         }
-                        if escapeVariable != 0 @print("f")
-                        else @print("4")
+                        if escapeVariable != 0 @print("f", "")
+                        else @print("4", "")
                     }
-                    if escapeVariable != 0 @print("f")
-                    else @print("3")
+                    if escapeVariable != 0 @print("f", "")
+                    else @print("3", "")
                 }
-                if escapeVariable != 0 @print("f")
-                else @print("2")
+                if escapeVariable != 0 @print("f", "")
+                else @print("2", "")
                 {
                     {
                         {
@@ -41,8 +41,8 @@ func main() i32 {
                                 {
                                     {
                                         {
-                                            if escapeVariable != 0 @print("f")
-                                            else @print("1")
+                                            if escapeVariable != 0 @print("f", "")
+                                            else @print("1", "")
                                         }
                                     }
                                 }
@@ -52,27 +52,27 @@ func main() i32 {
                 }
                 return 0;
                 {        
-                    @print(thisincludingshouldnthappenorcompile_uwu)
-                    if escapeVariable != 0 @print("f")
-                    else @print("9")
+                    @print(thisincludingshouldnthappenorcompile_uwu, "")
+                    if escapeVariable != 0 @print("f", "")
+                    else @print("9", "")
                     {
-                        if escapeVariable != 0 @print("f")
-                        else @print("8")
+                        if escapeVariable != 0 @print("f", "")
+                        else @print("8", "")
                         {
-                            if escapeVariable != 0 @print("f")
-                            else @print("7")
+                            if escapeVariable != 0 @print("f", "")
+                            else @print("7", "")
                             {
-                                if escapeVariable != 0 @print("f")
-                                else @print("6")
+                                if escapeVariable != 0 @print("f", "")
+                                else @print("6", "")
                             }
-                            if escapeVariable != 0 @print("f")
-                            else @print("5")
+                            if escapeVariable != 0 @print("f", "")
+                            else @print("5", "")
                         }
-                        if escapeVariable != 0 @print("f")
-                        else @print("4")
+                        if escapeVariable != 0 @print("f", "")
+                        else @print("4", "")
                     }
-                    if escapeVariable != 0 @print("f")
-                    else @print("3")
+                    if escapeVariable != 0 @print("f", "")
+                    else @print("3", "")
                 }
             }
             

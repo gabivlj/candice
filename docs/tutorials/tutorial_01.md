@@ -107,12 +107,7 @@ func main() {
 }
 ```
 
-You will encounter with the following error:
-
-```bash
- Error Analyzing   error analyzing on 6:19 (at +): _(variable+variable2)_ :: mismatched types, expected=i64, got=i32
-```
-
+You will encounter a type mismatch error.
 You can fix it by casting one of the variables, preferably the one with the lesser size.
 
 ```go
@@ -264,6 +259,8 @@ for value := 10; value > 0; value = value - 1
     @print("value is", value);
 
 ```
+
+You can also use the `continue` and `break` keywords, as they work like other languages.
 
 One way to use loops is to walk through a list.
 
@@ -967,7 +964,7 @@ You also can make that a function returns multiple values...
 
 ```go
 
-func multipleReturner() i32, i64 {
+func multipleReturner() (i32, i64) {
     return 1, 2 as i64;
 }
 
