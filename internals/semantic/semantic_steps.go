@@ -30,7 +30,9 @@ func (s *Semantic) predefineFunctions(statements []ast.Statement) {
 		switch t := statement.(type) {
 		case *ast.FunctionDeclarationStatement:
 			{
+				s.enterFrame()
 				s.replaceAnonymousFunctionParameterTypes(t.FunctionType)
+				s.leaveFrame()
 				s.variables.Add(t.FunctionType.Name, s.newType(t.FunctionType))
 			}
 

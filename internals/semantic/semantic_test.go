@@ -272,6 +272,65 @@ func TestSemantic_Analyze(t *testing.T) {
 			`s, e := 3 as i64, 3; s, e = 4, 4;`,
 			false,
 		},
+		{
+			`struct Transform {
+				x f32
+				y f32    
+			}
+			
+			struct GameObject {
+				transform Transform
+			}
+			
+			struct GameObjectContainer {
+				update func(*GameObject) i0
+				g *GameObject
+			}
+			
+			
+			struct World {
+				gos *GameObjectContainer
+				n i32
+			}
+			
+			func new_world() World {
+				return @World{
+					gos: @alloc(GameObjectContainer, 100),
+					n: 0
+				}
+			}
+			
+			type startFn = func()*GameObject
+			struct Factory {     
+				w *World
+				start startFn
+				update func(*GameObject) void
+			}
+			
+			func new(w *World, start startFn, update func(*GameObject) i0) Factory {    
+				return @Factory{
+					w: w,
+					start: start,
+					update: update,
+				};
+			}
+			
+			func spawn(f Factory) {
+				go := f.start();
+				g := go.update
+				goContainer := @GameObjectContainer{
+					update: g,
+					g: go,
+				};
+				f.w.gos[f.w.n] = goContainer;
+				++f.w.n;
+			}
+			
+			func main() {
+				// do nothing, I just want this file to fail
+			}`,
+			false,
+		},
 
 		// This still doesn't work...
 		// {
