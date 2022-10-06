@@ -981,6 +981,24 @@ But you can't do this.
 value, value1, value2 := 1, multipleReturner();
 ```
 
+## Blocks that return values
+
+You can create block expressions that return values like in Rust or similar.
+
+```go
+    someValue := :i32 if value == 3 {
+        return value + 1;
+    } else {
+        return value + 2;
+    }
+
+    otherValue := :i64 {
+        return 0 as i64;
+    }
+```
+
+If some path of the block don't return a value, it will throw an error similar to the ones you might find if you didn't return on functions.
+
 ## Variable capturing on Anonymous functions
 
 You can capture variables with an anonymous function. But they work differently

@@ -51,6 +51,7 @@ const (
 	DOUBLE_PLUS  = TypeToken("++")
 	DOUBLE_MINUS = TypeToken("--")
 	MODULO       = TypeToken("%")
+	ARROW        = TypeToken("->")
 
 	// Delimiters
 	LPAREN    = TypeToken("(")

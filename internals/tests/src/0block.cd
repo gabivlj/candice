@@ -1,0 +1,24 @@
+union Something {
+	i i32
+}
+
+func main() {
+    value := :i32 {
+        return 3;
+    };
+    if value != 3 @print("bad0");
+
+    value02 := :i32 if value == 3 {
+        return value + 1;
+    } else {
+        return value + 2;
+    }
+    if value02 != 4 @print("bad2");
+
+    if :Something {
+		value : Something = 3;
+		return value;
+	}.i != 3 {
+        @print("bad3")
+    }
+}

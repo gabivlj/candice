@@ -148,7 +148,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefixHandler(token.LBRACKET, p.parseStaticArray)
 	p.registerPrefixHandler(token.DOUBLE_PLUS, p.parsePrefixExpression)
 	p.registerPrefixHandler(token.DOUBLE_MINUS, p.parsePrefixExpression)
-
+	p.registerPrefixHandler(token.COLON, p.parseBlockExpression)
 	return p
 }
 
@@ -1256,4 +1256,11 @@ func (p *Parser) parseCommaInfix(previous ast.Expression) ast.Expression {
 		expressionList.Expressions = append(expressionList.Expressions, p.parseExpression(2))
 	}
 	return &expressionList
+}
+
+func (p *Parser) parseBlockExpression() ast.Expression {
+	expressionBlock := ast.ExpressionBlock{Node: &node.Node{Token: p.nextToken()}}
+	expressionBlock.Type = p.parseType()
+	expressionBlock.Block = p.parseBlock()
+	return &expressionBlock
 }

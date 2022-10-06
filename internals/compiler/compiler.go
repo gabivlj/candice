@@ -50,11 +50,12 @@ type Compiler struct {
 	doNotLoadIntoMemory bool
 	doNotAllocate       bool
 
-	currentBreakLeaveBlock     *ir.Block
-	currentContinueEscapeBlock *ir.Block
-	context                    *semantic.Semantic
-	modules                    map[string]*Compiler
-	compiledModules            map[string]*Compiler
+	currentBreakLeaveBlock              *ir.Block
+	currentContinueEscapeBlock          *ir.Block
+	currentValueToReturnBlockExpression value.Value
+	context                             *semantic.Semantic
+	modules                             map[string]*Compiler
+	compiledModules                     map[string]*Compiler
 
 	eventHandler func(Event)
 }
@@ -525,8 +526,17 @@ func (c *Compiler) compileReturn(ret *ast.ReturnStatement) {
 		c.block().NewRet(nil)
 		return
 	}
+
 	toReturn := c.compileExpression(ret.Expression)
 	toReturnLoaded := c.loadIfPointer(toReturn)
+	if c.currentValueToReturnBlockExpression != nil {
+		c.block().NewStore(
+			toReturnLoaded,
+			c.bitcastIfUnion(ret.Type, c.currentValueToReturnBlockExpression, toReturn.Type()),
+		)
+		return
+	}
+
 	c.block().NewRet(toReturnLoaded)
 }
 
@@ -816,6 +826,8 @@ func (c *Compiler) compileType(name string, ct ctypes.Type) {
 func (c *Compiler) compileExpression(expression ast.Expression) value.Value {
 
 	switch e := expression.(type) {
+	case *ast.ExpressionBlock:
+		return c.compileBlockExpression(e)
 	case *ast.CommaExpressions:
 		return c.compileCommaExpression(e)
 	case *ast.PrefixOperation:
@@ -1070,7 +1082,6 @@ func (c *Compiler) retrieveLocalVariable(name string) value.Value {
 	return c.variables.Get(name)
 }
 
-/// Function calls
 func (c *Compiler) compileBuiltinFunctionCall(ast *ast.BuiltinCall) value.Value {
 	if fun, ok := c.builtins[ast.Name]; ok {
 		return fun(c, ast)
@@ -1205,6 +1216,17 @@ func (c *Compiler) loadIfPointerWithAlignment(val value.Value, alignment int) va
 		return l
 	}
 	return val
+}
+
+func (c *Compiler) compileBlockExpression(block *ast.ExpressionBlock) value.Value {
+	t := c.ToLLVMType(block.Type)
+	alloca := c.block().NewAlloca(t)
+	c.currentValueToReturnBlockExpression = alloca
+	newBlock := c.currentFunction.NewBlock("block-expression-" + random.RandomString(5))
+	c.block().NewBr(newBlock)
+	c.blocks[len(c.blocks)-1] = c.compileBlock(block.Block, newBlock)
+	c.currentValueToReturnBlockExpression = nil
+	return alloca
 }
 
 func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {

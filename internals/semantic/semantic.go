@@ -785,6 +785,8 @@ func (s *Semantic) analyzeExpression(expression ast.Expression) ctypes.Type {
 		return s.analyzeStructLiteral(expressionType)
 	case *ast.IndexAccess:
 		return s.analyzeIndexAccess(expressionType)
+	case *ast.ExpressionBlock:
+		return s.analyzeExpressionBlock(expressionType)
 	case *ast.StringLiteral:
 		stringLiteralType := &ctypes.Pointer{Inner: ctypes.I8}
 		expressionType.Type = stringLiteralType
@@ -1295,6 +1297,25 @@ func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	// <struct_instance>.<method_that_contains_as_first_param_the_instance>(...)
 	s.modules[internalSemantic.Root.ID] = internalSemantic
 	s.modules[importStatement.Name] = internalSemantic
+}
+
+func (s *Semantic) analyzeExpressionBlock(blockExpression *ast.ExpressionBlock) ctypes.Type {
+	t := s.UnwrapAnonymous(blockExpression.Type)
+	tmpReturns := s.returns
+	tmpExpectedReturnType := s.currentExpectedReturnType
+	defer func() {
+		s.returns = tmpReturns
+		s.currentExpectedReturnType = tmpExpectedReturnType
+	}()
+
+	s.currentExpectedReturnType = t
+	s.analyzeBlock(blockExpression.Block)
+	if !s.returns {
+		s.errorWithStatement(fmt.Sprintf("not all paths of expression block return type %q", t.String()), blockExpression.Token)
+		return ctypes.TODO()
+	}
+
+	return t
 }
 
 func (s *Semantic) analyzeShiftOperation(binaryOperation *ast.BinaryOperation, left ctypes.Type, right ctypes.Type) ctypes.Type {
