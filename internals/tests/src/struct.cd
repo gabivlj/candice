@@ -17,6 +17,7 @@ point := p.points[0]
 p.points[0].x = @cast(i64, -3)
 
 points := @alloc(Point, 3)
+points[0].x = 0 as i64
 pointCopy : Point = points[0]
 points[0].x = @cast(i64, -3)
 @print(points[0].x, "") // prints '-3'

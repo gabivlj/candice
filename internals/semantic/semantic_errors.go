@@ -120,6 +120,11 @@ func (s *Semantic) checkDereferenceErrors(line string, left, right ctypes.Type, 
 	s.error(message, leftExpr.GetToken())
 }
 
+func (semantic *Semantic) formatExpression(expr ast.Expression) string {
+	s := expr.String()
+	return semantic.formatLine(s)
+}
+
 func (semantic *Semantic) getCurrentStatementLineFormatted() string {
 	if semantic.currentStatementBeingAnalyzed != nil {
 		s := semantic.currentStatementBeingAnalyzed.String()

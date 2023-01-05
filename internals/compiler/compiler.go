@@ -1273,9 +1273,9 @@ func (c *Compiler) compileStructLiteral(strukt *ast.StructLiteral) value.Value {
 	return struktValue
 }
 
-/// Simple binary compilations
-/// Making redundant and easy to understand globalVariables is better
-/// than storing callbacks on a hashmap. Let's keep it simple.
+// Simple binary compilations
+// Making redundant and easy to understand globalVariables is better
+// than storing callbacks on a hashmap. Let's keep it simple.
 func (c *Compiler) compileBinaryExpression(expr *ast.BinaryOperation) value.Value {
 	switch expr.Operation {
 	case ops.Modulo:

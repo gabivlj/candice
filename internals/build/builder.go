@@ -108,7 +108,7 @@ func ExecuteProject() {
 	})
 
 	if flags.Release {
-		config.CompilerFlags = append(config.CompilerFlags, "-O3")
+		config.CompilerFlags = append(config.CompilerFlags, "-O3", "-mllvm", "-inline-threshold=0")
 	}
 
 	if config.BinaryKind == Object {

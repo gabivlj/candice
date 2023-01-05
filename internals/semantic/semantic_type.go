@@ -23,7 +23,13 @@ func (s *Semantic) newType(t ctypes.Type) *SemanticType {
 func (s *Semantic) wrapInOperators(expression ast.Expression, times int, operator ops.Operation) ast.Expression {
 	newType := expression.GetType()
 	if operator == ops.Multiply {
-		newType = newType.(*ctypes.Pointer).Inner
+		ptr, ok := newType.(*ctypes.Pointer)
+		if !ok {
+			s.errorWithExpression("can't unwrap non pointer", expression)
+			return expression
+		}
+
+		newType = ptr.Inner
 	} else if operator == ops.Reference {
 		newType = &ctypes.Pointer{Inner: newType}
 	}

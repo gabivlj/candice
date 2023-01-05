@@ -15,7 +15,7 @@ func CreateNode(value i64) *node {
 }
 
 func IsNodeNull(node *node) i1 {
-    return @cast(i32, node) == 0
+    return @cast(i64, node) == 0 as i64
 }
 
 func InsertNode(head *node, toInsert *node) {

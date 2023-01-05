@@ -1,35 +1,35 @@
 func main() {
 
-    integer : i32 = 32;
-    integer := 32;
-    integer64 := 32 as i64;
+    // integer : i32 = 32;
+    // integer := 32;
+    // integer64 := 32 as i64;
 
-    element : i16 = @cast(i16, 32)
-    @print(element, "")
-    floatToIntegeri8 : i8 = @cast(i8, -1.2);
-    floatToIntegeri16 : i16 = @cast(i16, -1.2);
-    floatToIntegeri32 : i32 = @cast(i32, -1.2);
-    floatToIntegeri64 : i64 = @cast(i64, -1.2);
-    @print(floatToIntegeri8, "");
-    @print(floatToIntegeri16, "");
-    @print(floatToIntegeri32, "");
-    @print(floatToIntegeri64, "");
+    // element : i16 = @cast(i16, 32)
+    // @print(element, "")
+    // floatToIntegeri8 : i8 = @cast(i8, -1.2);
+    // floatToIntegeri16 : i16 = @cast(i16, -1.2);
+    // floatToIntegeri32 : i32 = @cast(i32, -1.2);
+    // floatToIntegeri64 : i64 = @cast(i64, -1.2);
+    // @print(floatToIntegeri8, "");
+    // @print(floatToIntegeri16, "");
+    // @print(floatToIntegeri32, "");
+    // @print(floatToIntegeri64, "");
 
-    floatToIntegeru8 : u8 = @cast(u8, -1.2);
-    floatToIntegeru16 : u16 = @cast(u16, -1.2);
-    floatToIntegeru32 : u32 = @cast(u32, -1.2);
-    floatToIntegeru64 : u64 = @cast(u64, -1.2);
-    @print(floatToIntegeru8, "");
-    @print(floatToIntegeru16, "");
-    @print(floatToIntegeru32, "");
-    @print(floatToIntegeru64, "");
+    // floatToIntegeru8 : u8 = @cast(u8, -1.2);
+    // floatToIntegeru16 : u16 = @cast(u16, -1.2);
+    // floatToIntegeru32 : u32 = @cast(u32, -1.2);
+    // floatToIntegeru64 : u64 = @cast(u64, -1.2);
+    // @print(floatToIntegeru8, "");
+    // @print(floatToIntegeru16, "");
+    // @print(floatToIntegeru32, "");
+    // @print(floatToIntegeru64, "");
 
 
-    integerToFloat32 : f32 = @cast(f32, -100) * 0.1;
-    integerToFloat64 : f64 = @cast(f64, 100) * @cast(f64, 0.01);
-    @print(integerToFloat32, "")
-    @print(integerToFloat64, "")
+    // integerToFloat32 : f32 = @cast(f32, -100) * 0.1;
+    // integerToFloat64 : f64 = @cast(f64, 100) * @cast(f64, 0.01);
+    // @print(integerToFloat32, "")
+    // @print(integerToFloat64, "")
 
-    float32ToFloat64 := 0.0 as f64
-    float64ToFloat32 := 0.0 as f64 as f32
+    // float32ToFloat64 := 0.0 as f64
+    // float64ToFloat32 := 0.0 as f64 as f32
 }

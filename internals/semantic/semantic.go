@@ -130,6 +130,11 @@ func (s *Semantic) warningWithStatement(msg string, tok token.Token) {
 	s.warning(msg, tok)
 }
 
+func (s *Semantic) errorWithExpression(msg string, expr ast.Expression) {
+	msg += "\n" + s.formatExpression(expr)
+	s.error(msg, expr.GetToken())
+}
+
 func (s *Semantic) warning(msg string, tok token.Token) {
 	s.Warnings = append(s.Errors, errors.New(fmt.Sprintf("[%d:%d] %s", tok.Line, tok.Position, msg)))
 }
