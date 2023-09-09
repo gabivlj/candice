@@ -227,6 +227,7 @@ func (s *Semantic) analyzeStatement(statement ast.Statement) {
 		return
 
 	case *ast.ExpressionStatement:
+		s.expectStatementInsideFunction(statementType.Token)
 		s.analyzeExpression(statementType.Expression)
 		return
 
@@ -280,6 +281,7 @@ func (s *Semantic) analyzeExternStatement(extern *ast.ExternStatement) {
 }
 
 func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
+	s.expectStatementInsideFunction(assign.Token)
 	right := s.analyzeExpression(assign.Expression)
 	s.expectNonConstantExpression = true
 	left := s.analyzeExpression(assign.Left)
@@ -290,6 +292,7 @@ func (s *Semantic) analyzeAssigmentStatement(assign *ast.AssignmentStatement) {
 }
 
 func (s *Semantic) analyzeBlock(block *ast.Block) {
+	s.expectStatementInsideFunction(block.Token)
 	s.enterFrame()
 	for _, stmt := range block.Statements {
 		if s.returns {
@@ -301,6 +304,7 @@ func (s *Semantic) analyzeBlock(block *ast.Block) {
 }
 
 func (s *Semantic) analyzeForStatement(forStatement *ast.ForStatement) {
+	s.expectStatementInsideFunction(forStatement.Token)
 	previousReturns := s.returns
 	s.enterFrame()
 
@@ -389,7 +393,18 @@ func (s *Semantic) analyzeAnonymousFunction(anonymousFunction *ast.AnonymousFunc
 	return anonymousFunction.FunctionType
 }
 
+func (s *Semantic) analyzingInsideFunction() bool {
+	return s.currentFunctionBeingAnalyzed != nil || s.currentAnonymousFunctionBeingAnalyzed != nil
+}
+
+func (s *Semantic) expectStatementInsideFunction(t token.Token) {
+	if !s.analyzingInsideFunction() {
+		s.errorWithStatement("Statement should be inside a function, but it's on the root of the source file.\nConsider moving this code to a function. If you pretended this code to run directly, wrap it inside func main()", t)
+	}
+}
+
 func (s *Semantic) analyzeIfStatement(ifStatement *ast.IfStatement) {
+	s.expectStatementInsideFunction(ifStatement.Token)
 	condition := s.analyzeExpression(ifStatement.Condition)
 	if !ctypes.IsNumeric(condition) {
 		s.typeMismatchError(ifStatement.Condition.String(), ifStatement.Condition, ifStatement.Token, ctypes.I8, condition)
@@ -1231,14 +1246,14 @@ func (s *Semantic) isArithmetic(op ops.Operation) bool {
 }
 
 // analyzeImport works in a really tricky way
-// - First off we start by gathering all types that the file is gonna need as parameters
-// - Then we should parse and analyze the file that is being imported if it hasn't been yet
-// - Now this is a tricky part, we check if the file with those type parameters have been analyzed before
-//  and if it does we try to get the semantic component and put it available as that module name.
-// - Because they are the exact same modules when using them in 2 different parts of the project,
-//   we won't find type discrepancies, which is good because really, it's the same type.
-// - This works because let's remember that string names in definitions are <name_put_by_the_user> '-' <random_id_set_by_the_parser>.
-//  	the random id is located in the *Semantic.Root attribute, so we can use it to create or parse names.
+//   - First off we start by gathering all types that the file is gonna need as parameters
+//   - Then we should parse and analyze the file that is being imported if it hasn't been yet
+//   - Now this is a tricky part, we check if the file with those type parameters have been analyzed before
+//     and if it does we try to get the semantic component and put it available as that module name.
+//   - Because they are the exact same modules when using them in 2 different parts of the project,
+//     we won't find type discrepancies, which is good because really, it's the same type.
+//   - This works because let's remember that string names in definitions are <name_put_by_the_user> '-' <random_id_set_by_the_parser>.
+//     the random id is located in the *Semantic.Root attribute, so we can use it to create or parse names.
 func (s *Semantic) analyzeImport(importStatement *ast.ImportStatement) {
 	types := make([]ctypes.Type, 0, len(importStatement.Types))
 	for _, t := range importStatement.Types {
@@ -1395,6 +1410,7 @@ func (s *Semantic) replaceAnonymous(t ctypes.Type) ctypes.Type {
 }
 
 func (s *Semantic) analyzeSwitchStatement(switchStatement *ast.SwitchStatement) {
+	s.expectStatementInsideFunction(switchStatement.Token)
 	condition := s.UnwrapAnonymous(s.analyzeExpression(switchStatement.Condition))
 
 	allCasesReturn := true
@@ -1427,6 +1443,7 @@ func (s *Semantic) analyzeSwitchStatement(switchStatement *ast.SwitchStatement) 
 }
 
 func (s *Semantic) analyzeMultipleDeclarationStatement(m *ast.MultipleDeclarationStatement) {
+	s.expectStatementInsideFunction(m.Token)
 	possibleTypeList := s.analyzeExpression(m.Expression)
 	var typeList *ctypes.TypeList
 	if typeListInstance, isList := possibleTypeList.(*ctypes.TypeList); isList {
