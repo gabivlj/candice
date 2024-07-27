@@ -43,6 +43,9 @@ test: build
 docker:
 	docker build --platform=$(PLATFORM) -t candice:latest .
 
-CMD ?= run . --release
+docker-init: docker
+	docker run --platform=$(PLATFORM) -v .:/context candice:latest bash -c "cd context && candice init ."
+
+RUN_CMD ?= run . --release
 docker-run: docker
-	docker run --platform=$(PLATFORM) -v .:/context candice:latest bash -c "cd context && candice $(CMD)"
+	docker run --platform=$(PLATFORM) -v .:/context candice:latest bash -c "cd context && candice $(RUN_CMD)"
